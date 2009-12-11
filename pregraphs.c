@@ -298,10 +298,18 @@ void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ver
     
 }
 
+/*
+ * determines the orbits of a given pair of vertices pairs. The pairs must be so that the image of a pair in the list
+ * is also in the list.
+ *
+ * In the end vertexPairOrbits[i] will contain the index of the canonical representant of the orbit to which vertexPairList[i]
+ * belongs and orbitCount will contain the number of orbits.
+ * The first two parameters are read-only, the last two are write-only.
+ */
 void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairListSize, int *vertexPairOrbits, int *orbitCount){
     DEBUG2DARRAYDUMP(vertexPairList, vertexPairListSize, 2, "%d")
 
-    int i, j, k;
+    int i, j, k, temp;
     int orbitSize[vertexPairListSize];
 
     //initialization of the variables
@@ -311,7 +319,38 @@ void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairLis
     }
     *orbitCount=vertexPairListSize;
 
-    
+    permutation *permutation;
+    VERTEXPAIR pair;
+    for(i = 0; i < number_of_generators; i++) {
+        //the generators were stored in the global variable generators by the method save_generators
+        permutation = generators[i];
+        DEBUGARRAYDUMP(permutation, currentVertexCount, "%d")
+
+        for(j = 0; j<vertexPairListSize; j++){
+            //apply permutation to current vertex pair
+            pair[0] = permutation[vertexPairList[j][0]];
+            pair[1] = permutation[vertexPairList[j][1]];
+
+            //canonical form of vertex pair
+            if(pair[0]>pair[1]){
+                temp = pair[1];
+                pair[1] = pair[0];
+                pair[0] = temp;
+            }
+
+            //search the pair in the list
+            for(k = 0; k<vertexPairListSize; k++){
+                if(pair[0] == vertexPairList[k][0] && pair[1] == vertexPairList[k][1]){
+                    union_elements(vertexPairOrbits, orbitSize, orbitCount, j, k);
+                    break; //the list of pairs doesn't contain any duplicates so we can stop
+                }
+            }
+        }
+    }
+
+    DEBUGARRAYDUMP(vertexPairOrbits, vertexPairListSize, "%d")
+
+
 }
 
 void union_elements(int *forest, int *treeSizes, int *numberOfComponents, int element1, int element2){
@@ -343,6 +382,25 @@ int find_root_of_element(int *forest, int element) {
     }
     return forest[element];
 }
+
+//----------------------Begin Nauty interaction--------------------------
+
+void init_nauty_options() {
+    //TODO also options without getcanon?
+    options.getcanon = TRUE;
+    options.userautomproc = save_generators;
+    options.writeautoms = TRUE;
+    //options.writemarkers = TRUE;
+}
+
+void save_generators(int count, permutation perm[], nvector orbits[],
+        int numorbits, int stabvertex, int n) {
+    memcpy(generators + number_of_generators, perm, sizeof(permutation) * n);
+
+    number_of_generators++;
+}
+
+//------------------------End Nauty interaction-------------------------
 
 #ifdef NO_MAIN
     #define MAIN_FUNCTION nomain

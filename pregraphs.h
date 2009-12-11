@@ -49,11 +49,22 @@ typedef struct _primpregraph PRIMPREGRAPH;
 typedef int VERTEXPAIR[2];
 
 /******************Global Variables**********************/
+int vertexCount;
+int currentVertexCount;
 
 boolean onlyCount = FALSE; /* TRUE if the graphs don't need to be outputted*/
 boolean allowLoops = FALSE; /* TRUE if loops are allowed*/
 boolean allowMultiEdges = FALSE; /* TRUE if multi-edges are allowed*/
 boolean allowSemiEdges = FALSE; /* TRUE if semi-edges are allowed*/
+
+permutation generators[MAXN][MAXN];
+int number_of_generators;
+
+/* Variables for nauty */
+int lab[MAXN], ptn[MAXN];
+static DEFAULTOPTIONS_GRAPH(options);
+statsblk stats;
+setword workspace[50 * MAXM];
 
 /******************Methods*******************************/
         
