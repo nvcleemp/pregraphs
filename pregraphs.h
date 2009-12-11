@@ -69,6 +69,8 @@ void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v);
 
 
 void get_deg1_pairs(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize);
+void get_single_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize);
+void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize);
 
 #endif	/* _PREGRAPHS_H */
 

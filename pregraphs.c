@@ -261,12 +261,41 @@ void get_deg1_pairs(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vert
             for(j=i+1; j<ppgraph->order;j++){
                 if(ppgraph->degree[j]==1){
                     vertexPairList[*vertexPairListSize][0]=i;
-                    vertexPairList[*vertexPairListSize][1]=i;
+                    vertexPairList[*vertexPairListSize][1]=j;
                     (*vertexPairListSize)++;
                 }
             }
         }
     }
+}
+
+void get_single_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize){
+    int i, j;
+    *vertexPairListSize = 0;
+    for(i=0;i<ppgraph->order-1;i++){
+        for(j=0; j<ppgraph->degree[i];j++){
+            if(ppgraph->adjList[i][j]>i &&
+                    !(ppgraph->degree[i]==2 && ppgraph->multiedge[i]==ppgraph->adjList[i][j])){
+                vertexPairList[*vertexPairListSize][0]=i;
+                vertexPairList[*vertexPairListSize][1]=ppgraph->adjList[i][j];
+                (*vertexPairListSize)++;
+            }
+        }
+    }
+
+}
+
+void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize){
+    int i, j;
+    *vertexPairListSize = 0;
+    for(i=0;i<ppgraph->order-1;i++){
+        if(ppgraph->degree[i]==2 && ppgraph->multiedge[i]>i){
+            vertexPairList[*vertexPairListSize][0]=i;
+            vertexPairList[*vertexPairListSize][1]=ppgraph->multiedge[i];
+            (*vertexPairListSize)++;
+        }
+    }
+    
 }
 
 void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairListSize, int *vertexPairOrbits, int *orbitCount){
