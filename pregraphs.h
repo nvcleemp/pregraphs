@@ -87,5 +87,8 @@ void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ver
 void construct_K2(PRIMPREGRAPH *ppgraph);
 void construct_C4(PRIMPREGRAPH *ppgraph);
 
+
+void save_generators(int count, permutation perm[], nvector orbits[],
+        int numorbits, int stabvertex, int n);
 #endif	/* _PREGRAPHS_H */
 
