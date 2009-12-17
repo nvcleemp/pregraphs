@@ -120,7 +120,7 @@ void apply_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->degree[s]=2;
     ppgraph->adjList[s*3]=u;
     ppgraph->adjList[s*3+1]=t;
-    ppgraph->multiedge[s]=t
+    ppgraph->multiedge[s]=t;
 
     ppgraph->degree[t]=2;
     ppgraph->adjList[t*3]=v;
@@ -170,7 +170,7 @@ void apply_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->degree[s]=2;
     ppgraph->adjList[s*3]=u;
     ppgraph->adjList[s*3+1]=t;
-    ppgraph->multiedge[s]=t
+    ppgraph->multiedge[s]=t;
 
     ppgraph->degree[t]=2;
     ppgraph->adjList[t*3]=v;
@@ -224,7 +224,7 @@ void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->degree[s]=2;
     ppgraph->adjList[s*3]=v;
     ppgraph->adjList[s*3+1]=t;
-    ppgraph->multiedge[s]=t
+    ppgraph->multiedge[s]=t;
 
     ppgraph->degree[t]=2;
     ppgraph->adjList[t*3]=v;
