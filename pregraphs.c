@@ -383,6 +383,54 @@ int find_root_of_element(int *forest, int element) {
     return forest[element];
 }
 
+void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
+    DEBUGASSERT(ppgraph->order >= vertexCount)
+    DEBUGASSERT(allowSemiEdges || vertexCount == ppgraph->order)
+    
+    int semiEdgeCount = ppgraph->order - vertexCount;
+    DEBUGASSERT(semiEdgeCount <= ppgraph->degree1Count)
+    int loopCount = ppgraph->degree1Count - semiEdgeCount;
+    //determine up to automorphism all the ways to select semiEdgeCount vertices
+    //of degree 1 by using union-find
+
+    //output pregraph
+}
+
+void do_deg1_operations(PRIMPREGRAPH *ppgraph){
+
+}
+
+void do_deg2_operations(PRIMPREGRAPH *ppgraph){
+
+}
+
+void grow(PRIMPREGRAPH *ppgraph){
+    if(allowLoops || allowSemiEdges){
+        do_deg1_operations(ppgraph);
+    }
+    if(allowMultiEdges){
+        do_deg2_operations(ppgraph);
+    }
+
+}
+
+void start(){
+    PRIMPREGRAPH ppgraph;
+    if(allowLoops || allowSemiEdges){
+        construct_K2(&ppgraph);
+        grow(&ppgraph);
+    }
+    if(allowMultiEdges){
+        construct_C4(&ppgraph);
+        grow(&ppgraph);
+    }
+    if((allowLoops || allowSemiEdges) && allowMultiEdges){
+        //
+        grow(&ppgraph);
+    }
+    //TODO: start generation of cubic graphs
+}
+
 //------------------------Begin start graphs-----------------------------
 
 void construct_K2(PRIMPREGRAPH *ppgraph){
