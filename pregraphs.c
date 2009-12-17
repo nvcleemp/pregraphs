@@ -299,7 +299,7 @@ void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ver
 }
 
 /*
- * determines the orbits of a given pair of vertices pairs. The pairs must be so that the image of a pair in the list
+ * determines the orbits of a given list of vertices pairs. The pairs must be so that the image of a pair in the list
  * is also in the list.
  *
  * In the end vertexPairOrbits[i] will contain the index of the canonical representant of the orbit to which vertexPairList[i]
