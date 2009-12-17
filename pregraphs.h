@@ -83,6 +83,9 @@ void get_deg1_pairs(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vert
 void get_single_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize);
 void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize);
 
+//union-find algorithm
+void union_elements(int *forest, int *treeSizes, int *numberOfComponents, int element1, int element2);
+int find_root_of_element(int *forest, int element);
 
 void construct_K2(PRIMPREGRAPH *ppgraph);
 void construct_C4(PRIMPREGRAPH *ppgraph);
