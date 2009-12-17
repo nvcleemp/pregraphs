@@ -87,6 +87,14 @@ void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ver
 void union_elements(int *forest, int *treeSizes, int *numberOfComponents, int element1, int element2);
 int find_root_of_element(int *forest, int element);
 
+void handle_primpregraph_result(PRIMPREGRAPH *ppgraph);
+void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph);
+void handle_deg1_operation1(PRIMPREGRAPH *ppgraph);
+void do_deg1_operations(PRIMPREGRAPH *ppgraph);
+void do_deg2_operations(PRIMPREGRAPH *ppgraph);
+void grow(PRIMPREGRAPH *ppgraph);
+void start();
+
 void construct_K2(PRIMPREGRAPH *ppgraph);
 void construct_C4(PRIMPREGRAPH *ppgraph);
 

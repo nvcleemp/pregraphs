@@ -383,6 +383,8 @@ int find_root_of_element(int *forest, int element) {
     return forest[element];
 }
 
+//--------------------------------------------------------------------
+
 void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     DEBUGASSERT(ppgraph->order >= vertexCount)
     DEBUGASSERT(allowSemiEdges || vertexCount == ppgraph->order)
@@ -394,6 +396,38 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     //of degree 1 by using union-find
 
     //output pregraph
+}
+
+void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
+    //if correct number of vertices
+    handle_primpregraph_result(ppgraph);
+
+    //if still more vertices possible
+    do_deg1_operations(ppgraph);
+
+    if(allowMultiEdges){
+        do_deg2_operations(ppgraph);
+    }
+}
+
+void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
+    VERTEXPAIR deg1PairList[0];
+    int listSize;
+    get_deg1_pairs(ppgraph, deg1PairList, &listSize);
+
+    int orbitCount;
+    int orbits[listSize];
+    determine_vertex_pairs_orbits(deg1PairList, listSize, orbits, &orbitCount);
+
+    int i;
+    for (i = 0; i < listSize; i++) {
+        if(orbits[i]==i){
+            apply_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
+            //check if this was a valid action
+            handle_deg1_operation1(ppgraph);
+        }
+    }
+
 }
 
 void do_deg1_operations(PRIMPREGRAPH *ppgraph){
