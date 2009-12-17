@@ -274,10 +274,10 @@ void get_single_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ve
     *vertexPairListSize = 0;
     for(i=0;i<ppgraph->order-1;i++){
         for(j=0; j<ppgraph->degree[i];j++){
-            if(ppgraph->adjList[i][j]>i &&
-                    !(ppgraph->degree[i]==2 && ppgraph->multiedge[i]==ppgraph->adjList[i][j])){
+            if(ppgraph->adjList[i*3+j]>i &&
+                    !(ppgraph->degree[i]==2 && ppgraph->multiedge[i]==ppgraph->adjList[i*3+j])){
                 vertexPairList[*vertexPairListSize][0]=i;
-                vertexPairList[*vertexPairListSize][1]=ppgraph->adjList[i][j];
+                vertexPairList[*vertexPairListSize][1]=ppgraph->adjList[i*3+j];
                 (*vertexPairListSize)++;
             }
         }
