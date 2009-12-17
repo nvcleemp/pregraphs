@@ -286,7 +286,7 @@ void get_single_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ve
 }
 
 void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize){
-    int i, j;
+    int i;
     *vertexPairListSize = 0;
     for(i=0;i<ppgraph->order-1;i++){
         if(ppgraph->degree[i]==2 && ppgraph->multiedge[i]>i){
