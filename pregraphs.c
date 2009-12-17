@@ -383,6 +383,64 @@ int find_root_of_element(int *forest, int element) {
     return forest[element];
 }
 
+//------------------------Begin start graphs-----------------------------
+
+void construct_K2(PRIMPREGRAPH *ppgraph){
+    ppgraph->order = 2;
+    ppgraph->degree1Count = 2;
+    ppgraph->multiEdgeCount = 0;
+    ppgraph->adjList[0*3] = 1;
+    ppgraph->adjList[1*3] = 0;
+    ppgraph->degree[0]=1;
+    ppgraph->degree[1]=1;
+
+    set *g0, *g1;
+    g0 = GRAPHROW(ppgraph->graph, 0, MAXM);
+    g1 = GRAPHROW(ppgraph->graph, 1, MAXM);
+    EMPTYSET(g0, MAXM);
+    EMPTYSET(g1, MAXM);
+    ADDELEMENT(g0, 1);
+    ADDELEMENT(g1, 0);
+}
+
+void construct_C4(PRIMPREGRAPH *ppgraph){
+    ppgraph->order = 4;
+    ppgraph->degree1Count = 0;
+    ppgraph->multiEdgeCount = 2;
+    ppgraph->adjList[0*3] = 3;
+    ppgraph->adjList[0*3+1] = 1;
+    ppgraph->adjList[1*3] = 0;
+    ppgraph->adjList[1*3+1] = 2;
+    ppgraph->adjList[2*3] = 1;
+    ppgraph->adjList[2*3+1] = 3;
+    ppgraph->adjList[3*3] = 2;
+    ppgraph->adjList[3*3+1] = 0;
+    ppgraph->degree[0]=2;
+    ppgraph->degree[1]=2;
+    ppgraph->degree[2]=2;
+    ppgraph->degree[3]=2;
+    ppgraph->multiedge[0]=1;
+    ppgraph->multiedge[1]=0;
+    ppgraph->multiedge[2]=3;
+    ppgraph->multiedge[3]=2;
+
+    set *g0, *g1, *g2, *g3;
+    g0 = GRAPHROW(ppgraph->graph, 0, MAXM);
+    g1 = GRAPHROW(ppgraph->graph, 1, MAXM);
+    g2 = GRAPHROW(ppgraph->graph, 2, MAXM);
+    g3 = GRAPHROW(ppgraph->graph, 3, MAXM);
+    EMPTYSET(g0, MAXM);
+    EMPTYSET(g1, MAXM);
+    EMPTYSET(g2, MAXM);
+    EMPTYSET(g3, MAXM);
+    ADDELEMENT(g0, 3); ADDELEMENT(g0, 1);
+    ADDELEMENT(g1, 0); ADDELEMENT(g1, 2);
+    ADDELEMENT(g2, 1); ADDELEMENT(g2, 3);
+    ADDELEMENT(g3, 2); ADDELEMENT(g3, 0);
+}
+
+//-------------------------End start graphs------------------------------
+
 //----------------------Begin Nauty interaction--------------------------
 
 void init_nauty_options() {
