@@ -259,7 +259,7 @@ void get_deg1_pairs(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vert
     for(i=0;i<ppgraph->order-1;i++){
         if(ppgraph->degree[i]==1){
             for(j=i+1; j<ppgraph->order;j++){
-                if(ppgraph->degree[j]==1){
+                if(ppgraph->degree[j]==1 && ppgraph->adjList[i*3]!=j && ppgraph->adjList[i*3]!=ppgraph->adjList[j*3]){
                     vertexPairList[*vertexPairListSize][0]=i;
                     vertexPairList[*vertexPairListSize][1]=j;
                     (*vertexPairListSize)++;
