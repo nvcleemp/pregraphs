@@ -61,6 +61,8 @@ typedef int VERTEXPAIR[2];
 /******************Global Variables**********************/
 int vertexCount;
 int currentVertexCount;
+int minVertexCount;
+int maxVertexCount;
 
 boolean onlyCount = FALSE; /* TRUE if the graphs don't need to be outputted*/
 boolean allowLoops = FALSE; /* TRUE if loops are allowed*/
@@ -104,6 +106,10 @@ void handle_pregraph_result(PREGRAPH *pregraph);
 void handle_primpregraph_result(PRIMPREGRAPH *ppgraph);
 void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph);
 void handle_deg1_operation1(PRIMPREGRAPH *ppgraph);
+void handle_deg1_operation2(PRIMPREGRAPH *ppgraph);
+void handle_deg2_operation1(PRIMPREGRAPH *ppgraph);
+void handle_deg2_operation2(PRIMPREGRAPH *ppgraph);
+void handle_deg2_operation3(PRIMPREGRAPH *ppgraph);
 void do_deg1_operations(PRIMPREGRAPH *ppgraph);
 void do_deg2_operations(PRIMPREGRAPH *ppgraph);
 void grow(PRIMPREGRAPH *ppgraph);

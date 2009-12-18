@@ -506,9 +506,9 @@ void determine_possible_sets_of_degree1_vertices(set *tempSet, set *vertexSetLis
 
 void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
     //if correct number of vertices
-    handle_primpregraph_result(ppgraph);
+    if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount)
+        handle_primpregraph_result(ppgraph);
 
-    //if still more vertices possible
     do_deg1_operations(ppgraph);
 
     if(allowMultiEdges){
@@ -530,18 +530,42 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
         if(orbits[i]==i){
             apply_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
             //check if this was a valid action
-            handle_deg1_operation1(ppgraph);
+            handle_deg1_operation_result(ppgraph);
+            //revert operation
         }
     }
 
 }
 
-void do_deg1_operations(PRIMPREGRAPH *ppgraph){
+void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
 
 }
 
-void do_deg2_operations(PRIMPREGRAPH *ppgraph){
+void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
 
+}
+
+void handle_deg2_operation2(PRIMPREGRAPH *ppgraph){
+
+}
+
+void handle_deg2_operation3(PRIMPREGRAPH *ppgraph){
+
+}
+
+void do_deg1_operations(PRIMPREGRAPH *ppgraph){
+    DEBUGASSERT(allowLoops || allowSemiEdges)
+    if(ppgraph->order<=maxVertexCount) handle_deg1_operation1(ppgraph);
+    if(ppgraph->order<=maxVertexCount-2) handle_deg1_operation2(ppgraph);
+}
+
+void do_deg2_operations(PRIMPREGRAPH *ppgraph){
+    DEBUGASSERT(allowMultiEdges)
+    if(ppgraph->order<=maxVertexCount-2){
+        handle_deg2_operation1(ppgraph);
+        handle_deg2_operation2(ppgraph);
+        handle_deg2_operation3(ppgraph);
+    }
 }
 
 void grow(PRIMPREGRAPH *ppgraph){
@@ -555,6 +579,12 @@ void grow(PRIMPREGRAPH *ppgraph){
 }
 
 void start(){
+    if(!allowSemiEdges){
+        minVertexCount = maxVertexCount = vertexCount;
+    } else {
+        minVertexCount = vertexCount;
+        maxVertexCount = 2*vertexCount; //TODO: better and correct(?) upperbound
+    }
     PRIMPREGRAPH ppgraph;
     if(allowLoops || allowSemiEdges){
         construct_K2(&ppgraph);
