@@ -50,6 +50,9 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     }
 }
 
+void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
+}
+
 /*                        o t
  *                        |
  *                        o s
@@ -95,6 +98,9 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gs, v);
     ADDELEMENT(gs, t);
     ADDELEMENT(gt, s);
+}
+
+void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
 }
 
 /*
@@ -147,6 +153,9 @@ void apply_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gt, s);
 }
 
+void revert_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
+}
+
 /*                              s  t
  *                              o--o
  *  __  u  v  __            __ u|  |v __
@@ -192,6 +201,9 @@ void apply_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gv, t);
     ADDELEMENT(gt, v);
     ADDELEMENT(gt, s);
+}
+
+void revert_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
 }
 
 /*                             s   t
@@ -251,6 +263,9 @@ void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gt, v);
     ADDELEMENT(gt, s);
 
+}
+
+void revert_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
 }
 
 void get_deg1_pairs(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize){
@@ -530,8 +545,10 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
         if(orbits[i]==i){
             apply_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
             //check if this was a valid action
+
             handle_deg1_operation_result(ppgraph);
-            //revert operation
+
+            revert_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
         }
     }
 

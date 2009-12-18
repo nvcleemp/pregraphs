@@ -90,6 +90,11 @@ void apply_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v);
 void apply_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v);
 void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v);
 
+void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v);
+void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v);
+void revert_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v);
+void revert_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v);
+void revert_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v);
 
 void get_deg1_pairs(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize);
 void get_single_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize);
