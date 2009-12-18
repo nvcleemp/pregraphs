@@ -504,18 +504,24 @@ int nextDegree1Vertex(int current, PRIMPREGRAPH *ppgraph){
         return current;
 }
 
-void determine_possible_sets_of_degree1_vertices(set *tempSet, set *vertexSetList, int* currentListPosition, int maximumSetSize, int currentSetSize, int currentSetElement, PRIMPREGRAPH *ppgraph){
+void determine_possible_sets_of_degree1_vertices
+(set *tempSet, set *vertexSetList, int* currentListPosition, int maximumSetSize,
+        int currentSetSize, int currentSetElement, PRIMPREGRAPH *ppgraph){
     ADDELEMENT(tempSet, currentSetElement);
     if(currentSetSize + 1 == maximumSetSize){
         //add to list
         vertexSetList[*currentListPosition] = *tempSet;
         (*currentListPosition)++;
     } else {
-        determine_possible_sets_of_degree1_vertices(tempSet, vertexSetList, currentListPosition, maximumSetSize, currentSetSize + 1, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
+        determine_possible_sets_of_degree1_vertices
+                (tempSet, vertexSetList, currentListPosition, maximumSetSize,
+                currentSetSize + 1, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
     }
     DELELEMENT(tempSet, currentSetElement);
     if(currentSetSize + ppgraph->degree1Count - currentSetElement > maximumSetSize){
-        determine_possible_sets_of_degree1_vertices(tempSet, vertexSetList, currentListPosition, maximumSetSize, currentSetSize, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
+        determine_possible_sets_of_degree1_vertices
+                (tempSet, vertexSetList, currentListPosition, maximumSetSize,
+                currentSetSize, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
     }
 }
 
