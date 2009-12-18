@@ -110,6 +110,7 @@ void determine_possible_sets_of_degree1_vertices(set *tempSet, set *vertexSetLis
 void handle_pregraph_result(PREGRAPH *pregraph);
 void handle_primpregraph_result(PRIMPREGRAPH *ppgraph);
 void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph);
+void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph);
 void handle_deg1_operation1(PRIMPREGRAPH *ppgraph);
 void handle_deg1_operation2(PRIMPREGRAPH *ppgraph);
 void handle_deg2_operation1(PRIMPREGRAPH *ppgraph);

@@ -537,6 +537,14 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
     }
 }
 
+void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph){
+    //if correct number of vertices
+    if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount)
+        handle_primpregraph_result(ppgraph);
+
+    do_deg2_operations(ppgraph);
+}
+
 void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
     VERTEXPAIR deg1PairList[0];
     int listSize;
