@@ -46,6 +46,16 @@ struct _primpregraph {
 
 typedef struct _primpregraph PRIMPREGRAPH;
 
+struct _pregraph {
+    int order;
+
+    PRIMPREGRAPH *ppgraph;
+
+    set *semiEdgeVertices;
+};
+
+typedef struct _pregraph PREGRAPH;
+
 typedef int VERTEXPAIR[2];
 
 /******************Global Variables**********************/
@@ -87,6 +97,10 @@ void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ver
 void union_elements(int *forest, int *treeSizes, int *numberOfComponents, int element1, int element2);
 int find_root_of_element(int *forest, int element);
 
+int nextDegree1Vertex(int current, PRIMPREGRAPH *ppgraph);
+void determine_possible_sets_of_degree1_vertices(set *tempSet, set *vertexSetList, int* currentListPosition, int maximumSetSize, int currentSetSize, int currentSetElement, PRIMPREGRAPH *ppgraph);
+
+void handle_pregraph_result(PREGRAPH *pregraph);
 void handle_primpregraph_result(PRIMPREGRAPH *ppgraph);
 void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph);
 void handle_deg1_operation1(PRIMPREGRAPH *ppgraph);

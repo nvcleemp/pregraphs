@@ -435,17 +435,73 @@ int find_root_of_element(int *forest, int element) {
 
 //--------------------------------------------------------------------
 
+void handle_pregraph_result(PREGRAPH *pregraph){
+
+}
+
 void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     DEBUGASSERT(ppgraph->order >= vertexCount)
     DEBUGASSERT(allowSemiEdges || vertexCount == ppgraph->order)
     
     int semiEdgeCount = ppgraph->order - vertexCount;
-    DEBUGASSERT(semiEdgeCount <= ppgraph->degree1Count)
-    int loopCount = ppgraph->degree1Count - semiEdgeCount;
+    int degree1Count = ppgraph->degree1Count;
+    DEBUGASSERT(semiEdgeCount <= degree1Count)
+    int loopCount = degree1Count - semiEdgeCount;
+
     //determine up to automorphism all the ways to select semiEdgeCount vertices
     //of degree 1 by using union-find
+    int listSize, i;
+    listSize = 1;
+    for(i=1; i<=semiEdgeCount;i++){
+        listSize = listSize*(loopCount - 1 + i)/i;
+    }
+    set vertexSetList[listSize];
+    for(i=0; i<listSize;i++){
+        EMPTYSET(vertexSetList+i,MAXM);
+    }
+    set tempSet;
+    int position = 0;
+    determine_possible_sets_of_degree1_vertices(&tempSet, vertexSetList, &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph);
+    DEBUGASSERT(position==listSize)
 
+    int orbitCount;
+    int orbits[listSize];
+    determine_vertex_sets_orbits(vertexSetList, listSize, orbits, &orbitCount);
+    
     //output pregraph
+    PREGRAPH pregraph;
+    pregraph.order = vertexCount;
+    pregraph.ppgraph = ppgraph;
+    for(i=0; i<listSize; i++){
+        if(orbits[i]==i){
+            pregraph.semiEdgeVertices = vertexSetList + i;
+            handle_pregraph_result(&pregraph);
+        }
+    }
+}
+
+int nextDegree1Vertex(int current, PRIMPREGRAPH *ppgraph){
+    current++;
+    while(current<ppgraph->order && ppgraph->degree[current]!=1) current++;
+    if(current==ppgraph->order)
+        return -1;
+    else
+        return current;
+}
+
+void determine_possible_sets_of_degree1_vertices(set *tempSet, set *vertexSetList, int* currentListPosition, int maximumSetSize, int currentSetSize, int currentSetElement, PRIMPREGRAPH *ppgraph){
+    ADDELEMENT(tempSet, currentSetElement);
+    if(currentSetSize + 1 == maximumSetSize){
+        //add to list
+        vertexSetList[*currentListPosition] = *tempSet;
+        (*currentListPosition)++;
+    } else {
+        determine_possible_sets_of_degree1_vertices(tempSet, vertexSetList, currentListPosition, maximumSetSize, currentSetSize + 1, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
+    }
+    DELELEMENT(tempSet, currentSetElement);
+    if(currentSetSize + ppgraph->degree1Count - currentSetElement > maximumSetSize){
+        determine_possible_sets_of_degree1_vertices(tempSet, vertexSetList, currentListPosition, maximumSetSize, currentSetSize, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
+    }
 }
 
 void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
