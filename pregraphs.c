@@ -383,16 +383,16 @@ void determine_vertex_sets_orbits(set *vertexSetList, int vertexSetListSize, int
         for(j = 0; j<vertexSetListSize; j++){
             //apply permutation to current vertex pair
             EMPTYSET(set, MAXM);
-            for(l=-1; (l = nextelement(vertexSetList[j], MAXM, l)) >=0;){
+            for(l=-1; (l = nextelement(vertexSetList+j, MAXM, l)) >=0;){
                 ADDELEMENT(set, permutation[l]);
             }
 
             //search the pair in the list
             for(k = 0; k<vertexSetListSize; k++){
                 //TODO: is there a better way to check whether two sets are equal?
-                l = nextelement(set, MAXM, -1);
+                l = nextelement(&set, MAXM, -1);
                 while(l>=0 && ISELEMENT(vertexSetList[k], l)){
-                    l = nextelement(set, MAXM, l);
+                    l = nextelement(&set, MAXM, l);
                 }
                 if(l==-1){
                     union_elements(vertexSetOrbits, orbitSize, orbitCount, j, k);
