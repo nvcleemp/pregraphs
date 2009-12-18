@@ -353,6 +353,56 @@ void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairLis
 
 }
 
+/*
+ * determines the orbits of a given list of vertices sets. The sets must be so that the image of a set in the list
+ * is also in the list.
+ *
+ * In the end vertexSetOrbits[i] will contain the index of the canonical representant of the orbit to which vertexSetList[i]
+ * belongs and orbitCount will contain the number of orbits.
+ * The first two parameters are read-only, the last two are write-only.
+ */
+void determine_vertex_sets_orbits(set *vertexSetList, int vertexSetListSize, int *vertexSetOrbits, int *orbitCount){
+    //it is assumed that all sets have an equal number of elements
+    int i, j, k, l;
+    int orbitSize[vertexSetListSize];
+
+    //initialization of the variables
+    for(i=0; i<vertexSetListSize; i++){
+        vertexSetOrbits[i]=i;
+        orbitSize[i]=1;
+    }
+    *orbitCount=vertexSetListSize;
+
+    permutation *permutation;
+    set set;
+    for(i = 0; i < number_of_generators; i++) {
+        //the generators were stored in the global variable generators by the method save_generators
+        permutation = generators[i];
+        DEBUGARRAYDUMP(permutation, currentVertexCount, "%d")
+
+        for(j = 0; j<vertexSetListSize; j++){
+            //apply permutation to current vertex pair
+            EMPTYSET(set, MAXM);
+            for(l=-1; (l = nextelement(vertexSetList[j], MAXM, l)) >=0;){
+                ADDELEMENT(set, permutation[l]);
+            }
+
+            //search the pair in the list
+            for(k = 0; k<vertexSetListSize; k++){
+                //TODO: is there a better way to check whether two sets are equal?
+                l = nextelement(set, MAXM, -1);
+                while(l>=0 && ISELEMENT(vertexSetList[k], l)){
+                    l = nextelement(set, MAXM, l);
+                }
+                if(l==-1){
+                    union_elements(vertexSetOrbits, orbitSize, orbitCount, j, k);
+                    break; //the list of sets doesn't contain any duplicates so we can stop
+                }
+            }
+        }
+    }
+}
+
 void union_elements(int *forest, int *treeSizes, int *numberOfComponents, int element1, int element2){
     int root1 = find_root_of_element(forest, element1);
     int root2 = find_root_of_element(forest, element2);
