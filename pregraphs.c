@@ -19,6 +19,8 @@ inline boolean areAdjacent(PRIMPREGRAPH *ppgraph, int u, int v){
     return FALSE;
 }
 
+//-----------------------------------------------------------------
+
 /*                         o v
  *   u     v               |
  *   o     o               o u
@@ -52,6 +54,8 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
 
 void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
 }
+
+//-----------------------------------------------------------------
 
 /*                        o t
  *                        |
@@ -102,6 +106,8 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
 
 void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
 }
+
+//-----------------------------------------------------------------
 
 /*
  *  __u      v__            __u  s  t  v__
@@ -156,6 +162,8 @@ void apply_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
 void revert_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
 }
 
+//-----------------------------------------------------------------
+
 /*                              s  t
  *                              o--o
  *  __  u  v  __            __ u|  |v __
@@ -205,6 +213,8 @@ void apply_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
 
 void revert_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
 }
+
+//-----------------------------------------------------------------
 
 /*                             s   t
  *                             o---o
@@ -267,6 +277,8 @@ void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
 
 void revert_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
 }
+
+//-----------------------------------------------------------------
 
 void get_deg1_pairs(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize){
     int i, j;
@@ -454,6 +466,10 @@ void handle_pregraph_result(PREGRAPH *pregraph){
 
 }
 
+/*
+ * Handles a result in the form of a primitive pregraph. If both semi-edges and loops are
+ * allowed all the different ways to select these are taken and passed on to handle_pregraph_result.
+ */
 void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     DEBUGASSERT(ppgraph->order >= vertexCount)
     DEBUGASSERT(allowSemiEdges || vertexCount == ppgraph->order)
@@ -525,18 +541,28 @@ void determine_possible_sets_of_degree1_vertices
     }
 }
 
+/*
+ * Handles the result of a degree 1 operation. If the graph has a valid size it is
+ * passed on to handle_primpregraph_result, then we continue with degree 1 operations
+ * and degree 2 operations.
+ */
 void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
     //if correct number of vertices
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount)
         handle_primpregraph_result(ppgraph);
 
-    do_deg1_operations(ppgraph);
+    do_deg1_operations(ppgraph); //when this returns &ppgraph is unchanged
 
     if(allowMultiEdges){
         do_deg2_operations(ppgraph);
     }
 }
 
+/*
+ * Handles the result of a degree 2 operation. If the graph has a valid size it is
+ * passed on to handle_primpregraph_result, then we continue with degree 2 operations.
+ * Degree 1 operations are no longer possible.
+ */
 void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph){
     //if correct number of vertices
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount)
@@ -545,6 +571,10 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph){
     do_deg2_operations(ppgraph);
 }
 
+/*
+ * Handles the first degree 1 operation, i.e. find all the degree 1 pairs, determine the orbits
+ * apply the operation for each pair, handle the result and then revert the operation.
+ */
 void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
     VERTEXPAIR deg1PairList[0];
     int listSize;
@@ -584,12 +614,20 @@ void handle_deg2_operation3(PRIMPREGRAPH *ppgraph){
 
 }
 
+/*
+ * Performs the different degree 1 operations. When this method returns &ppgraph
+ * will be unchanged.
+ */
 void do_deg1_operations(PRIMPREGRAPH *ppgraph){
     DEBUGASSERT(allowLoops || allowSemiEdges)
     if(ppgraph->order<=maxVertexCount) handle_deg1_operation1(ppgraph);
     if(ppgraph->order<=maxVertexCount-2) handle_deg1_operation2(ppgraph);
 }
 
+/*
+ * Performs the different degree 2 operations. When this method returns &ppgraph
+ * will be unchanged.
+ */
 void do_deg2_operations(PRIMPREGRAPH *ppgraph){
     DEBUGASSERT(allowMultiEdges)
     if(ppgraph->order<=maxVertexCount-2){
@@ -626,7 +664,7 @@ void start(){
         grow(&ppgraph);
     }
     if((allowLoops || allowSemiEdges) && allowMultiEdges){
-        //
+        construct_K3_with_spike(&ppgraph);
         grow(&ppgraph);
     }
     //TODO: start generation of cubic graphs
@@ -634,6 +672,10 @@ void start(){
 
 //------------------------Begin start graphs-----------------------------
 
+/*
+ * o----o
+ *
+ */
 void construct_K2(PRIMPREGRAPH *ppgraph){
     ppgraph->order = 2;
     ppgraph->degree1Count = 2;
@@ -652,6 +694,13 @@ void construct_K2(PRIMPREGRAPH *ppgraph){
     ADDELEMENT(g1, 0);
 }
 
+/*
+ * o---o
+ * |   |
+ * |   |
+ * o---o
+ *
+ */
 void construct_C4(PRIMPREGRAPH *ppgraph){
     ppgraph->order = 4;
     ppgraph->degree1Count = 0;
