@@ -19,6 +19,45 @@ inline boolean areAdjacent(PRIMPREGRAPH *ppgraph, int u, int v){
     return FALSE;
 }
 
+/*
+ * Performs a depth-first search of the graph looking for the vertex find.
+ * Returns TRUE if the vertex was reached and FALSE if it wasn't reached.
+ */
+boolean DFSearch(PRIMPREGRAPH *ppgraph, int current, int find, set *visited){
+    int i;
+    for (i = 0; i < ppgraph->degree[current]; i++) {
+        if(!ISELEMENT(visited, ppgraph->adjList[current*3+i])){
+            if(ppgraph->adjList[current*3+i]==find) return TRUE;
+
+            ADDELEMENT(visited, ppgraph->adjList[current*3+i]);
+            if(DFSearch(ppgraph, ppgraph->adjList[current*3+i], find, visited))
+                return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/*
+ * Returns true if the edge uv is a bridge
+ */
+boolean isBridge(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGASSERT(areAdjacent(ppgraph, u, v))
+
+    if(ppgraph->degree[u]==1 || ppgraph->degree[v]==1) return TRUE;
+
+    set visited;
+    EMPTYSET(&visited, MAXM);
+    ADDELEMENT(&visited, u);
+    int i;
+    for (i = 0; i < ppgraph->degree[u]; i++) {
+        if(ppgraph->adjList[u*3+i]!=v && !ISELEMENT((&visited), ppgraph->adjList[u*3+i])){
+            ADDELEMENT(&visited, ppgraph->adjList[u*3+i]);
+            if(DFSearch(ppgraph, ppgraph->adjList[u*3+i], v, &visited))
+                return TRUE;
+        }
+    }
+    return FALSE;
+}
 //-----------------------------------------------------------------
 
 /*                         o v
@@ -691,14 +730,15 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
     int i;
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
-            //TODO: check if this edge is a bridge or maybe only enumerate the bridges?
-            //if(edge is bridge)
-            apply_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
-            //TODO: check if this was a valid action
-            //if(valid action)
-            handle_deg1_operation_result(ppgraph);
+            //TODO: maybe only enumerate the bridges?
+            if(isBridge(ppgraph, edgeList[i][0], edgeList[i][1])){
+                apply_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
+                //TODO: check if this was a valid action
+                //if(valid action)
+                handle_deg1_operation_result(ppgraph);
 
-            revert_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
+                revert_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
+            }
         }
     }
 }
