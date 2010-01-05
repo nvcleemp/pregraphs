@@ -122,7 +122,7 @@ void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->degree1Count--;
     ppgraph->order-=2;
 
-    set *gu, *gv, *gs, *gt;
+    set *gu, *gv;
     gu = GRAPHROW(ppgraph->graph, u, MAXM);
     gv = GRAPHROW(ppgraph->graph, v, MAXM);
     DELELEMENT(gu, s);
