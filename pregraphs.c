@@ -40,19 +40,24 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     gu = GRAPHROW(ppgraph->graph, u, MAXM);
     gv = GRAPHROW(ppgraph->graph, v, MAXM);
     ADDELEMENT(gu, v);
-    int i = 0;
-    while(i<ppgraph->order && !ISELEMENT(gv,i)) i++;
-    if(i<ppgraph->order){
-        DELELEMENT(gv,i);
-        ADDELEMENT(gv,u);
-        ADDELEMENT(gu,i);
-    } else {
-        DEBUGMSG("Something went horribly wrong!")
-        exit(EXIT_FAILURE);
-    }
+    DELELEMENT(gv,ppgraph->adjList[v*3]);
+    ADDELEMENT(gv,u);
+    ADDELEMENT(gu,ppgraph->adjList[v*3]);
 }
 
 void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
+    //the original neighbour of u is the first element in the adjList
+    //so no need to change anything except the degree
+    ppgraph->degree[u]=1;
+    ppgraph->adjList[v*3]=ppgraph->adjList[u*3+2];
+    
+    set *gu, *gv;
+    gu = GRAPHROW(ppgraph->graph, u, MAXM);
+    gv = GRAPHROW(ppgraph->graph, v, MAXM);
+    DELELEMENT(gv, u);
+    ADDELEMENT(gv, ppgraph->adjList[u*3+2]);
+    DELELEMENT(gu, v);
+    DELELEMENT(gu, ppgraph->adjList[u*3+2]);
 }
 
 //-----------------------------------------------------------------
