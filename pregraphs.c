@@ -667,8 +667,8 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
             apply_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
-            //check if this was a valid action
-
+            //TODO: check if this was a valid action
+            //if(valid action)
             handle_deg1_operation_result(ppgraph);
 
             revert_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
@@ -678,19 +678,99 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
 }
 
 void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
+    int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
+    VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all single edges
+    int listSize;
+    get_single_edges(ppgraph, edgeList, &listSize);
 
+    int orbitCount;
+    int orbits[listSize];
+    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount);
+    //TODO: the calculation above is done both for degree 1 operation 2 and degree 2 operation 1: avoid duplicating this work!!!
+
+    int i;
+    for (i = 0; i < listSize; i++) {
+        if(orbits[i]==i){
+            //TODO: check if this edge is a bridge or maybe only enumerate the bridges?
+            //if(edge is bridge)
+            apply_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
+            //TODO: check if this was a valid action
+            //if(valid action)
+            handle_deg1_operation_result(ppgraph);
+
+            revert_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
+        }
+    }
 }
 
 void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
+    int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
+    VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all single edges
+    int listSize;
+    get_single_edges(ppgraph, edgeList, &listSize);
 
+    int orbitCount;
+    int orbits[listSize];
+    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount);
+
+    int i;
+    for (i = 0; i < listSize; i++) {
+        if(orbits[i]==i){
+            apply_deg2_operation1(ppgraph, edgeList[i][0], edgeList[i][1]);
+            //TODO: check if this was a valid action
+            //if(valid action)
+            handle_deg2_operation_result(ppgraph);
+
+            revert_deg2_operation1(ppgraph, edgeList[i][0], edgeList[i][1]);
+        }
+    }
 }
 
 void handle_deg2_operation2(PRIMPREGRAPH *ppgraph){
+    int maxSize = ppgraph->multiEdgeCount;
+    VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all multi-edges
+    int listSize;
+    get_multi_edges(ppgraph, edgeList, &listSize);
 
+    int orbitCount;
+    int orbits[listSize];
+    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount);
+
+    int i;
+    for (i = 0; i < listSize; i++) {
+        if(orbits[i]==i){
+            apply_deg2_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
+            //TODO: check if this was a valid action
+            //if(valid action)
+            handle_deg2_operation_result(ppgraph);
+
+            revert_deg2_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
+        }
+    }
 }
 
 void handle_deg2_operation3(PRIMPREGRAPH *ppgraph){
+    int maxSize = ppgraph->multiEdgeCount;
+    VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all multi-edges
+    int listSize;
+    get_multi_edges(ppgraph, edgeList, &listSize);
 
+    int orbitCount;
+    int orbits[listSize];
+    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount);
+    //TODO: the calculation above is done both for operation 2 and 3: avoid duplicating this work!!!
+
+    int i;
+    for (i = 0; i < listSize; i++) {
+        if(orbits[i]==i){
+            apply_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
+            //TODO: check if this was a valid action
+            //if(valid action)
+            handle_deg2_operation_result(ppgraph);
+
+            revert_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
+        }
+    }
 }
 
 /*
