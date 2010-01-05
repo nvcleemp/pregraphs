@@ -184,6 +184,26 @@ void apply_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
 }
 
 void revert_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
+    int s, t, i;
+    s = ppgraph->order-2;
+    t = s + 1;
+    i=0;
+    while(ppgraph->adjList[u*3+i]!=s) i++;
+    ppgraph->adjList[u*3+i]=v;
+    i=0;
+    while(ppgraph->adjList[v*3+i]!=t) i++;
+    ppgraph->adjList[v*3+i]=u;
+
+    ppgraph->multiEdgeCount--;
+    ppgraph->order-=2;
+
+    set *gu, *gv;
+    gu = GRAPHROW(ppgraph->graph, u, MAXM);
+    gv = GRAPHROW(ppgraph->graph, v, MAXM);
+    DELELEMENT(gu, s);
+    DELELEMENT(gv, t);
+    ADDELEMENT(gu, v);
+    ADDELEMENT(gv, u);
 }
 
 //-----------------------------------------------------------------
