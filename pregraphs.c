@@ -352,8 +352,8 @@ void revert_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     gv = GRAPHROW(ppgraph->graph, v, MAXM);
     DELELEMENT(gv, s);
     DELELEMENT(gv, t);
-    ADDELEMENT(gv, ppgraph->adjList[u*3+2])
-    DELELEMENT(gu, ppgraph->adjList[u*3+2])
+    ADDELEMENT(gv, ppgraph->adjList[u*3+2]);
+    DELELEMENT(gu, ppgraph->adjList[u*3+2]);
 }
 
 //-----------------------------------------------------------------
