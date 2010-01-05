@@ -654,7 +654,8 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph){
  * apply the operation for each pair, handle the result and then revert the operation.
  */
 void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
-    VERTEXPAIR deg1PairList[0];
+    int maxSize = ppgraph->degree1Count*ppgraph->degree1Count/2;
+    VERTEXPAIR deg1PairList[maxSize]; //initialize an array that is large enough to hold all the degree 1 pairs
     int listSize;
     get_deg1_pairs(ppgraph, deg1PairList, &listSize);
 
