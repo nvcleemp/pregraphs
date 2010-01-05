@@ -256,6 +256,23 @@ void apply_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
 }
 
 void revert_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
+    int s, t;
+    s = ppgraph->order-2;
+    t = s + 1;
+
+    //s (resp t) are placed last in the adjlist of u (resp v)
+    //so we can just change the degree of u and v
+    ppgraph->degree[u]=2;
+    ppgraph->degree[v]=2;
+    ppgraph->multiedge[u]=v;
+    ppgraph->multiedge[v]=u;
+    ppgraph->order-=2;
+
+    set *gu, *gv;
+    gu = GRAPHROW(ppgraph->graph, u, MAXM);
+    gv = GRAPHROW(ppgraph->graph, v, MAXM);
+    DELELEMENT(gu, s);
+    DELELEMENT(gv, t);
 }
 
 //-----------------------------------------------------------------
