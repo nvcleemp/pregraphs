@@ -123,6 +123,7 @@ void start();
 
 void construct_K2(PRIMPREGRAPH *ppgraph);
 void construct_C4(PRIMPREGRAPH *ppgraph);
+void construct_K3_with_spike(PRIMPREGRAPH *ppgraph);
 
 
 void save_generators(int count, permutation perm[], nvector orbits[],
