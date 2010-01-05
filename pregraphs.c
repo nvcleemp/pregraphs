@@ -110,6 +110,25 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
 }
 
 void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
+    int s, i;
+    s = ppgraph->order-2;
+    i=0;
+    while(ppgraph->adjList[u*3+i]!=s) i++;
+    ppgraph->adjList[u*3+i]=v;
+    i=0;
+    while(ppgraph->adjList[v*3+i]!=s) i++;
+    ppgraph->adjList[v*3+i]=u;
+
+    ppgraph->degree1Count--;
+    ppgraph->order-=2;
+
+    set *gu, *gv, *gs, *gt;
+    gu = GRAPHROW(ppgraph->graph, u, MAXM);
+    gv = GRAPHROW(ppgraph->graph, v, MAXM);
+    DELELEMENT(gu, s);
+    DELELEMENT(gv, s);
+    ADDELEMENT(gu, v);
+    ADDELEMENT(gv, u);
 }
 
 //-----------------------------------------------------------------
