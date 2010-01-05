@@ -256,8 +256,8 @@ void revert_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
  */
 void apply_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     DEBUGASSERT(areAdjacent(ppgraph, u, v))
-    DEBUGASSERT(ppgraph->degree[u]==2 || ppgraph->multiedge[u]==v)
-    DEBUGASSERT(ppgraph->degree[v]==2 || ppgraph->multiedge[v]==u)
+    DEBUGASSERT(ppgraph->degree[u]==2 && ppgraph->multiedge[u]==v)
+    DEBUGASSERT(ppgraph->degree[v]==2 && ppgraph->multiedge[v]==u)
 
     int s, t;
     s = ppgraph->order;
@@ -327,8 +327,8 @@ void revert_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
  */
 void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     DEBUGASSERT(areAdjacent(ppgraph, u, v))
-    DEBUGASSERT(ppgraph->degree[u]==2 || ppgraph->multiedge[u]==v)
-    DEBUGASSERT(ppgraph->degree[v]==2 || ppgraph->multiedge[v]==u)
+    DEBUGASSERT(ppgraph->degree[u]==2 && ppgraph->multiedge[u]==v)
+    DEBUGASSERT(ppgraph->degree[v]==2 && ppgraph->multiedge[v]==u)
 
     int s, t, i;
     s = ppgraph->order;
