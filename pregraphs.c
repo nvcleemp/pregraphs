@@ -300,8 +300,7 @@ void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->degree[u]=3;
 
     ppgraph->degree[v]=3;
-    ppgraph->adjList[v*3]=u;
-    ppgraph->adjList[v*3+1]=s;
+    ppgraph->adjList[v*3+i]=s;
     ppgraph->adjList[v*3+2]=t;
 
     ppgraph->degree[s]=2;
@@ -323,10 +322,8 @@ void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     gt = GRAPHROW(ppgraph->graph, t, MAXM);
     EMPTYSET(gs, MAXM);
     EMPTYSET(gt, MAXM);
-    int j = nextelement(gv, MAXM, -1);
-    if(j==u) j = nextelement(gv, MAXM, j);
-    DELELEMENT(gv, j);
-    ADDELEMENT(gu, j);
+    DELELEMENT(gv, ppgraph->adjList[u*3+2]);
+    ADDELEMENT(gu, ppgraph->adjList[u*3+2]);
     ADDELEMENT(gv, s);
     ADDELEMENT(gv, t);
     ADDELEMENT(gs, t);
@@ -337,6 +334,26 @@ void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
 }
 
 void revert_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
+    int s, t, i;
+    s = ppgraph->order-2;
+    t = s + 1;
+    i=0;
+    while(ppgraph->adjList[v*3+i]!=s) i++;
+    DEBUGASSERT(i<2)
+    ppgraph->adjList[v*3+i]=ppgraph->adjList[u*3+2];
+    ppgraph->degree[u]=2;
+    ppgraph->degree[v]=2;
+    ppgraph->multiedge[u]=v;
+    ppgraph->multiedge[v]=u;
+    ppgraph->order-=2;
+
+    set *gu, *gv;
+    gu = GRAPHROW(ppgraph->graph, u, MAXM);
+    gv = GRAPHROW(ppgraph->graph, v, MAXM);
+    DELELEMENT(gv, s);
+    DELELEMENT(gv, t);
+    ADDELEMENT(gv, ppgraph->adjList[u*3+2])
+    DELELEMENT(gu, ppgraph->adjList[u*3+2])
 }
 
 //-----------------------------------------------------------------
