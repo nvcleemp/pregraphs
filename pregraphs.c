@@ -68,7 +68,7 @@ boolean isBridge(PRIMPREGRAPH *ppgraph, int u, int v){
  * \_________/          \_____/
  */
 void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
-    DEBUGASSERT(ppgraph->degree[u]==1 && ppgraph->degree[v]==1);
+    DEBUGASSERT(ppgraph->degree[u]==1 && ppgraph->degree[v]==1)
     ppgraph->degree[u]=3;
     ppgraph->adjList[u*3+1]=v;
     ppgraph->adjList[u*3+2]=ppgraph->adjList[v*3];
@@ -109,7 +109,7 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
  * \__/ \__/          \__/ \__/
  */
 void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
-    DEBUGASSERT(areAdjacent(ppgraph, u, v));
+    DEBUGASSERT(areAdjacent(ppgraph, u, v))
     int s, t, i;
     s = ppgraph->order;
     t = s + 1;
