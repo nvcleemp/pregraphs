@@ -711,7 +711,7 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
             //if v belongs to the first orbit of degree 1 vertices
             int orbits[ppgraph->order];
             nauty(&(ppgraph->graph), lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
-            int vOrbit = orbits[v];
+            int vOrbit = orbits[deg1PairList[i][1]];
             int j = 0;
             while(j<vOrbit && ppgraph->degree[j]>1) j++;
 
