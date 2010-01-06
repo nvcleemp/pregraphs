@@ -706,7 +706,6 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
             apply_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
-            //TODO: check if this was a valid action
 
             //the only deg 1 vertex after this operation is v. This is a valid action
             //if v belongs to the first orbit of degree 1 vertices
