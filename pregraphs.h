@@ -58,6 +58,8 @@ typedef struct _pregraph PREGRAPH;
 
 typedef int VERTEXPAIR[2];
 
+#define WORKSIZE 50 * MAXM
+
 /******************Global Variables**********************/
 int vertexCount;
 int currentVertexCount;
@@ -77,6 +79,7 @@ int lab[MAXN], ptn[MAXN];
 static DEFAULTOPTIONS_GRAPH(options);
 statsblk stats;
 setword workspace[50 * MAXM];
+graph canonicalGraph[MAXN * MAXM];
 
 /******************Methods*******************************/
         
