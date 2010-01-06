@@ -707,8 +707,20 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
         if(orbits[i]==i){
             apply_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
             //TODO: check if this was a valid action
-            //if(valid action)
-            handle_deg1_operation_result(ppgraph);
+
+            //the only deg 1 vertex after this operation is v. This is a valid action
+            //if v belongs to the first orbit of degree 1 vertices
+            int orbits[ppgraph->order];
+            nauty(&(ppgraph->graph), lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+            int vOrbit = orbits[v];
+            int j = 0;
+            while(j<vOrbit && ppgraph->degree[j]>1) j++;
+
+            if(j==vOrbit){
+                //v belongs to the orbit of degree 1 vertices with the smallest representant
+                //Therefore this graph was created from the correct parent.
+                handle_deg1_operation_result(ppgraph);
+            }
 
             revert_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
         }
