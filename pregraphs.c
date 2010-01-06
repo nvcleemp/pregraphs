@@ -744,9 +744,20 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
             //TODO: maybe only enumerate the bridges?
             if(isBridge(ppgraph, edgeList[i][0], edgeList[i][1])){
                 apply_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
-                //TODO: check if this was a valid action
-                //if(valid action)
-                handle_deg1_operation_result(ppgraph);
+                
+                //the new deg 1 vertex after this operation is t. This is a valid action
+                //if t belongs to the first orbit of degree 1 vertices
+                int orbits[ppgraph->order];
+                nauty(&(ppgraph->graph), lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+                int tOrbit = orbits[ppgraph->order-1];
+                int j = 0;
+                while(j<tOrbit && ppgraph->degree[j]>1) j++;
+
+                if(j==tOrbit){
+                    //t belongs to the orbit of degree 1 vertices with the smallest representant
+                    //Therefore this graph was created from the correct parent.
+                    handle_deg1_operation_result(ppgraph);
+                }
 
                 revert_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
             }
