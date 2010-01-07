@@ -765,6 +765,38 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
     }
 }
 
+/*
+ * Returns TRUE if the edge (v1, v2) belongs to the orbit with the canonically smallest label
+ */
+boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2){
+    if(v2<v1){
+        int temp = v1;
+        v1 = v2;
+        v2 = temp;
+    }
+    int orbits[ppgraph->order];
+    nauty(&(ppgraph->graph), lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+
+    int maxSize = ppgraph->multiEdgeCount;
+    VERTEXPAIR multiEdgeList[maxSize]; //initialize an array that is large enough to hold all multi-edges
+    int multiEdgeListSize;
+    get_multi_edges(ppgraph, multiEdgeList, &multiEdgeListSize);
+
+    DEBUGASSERT(multiEdgeListSize == ppgraph->multiEdgeCount)
+
+    int multiEdgeOrbitCount;
+    int multiEdgeOrbits[multiEdgeListSize];
+    determine_vertex_pairs_orbits(multiEdgeList, multiEdgeListSize, multiEdgeOrbits, &multiEdgeOrbitCount);
+
+    int i = 0;
+    while(i<multiEdgeListSize && !(multiEdgeList[i][0]==v1 && multiEdgeList[i][1]==v2)) i++;
+    DEBUGASSERT(i<multiEdgeListSize)
+    int newEdgeOrbit = multiEdgeOrbits[i]; //contains the number of the orbit of the edge (v1, v2)
+
+    return newEdgeOrbit==0;
+    //because multiEdgeList only contains the multi edges
+}
+
 void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
     int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
     VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all single edges
@@ -779,9 +811,9 @@ void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
             apply_deg2_operation1(ppgraph, edgeList[i][0], edgeList[i][1]);
-            //TODO: check if this was a valid action
-            //if(valid action)
-            handle_deg2_operation_result(ppgraph);
+
+            if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1))
+                handle_deg2_operation_result(ppgraph);
 
             revert_deg2_operation1(ppgraph, edgeList[i][0], edgeList[i][1]);
         }
@@ -802,9 +834,9 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph){
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
             apply_deg2_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
-            //TODO: check if this was a valid action
-            //if(valid action)
-            handle_deg2_operation_result(ppgraph);
+
+            if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1))
+                handle_deg2_operation_result(ppgraph);
 
             revert_deg2_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
         }
@@ -826,9 +858,9 @@ void handle_deg2_operation3(PRIMPREGRAPH *ppgraph){
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
             apply_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
-            //TODO: check if this was a valid action
-            //if(valid action)
-            handle_deg2_operation_result(ppgraph);
+
+            if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1))
+                handle_deg2_operation_result(ppgraph);
 
             revert_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
         }
