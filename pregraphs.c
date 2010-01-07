@@ -891,6 +891,10 @@ void do_deg2_operations(PRIMPREGRAPH *ppgraph){
 }
 
 void grow(PRIMPREGRAPH *ppgraph){
+    int orbits[ppgraph->order];
+    nauty(&(ppgraph->graph), lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    //the generators for these start graphs need to be calculated
+
     if(allowLoops || allowSemiEdges){
         do_deg1_operations(ppgraph);
     }
