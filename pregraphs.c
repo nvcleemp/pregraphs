@@ -580,7 +580,7 @@ int find_root_of_element(int *forest, int element) {
 //--------------------------------------------------------------------
 
 void handle_pregraph_result(PREGRAPH *pregraph){
-
+    structureCount++;
 }
 
 /*
@@ -1064,6 +1064,14 @@ void save_generators(int count, permutation perm[], nvector orbits[],
  * 
  */
 int MAIN_FUNCTION(int argc, char** argv) {
+    structureCount=0;
+    allowLoops = TRUE;
+    allowMultiEdges = TRUE;
+    allowSemiEdges = TRUE;
+    vertexCount = 6;
+    start();
+
+    fprintf(stderr, "Found %ld structures.\n", structureCount);
 
     return (EXIT_SUCCESS);
 }
