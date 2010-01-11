@@ -76,8 +76,8 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->degree1Count--;
 
     set *gu, *gv;
-    gu = GRAPHROW(ppgraph->graph, u, MAXM);
-    gv = GRAPHROW(ppgraph->graph, v, MAXM);
+    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
+    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
     ADDELEMENT(gu, v);
     DELELEMENT(gv,ppgraph->adjList[v*3]);
     ADDELEMENT(gv,u);
@@ -91,8 +91,8 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->adjList[v*3]=ppgraph->adjList[u*3+2];
     
     set *gu, *gv;
-    gu = GRAPHROW(ppgraph->graph, u, MAXM);
-    gv = GRAPHROW(ppgraph->graph, v, MAXM);
+    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
+    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
     DELELEMENT(gv, u);
     ADDELEMENT(gv, ppgraph->adjList[u*3+2]);
     DELELEMENT(gu, v);
@@ -132,10 +132,10 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order+=2;
 
     set *gu, *gv, *gs, *gt;
-    gu = GRAPHROW(ppgraph->graph, u, MAXM);
-    gv = GRAPHROW(ppgraph->graph, v, MAXM);
-    gs = GRAPHROW(ppgraph->graph, s, MAXM);
-    gt = GRAPHROW(ppgraph->graph, t, MAXM);
+    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
+    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
+    gs = GRAPHROW(&(ppgraph->graph), s, MAXM);
+    gt = GRAPHROW(&(ppgraph->graph), t, MAXM);
     EMPTYSET(gs, MAXM);
     EMPTYSET(gt, MAXM);
     DELELEMENT(gu, v);
@@ -162,8 +162,8 @@ void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order-=2;
 
     set *gu, *gv;
-    gu = GRAPHROW(ppgraph->graph, u, MAXM);
-    gv = GRAPHROW(ppgraph->graph, v, MAXM);
+    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
+    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
     DELELEMENT(gu, s);
     DELELEMENT(gv, s);
     ADDELEMENT(gu, v);
@@ -206,10 +206,10 @@ void apply_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order+=2;
 
     set *gu, *gv, *gs, *gt;
-    gu = GRAPHROW(ppgraph->graph, u, MAXM);
-    gv = GRAPHROW(ppgraph->graph, v, MAXM);
-    gs = GRAPHROW(ppgraph->graph, s, MAXM);
-    gt = GRAPHROW(ppgraph->graph, t, MAXM);
+    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
+    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
+    gs = GRAPHROW(&(ppgraph->graph), s, MAXM);
+    gt = GRAPHROW(&(ppgraph->graph), t, MAXM);
     EMPTYSET(gs, MAXM);
     EMPTYSET(gt, MAXM);
     DELELEMENT(gu, v);
@@ -237,8 +237,8 @@ void revert_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order-=2;
 
     set *gu, *gv;
-    gu = GRAPHROW(ppgraph->graph, u, MAXM);
-    gv = GRAPHROW(ppgraph->graph, v, MAXM);
+    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
+    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
     DELELEMENT(gu, s);
     DELELEMENT(gv, t);
     ADDELEMENT(gu, v);
@@ -280,10 +280,10 @@ void apply_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order+=2;
 
     set *gu, *gv, *gs, *gt;
-    gu = GRAPHROW(ppgraph->graph, u, MAXM);
-    gv = GRAPHROW(ppgraph->graph, v, MAXM);
-    gs = GRAPHROW(ppgraph->graph, s, MAXM);
-    gt = GRAPHROW(ppgraph->graph, t, MAXM);
+    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
+    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
+    gs = GRAPHROW(&(ppgraph->graph), s, MAXM);
+    gt = GRAPHROW(&(ppgraph->graph), t, MAXM);
     EMPTYSET(gs, MAXM);
     EMPTYSET(gt, MAXM);
     ADDELEMENT(gu, s);
@@ -308,8 +308,8 @@ void revert_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order-=2;
 
     set *gu, *gv;
-    gu = GRAPHROW(ppgraph->graph, u, MAXM);
-    gv = GRAPHROW(ppgraph->graph, v, MAXM);
+    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
+    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
     DELELEMENT(gu, s);
     DELELEMENT(gv, t);
 }
@@ -355,10 +355,10 @@ void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order+=2;
 
     set *gu, *gv, *gs, *gt;
-    gu = GRAPHROW(ppgraph->graph, u, MAXM);
-    gv = GRAPHROW(ppgraph->graph, v, MAXM);
-    gs = GRAPHROW(ppgraph->graph, s, MAXM);
-    gt = GRAPHROW(ppgraph->graph, t, MAXM);
+    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
+    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
+    gs = GRAPHROW(&(ppgraph->graph), s, MAXM);
+    gt = GRAPHROW(&(ppgraph->graph), t, MAXM);
     EMPTYSET(gs, MAXM);
     EMPTYSET(gt, MAXM);
     DELELEMENT(gv, ppgraph->adjList[u*3+2]);
@@ -387,8 +387,8 @@ void revert_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order-=2;
 
     set *gu, *gv;
-    gu = GRAPHROW(ppgraph->graph, u, MAXM);
-    gv = GRAPHROW(ppgraph->graph, v, MAXM);
+    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
+    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
     DELELEMENT(gv, s);
     DELELEMENT(gv, t);
     ADDELEMENT(gv, ppgraph->adjList[u*3+2]);
@@ -943,8 +943,8 @@ void construct_K2(PRIMPREGRAPH *ppgraph){
     ppgraph->degree[1]=1;
 
     set *g0, *g1;
-    g0 = GRAPHROW(ppgraph->graph, 0, MAXM);
-    g1 = GRAPHROW(ppgraph->graph, 1, MAXM);
+    g0 = GRAPHROW(&(ppgraph->graph), 0, MAXM);
+    g1 = GRAPHROW(&(ppgraph->graph), 1, MAXM);
     EMPTYSET(g0, MAXM);
     EMPTYSET(g1, MAXM);
     ADDELEMENT(g0, 1);
@@ -980,10 +980,10 @@ void construct_C4(PRIMPREGRAPH *ppgraph){
     ppgraph->multiedge[3]=2;
 
     set *g0, *g1, *g2, *g3;
-    g0 = GRAPHROW(ppgraph->graph, 0, MAXM);
-    g1 = GRAPHROW(ppgraph->graph, 1, MAXM);
-    g2 = GRAPHROW(ppgraph->graph, 2, MAXM);
-    g3 = GRAPHROW(ppgraph->graph, 3, MAXM);
+    g0 = GRAPHROW(&(ppgraph->graph), 0, MAXM);
+    g1 = GRAPHROW(&(ppgraph->graph), 1, MAXM);
+    g2 = GRAPHROW(&(ppgraph->graph), 2, MAXM);
+    g3 = GRAPHROW(&(ppgraph->graph), 3, MAXM);
     EMPTYSET(g0, MAXM);
     EMPTYSET(g1, MAXM);
     EMPTYSET(g2, MAXM);
@@ -1020,10 +1020,10 @@ void construct_K3_with_spike(PRIMPREGRAPH *ppgraph){
     ppgraph->multiedge[2]=1;
 
     set *g0, *g1, *g2, *g3;
-    g0 = GRAPHROW(ppgraph->graph, 0, MAXM);
-    g1 = GRAPHROW(ppgraph->graph, 1, MAXM);
-    g2 = GRAPHROW(ppgraph->graph, 2, MAXM);
-    g3 = GRAPHROW(ppgraph->graph, 3, MAXM);
+    g0 = GRAPHROW(&(ppgraph->graph), 0, MAXM);
+    g1 = GRAPHROW(&(ppgraph->graph), 1, MAXM);
+    g2 = GRAPHROW(&(ppgraph->graph), 2, MAXM);
+    g3 = GRAPHROW(&(ppgraph->graph), 3, MAXM);
     EMPTYSET(g0, MAXM);
     EMPTYSET(g1, MAXM);
     EMPTYSET(g2, MAXM);
