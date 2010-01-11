@@ -636,13 +636,16 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     for(i=0; i<listSize;i++){
         EMPTYSET(vertexSetList+i,MAXM);
     }
-    set tempSet;
-    int position = 0;
+
     DEBUGDUMP(semiEdgeCount, "%d")
-    determine_possible_sets_of_degree1_vertices(&tempSet, vertexSetList, &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph);
-    DEBUGDUMP(position, "%d")
-    DEBUGDUMP(listSize, "%d")
-    DEBUGASSERT(position==listSize)
+    if(semiEdgeCount>0){
+        int position = 0;
+        set tempSet;
+        determine_possible_sets_of_degree1_vertices(&tempSet, vertexSetList, &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph);
+        DEBUGDUMP(position, "%d")
+        DEBUGDUMP(listSize, "%d")
+        DEBUGASSERT(position==listSize)
+    } //else: listsize is already 1 and that set is already empty
 
     int orbitCount;
     int orbits[listSize];
