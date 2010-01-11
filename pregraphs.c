@@ -657,21 +657,23 @@ void determine_possible_sets_of_degree1_vertices
 (set *tempSet, set *vertexSetList, int* currentListPosition, int maximumSetSize,
         int currentSetSize, int currentSetElement, PRIMPREGRAPH *ppgraph){
     DEBUGMSG("Start determine_possible_sets_of_degree1_vertices")
-    ADDELEMENT(tempSet, currentSetElement);
-    if(currentSetSize + 1 == maximumSetSize){
-        //add to list
-        vertexSetList[*currentListPosition] = *tempSet;
-        (*currentListPosition)++;
-    } else {
-        determine_possible_sets_of_degree1_vertices
-                (tempSet, vertexSetList, currentListPosition, maximumSetSize,
-                currentSetSize + 1, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
-    }
-    DELELEMENT(tempSet, currentSetElement);
-    if(currentSetSize + ppgraph->degree1Count - currentSetElement > maximumSetSize){
-        determine_possible_sets_of_degree1_vertices
-                (tempSet, vertexSetList, currentListPosition, maximumSetSize,
-                currentSetSize, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
+    if(currentSetElement!=-1){
+        ADDELEMENT(tempSet, currentSetElement);
+        if(currentSetSize + 1 == maximumSetSize){
+            //add to list
+            vertexSetList[*currentListPosition] = *tempSet;
+            (*currentListPosition)++;
+        } else {
+            determine_possible_sets_of_degree1_vertices
+                    (tempSet, vertexSetList, currentListPosition, maximumSetSize,
+                    currentSetSize + 1, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
+        }
+        DELELEMENT(tempSet, currentSetElement);
+        if(currentSetSize + ppgraph->degree1Count - currentSetElement > maximumSetSize){
+            determine_possible_sets_of_degree1_vertices
+                    (tempSet, vertexSetList, currentListPosition, maximumSetSize,
+                    currentSetSize, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
+        }
     }
     DEBUGMSG("End determine_possible_sets_of_degree1_vertices")
 }
