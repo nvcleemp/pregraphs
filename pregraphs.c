@@ -159,6 +159,7 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
 }
 
 void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGMSG("Start revert_deg1_operation2")
     int s, i;
     s = ppgraph->order-2;
     i=0;
@@ -178,6 +179,7 @@ void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     DELELEMENT(gv, s);
     ADDELEMENT(gu, v);
     ADDELEMENT(gv, u);
+    DEBUGMSG("End revert_deg1_operation2")
 }
 
 //-----------------------------------------------------------------
@@ -189,6 +191,7 @@ void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
  * \____________/          \______________/
  */
 void apply_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGMSG("Start apply_deg2_operation1")
     DEBUGASSERT(areAdjacent(ppgraph, u, v))
     DEBUGASSERT(ppgraph->degree[u]!=2 || ppgraph->multiedge[u]!=v)
 
@@ -230,9 +233,11 @@ void apply_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gv, t);
     ADDELEMENT(gt, v);
     ADDELEMENT(gt, s);
+    DEBUGMSG("End apply_deg2_operation1")
 }
 
 void revert_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGMSG("Start revert_deg2_operation1")
     int s, t, i;
     s = ppgraph->order-2;
     t = s + 1;
@@ -253,6 +258,7 @@ void revert_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     DELELEMENT(gv, t);
     ADDELEMENT(gu, v);
     ADDELEMENT(gv, u);
+    DEBUGMSG("End revert_deg2_operation1")
 }
 
 //-----------------------------------------------------------------
@@ -265,6 +271,7 @@ void revert_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
  * \____________/          \____________/
  */
 void apply_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGMSG("Start apply_deg2_operation2")
     DEBUGASSERT(areAdjacent(ppgraph, u, v))
     DEBUGASSERT(ppgraph->degree[u]==2 && ppgraph->multiedge[u]==v)
     DEBUGASSERT(ppgraph->degree[v]==2 && ppgraph->multiedge[v]==u)
@@ -302,9 +309,11 @@ void apply_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gv, t);
     ADDELEMENT(gt, v);
     ADDELEMENT(gt, s);
+    DEBUGMSG("End apply_deg2_operation2")
 }
 
 void revert_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGMSG("Start revert_deg2_operation2")
     int s, t;
     s = ppgraph->order-2;
     t = s + 1;
@@ -322,6 +331,7 @@ void revert_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
     DELELEMENT(gu, s);
     DELELEMENT(gv, t);
+    DEBUGMSG("End revert_deg2_operation2")
 }
 
 //-----------------------------------------------------------------
@@ -336,6 +346,7 @@ void revert_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
  * \____________/          \___________/
  */
 void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGMSG("Start apply_deg2_operation3")
     DEBUGASSERT(areAdjacent(ppgraph, u, v))
     DEBUGASSERT(ppgraph->degree[u]==2 && ppgraph->multiedge[u]==v)
     DEBUGASSERT(ppgraph->degree[v]==2 && ppgraph->multiedge[v]==u)
@@ -380,9 +391,11 @@ void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gt, v);
     ADDELEMENT(gt, s);
 
+    DEBUGMSG("End apply_deg2_operation3")
 }
 
 void revert_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGMSG("Start revert_deg2_operation3")
     int s, t, i;
     s = ppgraph->order-2;
     t = s + 1;
@@ -403,6 +416,7 @@ void revert_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     DELELEMENT(gv, t);
     ADDELEMENT(gv, ppgraph->adjList[u*3+2]);
     DELELEMENT(gu, ppgraph->adjList[u*3+2]);
+    DEBUGMSG("End revert_deg2_operation3")
 }
 
 //-----------------------------------------------------------------
@@ -624,7 +638,10 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     }
     set tempSet;
     int position = 0;
+    DEBUGDUMP(semiEdgeCount, "%d")
     determine_possible_sets_of_degree1_vertices(&tempSet, vertexSetList, &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph);
+    DEBUGDUMP(position, "%d")
+    DEBUGDUMP(listSize, "%d")
     DEBUGASSERT(position==listSize)
 
     int orbitCount;
@@ -659,6 +676,7 @@ void determine_possible_sets_of_degree1_vertices
     DEBUGMSG("Start determine_possible_sets_of_degree1_vertices")
     if(currentSetElement!=-1){
         ADDELEMENT(tempSet, currentSetElement);
+        DEBUGDUMP(currentSetElement, "%d added")
         if(currentSetSize + 1 == maximumSetSize){
             //add to list
             vertexSetList[*currentListPosition] = *tempSet;
@@ -669,6 +687,7 @@ void determine_possible_sets_of_degree1_vertices
                     currentSetSize + 1, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
         }
         DELELEMENT(tempSet, currentSetElement);
+        DEBUGDUMP(currentSetElement, "%d removed")
         if(currentSetSize + ppgraph->degree1Count - currentSetElement > maximumSetSize){
             determine_possible_sets_of_degree1_vertices
                     (tempSet, vertexSetList, currentListPosition, maximumSetSize,
@@ -703,11 +722,13 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
  * Degree 1 operations are no longer possible.
  */
 void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start handle_deg2_operation_result")
     //if correct number of vertices
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount)
         handle_primpregraph_result(ppgraph);
 
     do_deg2_operations(ppgraph);
+    DEBUGMSG("End handle_deg2_operation_result")
 }
 
 /*
@@ -798,6 +819,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
  * Returns TRUE if the edge (v1, v2) belongs to the orbit with the canonically smallest label
  */
 boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2){
+    DEBUGMSG("Start isCanonicalMultiEdge")
     if(v2<v1){
         int temp = v1;
         v1 = v2;
@@ -822,6 +844,7 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2){
     DEBUGASSERT(i<multiEdgeListSize)
     int newEdgeOrbit = multiEdgeOrbits[i]; //contains the number of the orbit of the edge (v1, v2)
 
+    DEBUGMSG("End isCanonicalMultiEdge")
     return newEdgeOrbit==0;
     //because multiEdgeList only contains the multi edges
 }
