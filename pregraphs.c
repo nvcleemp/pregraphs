@@ -693,6 +693,7 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph){
  * apply the operation for each pair, handle the result and then revert the operation.
  */
 void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start handle_deg1_operation1")
     int maxSize = ppgraph->degree1Count*ppgraph->degree1Count/2;
     VERTEXPAIR deg1PairList[maxSize]; //initialize an array that is large enough to hold all the degree 1 pairs
     int listSize;
@@ -724,10 +725,11 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
             revert_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
         }
     }
-
+    DEBUGMSG("End handle_deg1_operation1")
 }
 
 void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start handle_deg1_operation2")
     int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
     VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all single edges
     int listSize;
@@ -763,6 +765,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
             }
         }
     }
+    DEBUGMSG("End handle_deg1_operation2")
 }
 
 /*
@@ -798,6 +801,7 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2){
 }
 
 void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start handle_deg2_operation1")
     int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
     VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all single edges
     int listSize;
@@ -818,9 +822,11 @@ void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
             revert_deg2_operation1(ppgraph, edgeList[i][0], edgeList[i][1]);
         }
     }
+    DEBUGMSG("End handle_deg2_operation1")
 }
 
 void handle_deg2_operation2(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start handle_deg2_operation2")
     int maxSize = ppgraph->multiEdgeCount;
     VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all multi-edges
     int listSize;
@@ -841,9 +847,11 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph){
             revert_deg2_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
         }
     }
+    DEBUGMSG("END handle_deg2_operation2")
 }
 
 void handle_deg2_operation3(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start handle_deg2_operation3")
     int maxSize = ppgraph->multiEdgeCount;
     VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all multi-edges
     int listSize;
@@ -865,6 +873,7 @@ void handle_deg2_operation3(PRIMPREGRAPH *ppgraph){
             revert_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
         }
     }
+    DEBUGMSG("End handle_deg2_operation3")
 }
 
 /*
