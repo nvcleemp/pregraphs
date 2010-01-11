@@ -41,9 +41,10 @@ boolean DFSearch(PRIMPREGRAPH *ppgraph, int current, int find, set *visited){
  * Returns true if the edge uv is a bridge
  */
 boolean isBridge(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGMSG("Start isBridge")
     DEBUGASSERT(areAdjacent(ppgraph, u, v))
 
-    if(ppgraph->degree[u]==1 || ppgraph->degree[v]==1) return TRUE;
+    if(ppgraph->degree[u]==1 || ppgraph->degree[v]==1){DEBUGMSG("End isBridge") return TRUE;}
 
     set visited;
     EMPTYSET(&visited, MAXM);
@@ -52,10 +53,13 @@ boolean isBridge(PRIMPREGRAPH *ppgraph, int u, int v){
     for (i = 0; i < ppgraph->degree[u]; i++) {
         if(ppgraph->adjList[u*3+i]!=v && !ISELEMENT((&visited), ppgraph->adjList[u*3+i])){
             ADDELEMENT(&visited, ppgraph->adjList[u*3+i]);
-            if(DFSearch(ppgraph, ppgraph->adjList[u*3+i], v, &visited))
+            if(DFSearch(ppgraph, ppgraph->adjList[u*3+i], v, &visited)){
+                DEBUGMSG("End isBridge")
                 return TRUE;
+            }
         }
     }
+    DEBUGMSG("End isBridge")
     return FALSE;
 }
 //-----------------------------------------------------------------
@@ -68,6 +72,7 @@ boolean isBridge(PRIMPREGRAPH *ppgraph, int u, int v){
  * \_________/          \_____/
  */
 void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGMSG("Start apply_deg1_operation1")
     DEBUGASSERT(ppgraph->degree[u]==1 && ppgraph->degree[v]==1)
     ppgraph->degree[u]=3;
     ppgraph->adjList[u*3+1]=v;
@@ -82,9 +87,11 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     DELELEMENT(gv,ppgraph->adjList[v*3]);
     ADDELEMENT(gv,u);
     ADDELEMENT(gu,ppgraph->adjList[v*3]);
+    DEBUGMSG("End apply_deg1_operation1")
 }
 
 void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGMSG("Start revert_deg1_operation1")
     //the original neighbour of u is the first element in the adjList
     //so no need to change anything except the degree
     ppgraph->degree[u]=1;
@@ -97,6 +104,7 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gv, ppgraph->adjList[u*3+2]);
     DELELEMENT(gu, v);
     DELELEMENT(gu, ppgraph->adjList[u*3+2]);
+    DEBUGMSG("End revert_deg1_operation1")
 }
 
 //-----------------------------------------------------------------
@@ -109,6 +117,7 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
  * \__/ \__/          \__/ \__/
  */
 void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGMSG("Start apply_deg1_operation2")
     DEBUGASSERT(areAdjacent(ppgraph, u, v))
     int s, t, i;
     s = ppgraph->order;
@@ -146,6 +155,7 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gs, v);
     ADDELEMENT(gs, t);
     ADDELEMENT(gt, s);
+    DEBUGMSG("End apply_deg1_operation2")
 }
 
 void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
@@ -451,6 +461,7 @@ void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ver
  * The first two parameters are read-only, the last two are write-only.
  */
 void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairListSize, int *vertexPairOrbits, int *orbitCount){
+    DEBUGMSG("Start determine_vertex_pairs_orbits")
     DEBUG2DARRAYDUMP(vertexPairList, vertexPairListSize, 2, "%d")
 
     int i, j, k, temp;
@@ -465,6 +476,7 @@ void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairLis
 
     permutation *permutation;
     VERTEXPAIR pair;
+    DEBUGDUMP(number_of_generators, "%d")
     for(i = 0; i < number_of_generators; i++) {
         //the generators were stored in the global variable generators by the method save_generators
         permutation = generators[i];
@@ -494,7 +506,7 @@ void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairLis
 
     DEBUGARRAYDUMP(vertexPairOrbits, vertexPairListSize, "%d")
 
-
+    DEBUGMSG("End determine_vertex_pairs_orbits")
 }
 
 /*
@@ -580,7 +592,9 @@ int find_root_of_element(int *forest, int element) {
 //--------------------------------------------------------------------
 
 void handle_pregraph_result(PREGRAPH *pregraph){
+    DEBUGMSG("Start handle_pregraph_result")
     structureCount++;
+    DEBUGMSG("End handle_pregraph_result")
 }
 
 /*
@@ -588,6 +602,7 @@ void handle_pregraph_result(PREGRAPH *pregraph){
  * allowed all the different ways to select these are taken and passed on to handle_pregraph_result.
  */
 void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start handle_primpregraph_result")
     DEBUGASSERT(ppgraph->order >= vertexCount)
     DEBUGASSERT(allowSemiEdges || vertexCount == ppgraph->order)
     
@@ -626,6 +641,7 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
             handle_pregraph_result(&pregraph);
         }
     }
+    DEBUGMSG("Start handle_primpregraph_result")
 }
 
 int nextDegree1Vertex(int current, PRIMPREGRAPH *ppgraph){
@@ -640,6 +656,7 @@ int nextDegree1Vertex(int current, PRIMPREGRAPH *ppgraph){
 void determine_possible_sets_of_degree1_vertices
 (set *tempSet, set *vertexSetList, int* currentListPosition, int maximumSetSize,
         int currentSetSize, int currentSetElement, PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start determine_possible_sets_of_degree1_vertices")
     ADDELEMENT(tempSet, currentSetElement);
     if(currentSetSize + 1 == maximumSetSize){
         //add to list
@@ -656,6 +673,7 @@ void determine_possible_sets_of_degree1_vertices
                 (tempSet, vertexSetList, currentListPosition, maximumSetSize,
                 currentSetSize, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
     }
+    DEBUGMSG("End determine_possible_sets_of_degree1_vertices")
 }
 
 /*
@@ -664,6 +682,7 @@ void determine_possible_sets_of_degree1_vertices
  * and degree 2 operations.
  */
 void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start handle_deg1_operation_result")
     //if correct number of vertices
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount)
         handle_primpregraph_result(ppgraph);
@@ -673,6 +692,7 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
     if(allowMultiEdges){
         do_deg2_operations(ppgraph);
     }
+    DEBUGMSG("End handle_deg1_operation_result")
 }
 
 /*
@@ -739,6 +759,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
     int orbits[listSize];
     determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount);
     //TODO: the calculation above is done both for degree 1 operation 2 and degree 2 operation 1: avoid duplicating this work!!!
+    DEBUGARRAYDUMP(orbits, orbitCount, "%d")
 
     int i;
     for (i = 0; i < listSize; i++) {
@@ -750,7 +771,10 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
                 //the new deg 1 vertex after this operation is t. This is a valid action
                 //if t belongs to the first orbit of degree 1 vertices
                 int orbits[ppgraph->order];
+                DEBUGMSG("Start nauty")
                 nauty(&(ppgraph->graph), lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+                DEBUGMSG("End nauty")
+                DEBUGARRAYDUMP(orbits, ppgraph->order, "%d")
                 int tOrbit = orbits[ppgraph->order-1];
                 int j = 0;
                 while(j<tOrbit && ppgraph->degree[j]>1) j++;
