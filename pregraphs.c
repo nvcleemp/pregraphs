@@ -617,11 +617,13 @@ void handle_pregraph_result(PREGRAPH *pregraph){
  */
 void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("Start handle_primpregraph_result")
+    DEBUGDUMP(ppgraph->order, "%d")
+    DEBUGDUMP(vertexCount, "%d")
     DEBUGASSERT(ppgraph->order >= vertexCount)
     DEBUGASSERT(allowSemiEdges || vertexCount == ppgraph->order)
     
-    int semiEdgeCount = ppgraph->order - vertexCount;
-    int degree1Count = ppgraph->degree1Count;
+    int semiEdgeCount = ppgraph->order - vertexCount; DEBUGDUMP(semiEdgeCount, "%d")
+    int degree1Count = ppgraph->degree1Count; DEBUGDUMP(degree1Count, "%d")
     DEBUGASSERT(semiEdgeCount <= degree1Count)
     int loopCount = degree1Count - semiEdgeCount;
 
@@ -637,7 +639,6 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
         EMPTYSET(vertexSetList+i,MAXM);
     }
 
-    DEBUGDUMP(semiEdgeCount, "%d")
     if(semiEdgeCount>0){
         int position = 0;
         set tempSet;
@@ -708,7 +709,7 @@ void determine_possible_sets_of_degree1_vertices
 void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("Start handle_deg1_operation_result")
     //if correct number of vertices
-    if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount)
+    if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
         handle_primpregraph_result(ppgraph);
 
     do_deg1_operations(ppgraph); //when this returns &ppgraph is unchanged
@@ -727,7 +728,7 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
 void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("Start handle_deg2_operation_result")
     //if correct number of vertices
-    if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount)
+    if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
         handle_primpregraph_result(ppgraph);
 
     do_deg2_operations(ppgraph);
@@ -972,6 +973,8 @@ void start(){
         minVertexCount = vertexCount;
         maxVertexCount = 2*vertexCount; //TODO: better and correct(?) upperbound
     }
+    DEBUGDUMP(minVertexCount, "%d")
+    DEBUGDUMP(maxVertexCount, "%d")
     PRIMPREGRAPH ppgraph;
     if(allowLoops || allowSemiEdges){
         construct_K2(&ppgraph);
