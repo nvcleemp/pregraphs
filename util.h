@@ -13,15 +13,16 @@
 
 /******************Debugging macros**********************/
 
-//#define _DEBUG
+#define _DEBUG
 
 #ifdef _DEBUG
 
-#define DEBUGMSG(msg) fprintf(stderr, "%s:%u %s\n", __FILE__, __LINE__, msg);
+#define DEBUGMSG(msg) fprintf(stderr, "%s:%u %s\n", __FILE__, __LINE__, msg); fflush(stderr);
 
-#define DEBUGCONDITIONALMSG(condition, msg) if(condition) fprintf(stderr, "%s:%u %s\n", __FILE__, __LINE__, msg);
 
-#define DEBUGDUMP(var, format) fprintf(stderr, "%s:%u %s=" format "\n", __FILE__, __LINE__, #var, var);
+#define DEBUGCONDITIONALMSG(condition, msg) if(condition) fprintf(stderr, "%s:%u %s\n", __FILE__, __LINE__, msg); fflush(stderr);
+
+#define DEBUGDUMP(var, format) fprintf(stderr, "%s:%u %s=" format "\n", __FILE__, __LINE__, #var, var); fflush(stderr);
 
 #define DEBUGARRAYDUMP(var, size, format) { \
                                             fprintf(stderr, "%s:%u %s= [" format, __FILE__, __LINE__, #var, var[0]);\
@@ -29,7 +30,7 @@
                                             for(debugarraydumpcounter=1; debugarraydumpcounter<size-1; debugarraydumpcounter++){ \
                                                 fprintf(stderr, ", " format, var[debugarraydumpcounter]);\
                                             }\
-                                            fprintf(stderr, ", " format "]\n", var[size-1]);\
+                                            fprintf(stderr, ", " format "]\n", var[size-1]); fflush(stderr);\
                                           }
 
 #define DEBUG2DARRAYDUMP(var, size1, size2, format) { \
@@ -42,9 +43,10 @@
                                               }\
                                               fprintf(stderr, ", " format "]\n", var[debug2darraydumpcounter1][size2-1]);\
                                             }\
+                                            fflush(stderr);\
                                           }
 
-#define DEBUGASSERT(assertion) if(!(assertion)) {fprintf(stderr, "%s:%u Assertion failed: %s\n", __FILE__, __LINE__, #assertion); exit(1);}
+#define DEBUGASSERT(assertion) if(!(assertion)) {fprintf(stderr, "%s:%u Assertion failed: %s\n", __FILE__, __LINE__, #assertion); fflush(stderr); exit(1);}
 
 #else
 

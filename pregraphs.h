@@ -46,6 +46,7 @@
                                             fprintf(stderr, "\n");\
                                         }\
                                         fprintf(stderr, "==========================\n");\
+                                        fflush(stderr);\
                                     }
 
 #else
