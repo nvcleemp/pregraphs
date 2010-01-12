@@ -76,9 +76,13 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     DEBUGDUMP(u, "%d")
     DEBUGDUMP(v, "%d")
     DEBUGASSERT(ppgraph->degree[u]==1 && ppgraph->degree[v]==1)
+    int t = ppgraph->adjList[v*3]; //original neighbour of v
     ppgraph->degree[u]=3;
     ppgraph->adjList[u*3+1]=v;
-    ppgraph->adjList[u*3+2]=ppgraph->adjList[v*3];
+    ppgraph->adjList[u*3+2]=t;
+    int i=0;
+    while(ppgraph->adjList[t*3+i]!=v) i++; //t and v are adjacent so will stop before i == 3
+    ppgraph->adjList[t*3+i]=u;
     ppgraph->adjList[v*3]=u;
     ppgraph->degree1Count--;
 
@@ -96,8 +100,12 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     DEBUGMSG("Start revert_deg1_operation1")
     //the original neighbour of u is the first element in the adjList
     //so no need to change anything except the degree
+    int t = ppgraph->adjList[u*3+2];
     ppgraph->degree[u]=1;
-    ppgraph->adjList[v*3]=ppgraph->adjList[u*3+2];
+    ppgraph->adjList[v*3]=t;
+    int i;
+    while(ppgraph->adjList[t*3+i]!=u) i++; //u and t are adjacent so will stop before i == 3
+    ppgraph->adjList[t*3+i]=v;
     
     set *gu, *gv;
     gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
