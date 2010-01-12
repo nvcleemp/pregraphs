@@ -108,6 +108,7 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     int i;
     while(ppgraph->adjList[t*3+i]!=u) i++; //u and t are adjacent so will stop before i == 3
     ppgraph->adjList[t*3+i]=v;
+    ppgraph->degree1Count++;
     
     set *gu, *gv;
     gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
