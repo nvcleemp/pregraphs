@@ -73,6 +73,8 @@ boolean isBridge(PRIMPREGRAPH *ppgraph, int u, int v){
  */
 void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     DEBUGMSG("Start apply_deg1_operation1")
+    DEBUGDUMP(u, "%d")
+    DEBUGDUMP(v, "%d")
     DEBUGASSERT(ppgraph->degree[u]==1 && ppgraph->degree[v]==1)
     ppgraph->degree[u]=3;
     ppgraph->adjList[u*3+1]=v;
@@ -192,6 +194,8 @@ void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
  */
 void apply_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     DEBUGMSG("Start apply_deg2_operation1")
+    DEBUGDUMP(u, "%d")
+    DEBUGDUMP(v, "%d")
     DEBUGASSERT(areAdjacent(ppgraph, u, v))
     DEBUGASSERT(ppgraph->degree[u]!=2 || ppgraph->multiedge[u]!=v)
 
@@ -243,9 +247,11 @@ void revert_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     t = s + 1;
     i=0;
     while(ppgraph->adjList[u*3+i]!=s) i++;
+    DEBUGASSERT(i<3)
     ppgraph->adjList[u*3+i]=v;
     i=0;
     while(ppgraph->adjList[v*3+i]!=t) i++;
+    DEBUGASSERT(i<3)
     ppgraph->adjList[v*3+i]=u;
 
     ppgraph->multiEdgeCount--;
@@ -753,6 +759,7 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
     int i;
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
+            DEBUGPPGRAPHPRINT(ppgraph)
             apply_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
 
             //the only deg 1 vertex after this operation is v. This is a valid action
@@ -770,6 +777,7 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
             }
 
             revert_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
+            DEBUGPPGRAPHPRINT(ppgraph)
         }
     }
     DEBUGMSG("End handle_deg1_operation1")
@@ -793,6 +801,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
         if(orbits[i]==i){
             //TODO: maybe only enumerate the bridges?
             if(isBridge(ppgraph, edgeList[i][0], edgeList[i][1])){
+                DEBUGPPGRAPHPRINT(ppgraph)
                 apply_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
                 
                 //the new deg 1 vertex after this operation is t. This is a valid action
@@ -813,6 +822,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
                 }
 
                 revert_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
+                DEBUGPPGRAPHPRINT(ppgraph)
             }
         }
     }
@@ -867,12 +877,14 @@ void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
     int i;
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
+            DEBUGPPGRAPHPRINT(ppgraph)
             apply_deg2_operation1(ppgraph, edgeList[i][0], edgeList[i][1]);
 
             if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1))
                 handle_deg2_operation_result(ppgraph);
 
             revert_deg2_operation1(ppgraph, edgeList[i][0], edgeList[i][1]);
+            DEBUGPPGRAPHPRINT(ppgraph)
         }
     }
     DEBUGMSG("End handle_deg2_operation1")
@@ -892,12 +904,14 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph){
     int i;
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
+            DEBUGPPGRAPHPRINT(ppgraph)
             apply_deg2_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
 
             if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1))
                 handle_deg2_operation_result(ppgraph);
 
             revert_deg2_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
+            DEBUGPPGRAPHPRINT(ppgraph)
         }
     }
     DEBUGMSG("END handle_deg2_operation2")
@@ -918,12 +932,14 @@ void handle_deg2_operation3(PRIMPREGRAPH *ppgraph){
     int i;
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
+            DEBUGPPGRAPHPRINT(ppgraph)
             apply_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
 
             if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1))
                 handle_deg2_operation_result(ppgraph);
 
             revert_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
+            DEBUGPPGRAPHPRINT(ppgraph)
         }
     }
     DEBUGMSG("End handle_deg2_operation3")
