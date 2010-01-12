@@ -671,6 +671,7 @@ void handle_pregraph_result(PREGRAPH *pregraph){
  */
 void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("Start handle_primpregraph_result")
+    DEBUGPPGRAPHPRINT(ppgraph)
     DEBUGDUMP(ppgraph->order, "%d")
     DEBUGDUMP(vertexCount, "%d")
     DEBUGASSERT(ppgraph->order >= vertexCount)
@@ -685,8 +686,11 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     //of degree 1 by using union-find
     int listSize, i;
     listSize = 1;
-    for(i=1; i<=semiEdgeCount;i++){
-        listSize = listSize*(loopCount - 1 + i)/i;
+    if(loopCount>0){
+        //otherwise listSize would be reset to 0 if semiEdgeCount == degree1Count
+        for(i=1; i<=semiEdgeCount;i++){
+            listSize = listSize*(degree1Count - i + 1)/i;
+        }
     }
     set vertexSetList[listSize];
     for(i=0; i<listSize;i++){
@@ -746,11 +750,9 @@ void determine_possible_sets_of_degree1_vertices
         }
         DELELEMENT(tempSet, currentSetElement);
         DEBUGDUMP(currentSetElement, "%d removed")
-        if(currentSetSize + ppgraph->degree1Count - currentSetElement > maximumSetSize){
-            determine_possible_sets_of_degree1_vertices
-                    (tempSet, vertexSetList, currentListPosition, maximumSetSize,
-                    currentSetSize, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
-        }
+        determine_possible_sets_of_degree1_vertices
+               (tempSet, vertexSetList, currentListPosition, maximumSetSize,
+                currentSetSize, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
     }
     DEBUGMSG("End determine_possible_sets_of_degree1_vertices")
 }
