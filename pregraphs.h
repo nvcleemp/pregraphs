@@ -25,6 +25,35 @@
 
 /******************Defines*******************************/
 
+#ifdef _DEBUG
+
+#define DEBUGPPGRAPHPRINT(ppgraph) {\
+                                        fprintf(stderr, "==========================\n");\
+                                        fprintf(stderr, "%s:%u %s:\n", __FILE__, __LINE__, #ppgraph);\
+                                        fprintf(stderr, "Order   : %d\n", (ppgraph)->order);\
+                                        fprintf(stderr, "# deg 1 : %d\n", (ppgraph)->degree1Count);\
+                                        fprintf(stderr, "# multi : %d\n", (ppgraph)->multiEdgeCount);\
+                                        int debugppgraphprintcounter;\
+                                        for(debugppgraphprintcounter=0;debugppgraphprintcounter<(ppgraph)->order;debugppgraphprintcounter++){\
+                                            fprintf(stderr, "%2d) ", debugppgraphprintcounter);\
+                                            int debugppgraphprintcounter2;\
+                                            for(debugppgraphprintcounter2=0;debugppgraphprintcounter2<(ppgraph)->degree[debugppgraphprintcounter];debugppgraphprintcounter2++){\
+                                                fprintf(stderr, "%2d ", (ppgraph)->adjList[3*debugppgraphprintcounter + debugppgraphprintcounter2]);\
+                                            }\
+                                            if((ppgraph)->degree[debugppgraphprintcounter]==2){\
+                                                fprintf(stderr, "[%2d]", (ppgraph)->multiedge[debugppgraphprintcounter]);\
+                                            }\
+                                            fprintf(stderr, "\n");\
+                                        }\
+                                        fprintf(stderr, "==========================\n");\
+                                    }
+
+#else
+
+#define DEBUGPPGRAPHPRINT(ppgraph)
+
+#endif
+
 struct _primpregraph {
     int order;
     int degree1Count;
