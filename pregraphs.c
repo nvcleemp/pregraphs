@@ -979,14 +979,20 @@ void handle_deg2_operation3(PRIMPREGRAPH *ppgraph){
     int i;
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
-            DEBUGPPGRAPHPRINT(ppgraph)
-            apply_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
+            //check if the second neighbour of u and v aren't equal
+            int x, y;
+            x = (ppgraph->adjList[edgeList[i][0]*3] == edgeList[i][1]) ? ppgraph->adjList[edgeList[i][0]*3+1] : ppgraph->adjList[edgeList[i][0]*3];
+            y = (ppgraph->adjList[edgeList[i][1]*3] == edgeList[i][0]) ? ppgraph->adjList[edgeList[i][1]*3+1] : ppgraph->adjList[edgeList[i][1]*3];
+            if(x!=y){
+                DEBUGPPGRAPHPRINT(ppgraph)
+                apply_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
 
-            if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1))
-                handle_deg2_operation_result(ppgraph);
+                if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1))
+                    handle_deg2_operation_result(ppgraph);
 
-            revert_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
-            DEBUGPPGRAPHPRINT(ppgraph)
+                revert_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
+                DEBUGPPGRAPHPRINT(ppgraph)
+            }
         }
     }
     DEBUGMSG("End handle_deg2_operation3")
@@ -1188,7 +1194,7 @@ void save_generators(int count, permutation perm[], nvector orbits[],
     #define MAIN_FUNCTION main
 #endif
 /*
- * 
+ *
  */
 int MAIN_FUNCTION(int argc, char** argv) {
     structureCount=0;
