@@ -1006,9 +1006,11 @@ void handle_deg2_operation3(PRIMPREGRAPH *ppgraph){
  * will be unchanged.
  */
 void do_deg1_operations(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start do_deg1_operations")
     DEBUGASSERT(allowLoops || allowSemiEdges)
     if(ppgraph->order<=maxVertexCount) handle_deg1_operation1(ppgraph);
     if(ppgraph->order<=maxVertexCount-2) handle_deg1_operation2(ppgraph);
+    DEBUGMSG("End do_deg1_operations")
 }
 
 /*
@@ -1016,15 +1018,18 @@ void do_deg1_operations(PRIMPREGRAPH *ppgraph){
  * will be unchanged.
  */
 void do_deg2_operations(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start do_deg2_operations")
     DEBUGASSERT(allowMultiEdges)
     if(ppgraph->order<=maxVertexCount-2){
         handle_deg2_operation1(ppgraph);
         handle_deg2_operation2(ppgraph);
         handle_deg2_operation3(ppgraph);
     }
+    DEBUGMSG("End do_deg2_operations")
 }
 
 void grow(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start grow")
     int orbits[ppgraph->order];
     nauty(&(ppgraph->graph), lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
     //the generators for these start graphs need to be calculated
@@ -1035,10 +1040,11 @@ void grow(PRIMPREGRAPH *ppgraph){
     if(allowMultiEdges){
         do_deg2_operations(ppgraph);
     }
-
+    DEBUGMSG("End grow")
 }
 
 void start(){
+    DEBUGMSG("Start start")
     if(!allowSemiEdges){
         minVertexCount = maxVertexCount = vertexCount;
     } else {
@@ -1061,6 +1067,7 @@ void start(){
         grow(&ppgraph);
     }
     //TODO: start generation of cubic graphs
+    DEBUGMSG("End start")
 }
 
 //------------------------Begin start graphs-----------------------------
@@ -1191,15 +1198,15 @@ void save_generators(int count, permutation perm[], nvector orbits[],
 
 //------------------------End Nauty interaction-------------------------
 
-#ifdef NO_MAIN
-    #define MAIN_FUNCTION nomain
+#ifdef PREGRAPH_NO_MAIN
+    #define PREGRAPH_MAIN_FUNCTION pregraphnomain
 #else
-    #define MAIN_FUNCTION main
+    #define PREGRAPH_MAIN_FUNCTION main
 #endif
 /*
  *
  */
-int MAIN_FUNCTION(int argc, char** argv) {
+int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     structureCount=0;
     allowLoops = TRUE;
     allowMultiEdges = TRUE;
