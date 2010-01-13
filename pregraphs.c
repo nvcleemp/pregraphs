@@ -105,7 +105,7 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     int t = ppgraph->adjList[u*3+2];
     ppgraph->degree[u]=1;
     ppgraph->adjList[v*3]=t;
-    int i;
+    int i=0;
     while(ppgraph->adjList[t*3+i]!=u) i++; //u and t are adjacent so will stop before i == 3
     ppgraph->adjList[t*3+i]=v;
     ppgraph->degree1Count++;
