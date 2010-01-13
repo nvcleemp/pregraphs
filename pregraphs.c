@@ -46,14 +46,14 @@ boolean isBridge(PRIMPREGRAPH *ppgraph, int u, int v){
 
     if(ppgraph->degree[u]==1 || ppgraph->degree[v]==1){DEBUGMSG("End isBridge") return TRUE;}
 
-    set visited;
-    EMPTYSET(&visited, MAXM);
-    ADDELEMENT(&visited, u);
+    set visited[MAXM];
+    EMPTYSET(visited, MAXM);
+    ADDELEMENT(visited, u);
     int i;
     for (i = 0; i < ppgraph->degree[u]; i++) {
-        if(ppgraph->adjList[u*3+i]!=v && !ISELEMENT((&visited), ppgraph->adjList[u*3+i])){
-            ADDELEMENT(&visited, ppgraph->adjList[u*3+i]);
-            if(DFSearch(ppgraph, ppgraph->adjList[u*3+i], v, &visited)){
+        if(ppgraph->adjList[u*3+i]!=v && !ISELEMENT(visited, ppgraph->adjList[u*3+i])){
+            ADDELEMENT(visited, ppgraph->adjList[u*3+i]);
+            if(DFSearch(ppgraph, ppgraph->adjList[u*3+i], v, visited)){
                 DEBUGMSG("End isBridge")
                 return TRUE;
             }
@@ -87,8 +87,8 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->degree1Count--;
 
     set *gu, *gv;
-    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
-    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
+    gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
+    gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
     ADDELEMENT(gu, v);
     DELELEMENT(gv,ppgraph->adjList[v*3]);
     ADDELEMENT(gv,u);
@@ -111,8 +111,8 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->degree1Count++;
     
     set *gu, *gv;
-    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
-    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
+    gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
+    gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
     DELELEMENT(gv, u);
     ADDELEMENT(gv, ppgraph->adjList[u*3+2]);
     DELELEMENT(gu, v);
@@ -156,10 +156,10 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order+=2;
 
     set *gu, *gv, *gs, *gt;
-    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
-    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
-    gs = GRAPHROW(&(ppgraph->graph), s, MAXM);
-    gt = GRAPHROW(&(ppgraph->graph), t, MAXM);
+    gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
+    gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
+    gs = GRAPHROW(ppgraph->ulgraph, s, MAXM);
+    gt = GRAPHROW(ppgraph->ulgraph, t, MAXM);
     EMPTYSET(gs, MAXM);
     EMPTYSET(gt, MAXM);
     DELELEMENT(gu, v);
@@ -190,8 +190,8 @@ void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order-=2;
 
     set *gu, *gv;
-    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
-    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
+    gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
+    gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
     DELELEMENT(gu, s);
     DELELEMENT(gv, s);
     ADDELEMENT(gu, v);
@@ -238,10 +238,10 @@ void apply_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order+=2;
 
     set *gu, *gv, *gs, *gt;
-    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
-    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
-    gs = GRAPHROW(&(ppgraph->graph), s, MAXM);
-    gt = GRAPHROW(&(ppgraph->graph), t, MAXM);
+    gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
+    gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
+    gs = GRAPHROW(ppgraph->ulgraph, s, MAXM);
+    gt = GRAPHROW(ppgraph->ulgraph, t, MAXM);
     EMPTYSET(gs, MAXM);
     EMPTYSET(gt, MAXM);
     DELELEMENT(gu, v);
@@ -275,8 +275,8 @@ void revert_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order-=2;
 
     set *gu, *gv;
-    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
-    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
+    gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
+    gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
     DELELEMENT(gu, s);
     DELELEMENT(gv, t);
     ADDELEMENT(gu, v);
@@ -322,10 +322,10 @@ void apply_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order+=2;
 
     set *gu, *gv, *gs, *gt;
-    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
-    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
-    gs = GRAPHROW(&(ppgraph->graph), s, MAXM);
-    gt = GRAPHROW(&(ppgraph->graph), t, MAXM);
+    gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
+    gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
+    gs = GRAPHROW(ppgraph->ulgraph, s, MAXM);
+    gt = GRAPHROW(ppgraph->ulgraph, t, MAXM);
     EMPTYSET(gs, MAXM);
     EMPTYSET(gt, MAXM);
     ADDELEMENT(gu, s);
@@ -354,8 +354,8 @@ void revert_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order-=2;
 
     set *gu, *gv;
-    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
-    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
+    gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
+    gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
     DELELEMENT(gu, s);
     DELELEMENT(gv, t);
     DEBUGMSG("End revert_deg2_operation2")
@@ -413,11 +413,11 @@ void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order+=2;
 
     set *gu, *gv, *gs, *gt, *gx;
-    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
-    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
-    gs = GRAPHROW(&(ppgraph->graph), s, MAXM);
-    gt = GRAPHROW(&(ppgraph->graph), t, MAXM);
-    gx = GRAPHROW(&(ppgraph->graph), x, MAXM);
+    gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
+    gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
+    gs = GRAPHROW(ppgraph->ulgraph, s, MAXM);
+    gt = GRAPHROW(ppgraph->ulgraph, t, MAXM);
+    gx = GRAPHROW(ppgraph->ulgraph, x, MAXM);
     EMPTYSET(gs, MAXM);
     EMPTYSET(gt, MAXM);
     DELELEMENT(gv, x);
@@ -461,9 +461,9 @@ void revert_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->order-=2;
 
     set *gu, *gv, *gx;
-    gu = GRAPHROW(&(ppgraph->graph), u, MAXM);
-    gv = GRAPHROW(&(ppgraph->graph), v, MAXM);
-    gx = GRAPHROW(&(ppgraph->graph), x, MAXM);
+    gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
+    gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
+    gx = GRAPHROW(ppgraph->ulgraph, x, MAXM);
     DELELEMENT(gv, s);
     DELELEMENT(gv, t);
     ADDELEMENT(gv, x);
@@ -598,7 +598,7 @@ void determine_vertex_sets_orbits(set *vertexSetList, int vertexSetListSize, int
     *orbitCount=vertexSetListSize;
 
     permutation *permutation;
-    set set;
+    set set[MAXM];
     for(i = 0; i < number_of_generators; i++) {
         //the generators were stored in the global variable generators by the method save_generators
         permutation = generators[i];
@@ -607,16 +607,16 @@ void determine_vertex_sets_orbits(set *vertexSetList, int vertexSetListSize, int
         for(j = 0; j<vertexSetListSize; j++){
             //apply permutation to current vertex pair
             EMPTYSET(set, MAXM);
-            for(l=-1; (l = nextelement(vertexSetList+j, MAXM, l)) >=0;){
-                ADDELEMENT(&set, permutation[l]);
+            for(l=-1; (l = nextelement(vertexSetList+j*MAXM, MAXM, l)) >=0;){
+                ADDELEMENT(set, permutation[l]);
             }
 
             //search the pair in the list
             for(k = 0; k<vertexSetListSize; k++){
                 //TODO: is there a better way to check whether two sets are equal?
-                l = nextelement(&set, MAXM, -1);
-                while(l>=0 && ISELEMENT(vertexSetList+k, l)){
-                    l = nextelement(&set, MAXM, l);
+                l = nextelement(set, MAXM, -1);
+                while(l>=0 && ISELEMENT(vertexSetList+k*MAXM, l)){
+                    l = nextelement(set, MAXM, l);
                 }
                 if(l==-1){
                     union_elements(vertexSetOrbits, orbitSize, orbitCount, j, k);
@@ -692,15 +692,15 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
             listSize = listSize*(degree1Count - i + 1)/i;
         }
     }
-    set vertexSetList[listSize];
+    set vertexSetList[MAXM*listSize];
     for(i=0; i<listSize;i++){
-        EMPTYSET(vertexSetList+i,MAXM);
+        EMPTYSET(vertexSetList+i*MAXM,MAXM);
     }
 
     if(semiEdgeCount>0){
         int position = 0;
-        set tempSet;
-        determine_possible_sets_of_degree1_vertices(&tempSet, vertexSetList, &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph);
+        set tempSet[MAXM];
+        determine_possible_sets_of_degree1_vertices(tempSet, vertexSetList, &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph);
         DEBUGDUMP(position, "%d")
         DEBUGDUMP(listSize, "%d")
         DEBUGASSERT(position==listSize)
@@ -716,7 +716,7 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     pregraph.ppgraph = ppgraph;
     for(i=0; i<listSize; i++){
         if(orbits[i]==i){
-            pregraph.semiEdgeVertices = vertexSetList + i;
+            pregraph.semiEdgeVertices = vertexSetList + i*MAXM;
             handle_pregraph_result(&pregraph);
         }
     }
@@ -815,7 +815,7 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
             //the only deg 1 vertex after this operation is v. This is a valid action
             //if v belongs to the first orbit of degree 1 vertices
             int orbits[ppgraph->order];
-            nauty(&(ppgraph->graph), lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+            nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
             int vOrbit = orbits[deg1PairList[i][1]];
             int j = 0;
             while(j<vOrbit && ppgraph->degree[j]>1) j++;
@@ -858,7 +858,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
                 //if t belongs to the first orbit of degree 1 vertices
                 int orbits[ppgraph->order];
                 DEBUGMSG("Start nauty")
-                nauty(&(ppgraph->graph), lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+                nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
                 DEBUGMSG("End nauty")
                 DEBUGARRAYDUMP(orbits, ppgraph->order, "%d")
                 int tOrbit = orbits[ppgraph->order-1];
@@ -890,7 +890,7 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2){
         v2 = temp;
     }
     int orbits[ppgraph->order];
-    nauty(&(ppgraph->graph), lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
 
     int maxSize = ppgraph->multiEdgeCount;
     VERTEXPAIR multiEdgeList[maxSize]; //initialize an array that is large enough to hold all multi-edges
@@ -1031,7 +1031,7 @@ void do_deg2_operations(PRIMPREGRAPH *ppgraph){
 void grow(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("Start grow")
     int orbits[ppgraph->order];
-    nauty(&(ppgraph->graph), lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
     //the generators for these start graphs need to be calculated
 
     if(allowLoops || allowSemiEdges){
@@ -1086,8 +1086,8 @@ void construct_K2(PRIMPREGRAPH *ppgraph){
     ppgraph->degree[1]=1;
 
     set *g0, *g1;
-    g0 = GRAPHROW(&(ppgraph->graph), 0, MAXM);
-    g1 = GRAPHROW(&(ppgraph->graph), 1, MAXM);
+    g0 = GRAPHROW(ppgraph->ulgraph, 0, MAXM);
+    g1 = GRAPHROW(ppgraph->ulgraph, 1, MAXM);
     EMPTYSET(g0, MAXM);
     EMPTYSET(g1, MAXM);
     ADDELEMENT(g0, 1);
@@ -1123,10 +1123,10 @@ void construct_C4(PRIMPREGRAPH *ppgraph){
     ppgraph->multiedge[3]=2;
 
     set *g0, *g1, *g2, *g3;
-    g0 = GRAPHROW(&(ppgraph->graph), 0, MAXM);
-    g1 = GRAPHROW(&(ppgraph->graph), 1, MAXM);
-    g2 = GRAPHROW(&(ppgraph->graph), 2, MAXM);
-    g3 = GRAPHROW(&(ppgraph->graph), 3, MAXM);
+    g0 = GRAPHROW(ppgraph->ulgraph, 0, MAXM);
+    g1 = GRAPHROW(ppgraph->ulgraph, 1, MAXM);
+    g2 = GRAPHROW(ppgraph->ulgraph, 2, MAXM);
+    g3 = GRAPHROW(ppgraph->ulgraph, 3, MAXM);
     EMPTYSET(g0, MAXM);
     EMPTYSET(g1, MAXM);
     EMPTYSET(g2, MAXM);
@@ -1163,10 +1163,10 @@ void construct_K3_with_spike(PRIMPREGRAPH *ppgraph){
     ppgraph->multiedge[2]=1;
 
     set *g0, *g1, *g2, *g3;
-    g0 = GRAPHROW(&(ppgraph->graph), 0, MAXM);
-    g1 = GRAPHROW(&(ppgraph->graph), 1, MAXM);
-    g2 = GRAPHROW(&(ppgraph->graph), 2, MAXM);
-    g3 = GRAPHROW(&(ppgraph->graph), 3, MAXM);
+    g0 = GRAPHROW(ppgraph->ulgraph, 0, MAXM);
+    g1 = GRAPHROW(ppgraph->ulgraph, 1, MAXM);
+    g2 = GRAPHROW(ppgraph->ulgraph, 2, MAXM);
+    g3 = GRAPHROW(ppgraph->ulgraph, 3, MAXM);
     EMPTYSET(g0, MAXM);
     EMPTYSET(g1, MAXM);
     EMPTYSET(g2, MAXM);

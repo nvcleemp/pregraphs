@@ -70,8 +70,8 @@ struct _primpregraph {
     //i.e. if degree[v]=2, then the edge (v,multiedge[v]) is a multiedge
     int multiedge[MAXN];
 
-    //the graph in nauty format
-    graph graph;
+    //the underlying graph in nauty format
+    graph ulgraph[MAXN*MAXM];
 };
 
 typedef struct _primpregraph PRIMPREGRAPH;
