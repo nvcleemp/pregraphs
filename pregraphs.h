@@ -10,7 +10,7 @@
 
 /******************Includes**********************/
 
-#define MAXN 50 //needs to be defined before nauty.h is included !
+//#define MAXN 50 //needs to be defined before nauty.h is included !
 
 #include "util.h"
 #include "nauty/nauty.h"
