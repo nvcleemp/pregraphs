@@ -771,7 +771,7 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
     do_deg1_operations(ppgraph); //when this returns &ppgraph is unchanged
 
     if(allowMultiEdges){
-        do_deg2_operations(ppgraph);
+        do_deg2_operations(ppgraph, NULL, 0, NULL, 0);
     }
     DEBUGMSG("End handle_deg1_operation_result")
 }
@@ -781,13 +781,14 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
  * passed on to handle_primpregraph_result, then we continue with degree 2 operations.
  * Degree 1 operations are no longer possible.
  */
-void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph){
+void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph,
+        VERTEXPAIR *multiEdgeList, int multiEdgeListSize, int *multiEdgeOrbits, int multiEdgeOrbitCount){
     DEBUGMSG("Start handle_deg2_operation_result")
     //if correct number of vertices
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
         handle_primpregraph_result(ppgraph);
 
-    do_deg2_operations(ppgraph);
+    do_deg2_operations(ppgraph, multiEdgeList, multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount);
     DEBUGMSG("End handle_deg2_operation_result")
 }
 
@@ -880,9 +881,13 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
 }
 
 /*
- * Returns TRUE if the edge (v1, v2) belongs to the orbit with the canonically smallest label
+ * Returns TRUE if the edge (v1, v2) belongs to the orbit with the canonically smallest label.
+ * Also stores the list of multi-edges, its size, its orbits and the number of orbits. The values
+ * multiEdgeList and multiEdgeOrbits will be allocated with malloc. The size and count need to be
+ * allocated on the stack.
  */
-boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2){
+boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2,
+        VERTEXPAIR **multiEdgeList, int *multiEdgeListSize, int **multiEdgeOrbits, int *multiEdgeOrbitCount){
     DEBUGMSG("Start isCanonicalMultiEdge")
     if(v2<v1){
         int temp = v1;
@@ -893,20 +898,18 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2){
     nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
 
     int maxSize = ppgraph->multiEdgeCount;
-    VERTEXPAIR multiEdgeList[maxSize]; //initialize an array that is large enough to hold all multi-edges
-    int multiEdgeListSize;
-    get_multi_edges(ppgraph, multiEdgeList, &multiEdgeListSize);
+    *multiEdgeList = malloc(sizeof(VERTEXPAIR)*maxSize); //initialize an array that is large enough to hold all multi-edges
+    get_multi_edges(ppgraph, *multiEdgeList, multiEdgeListSize);
 
-    DEBUGASSERT(multiEdgeListSize == ppgraph->multiEdgeCount)
+    DEBUGASSERT(*multiEdgeListSize == ppgraph->multiEdgeCount)
 
-    int multiEdgeOrbitCount;
-    int multiEdgeOrbits[multiEdgeListSize];
-    determine_vertex_pairs_orbits(multiEdgeList, multiEdgeListSize, multiEdgeOrbits, &multiEdgeOrbitCount);
+    *multiEdgeOrbits = malloc(sizeof(int)*maxSize);
+    determine_vertex_pairs_orbits(*multiEdgeList, *multiEdgeListSize, *multiEdgeOrbits, multiEdgeOrbitCount);
 
     int i = 0;
-    while(i<multiEdgeListSize && !(multiEdgeList[i][0]==v1 && multiEdgeList[i][1]==v2)) i++;
-    DEBUGASSERT(i<multiEdgeListSize)
-    int newEdgeOrbit = multiEdgeOrbits[i]; //contains the number of the orbit of the edge (v1, v2)
+    while(i<*multiEdgeListSize && !((*multiEdgeList)[i][0]==v1 && (*multiEdgeList)[i][1]==v2)) i++;
+    DEBUGASSERT(i<*multiEdgeListSize)
+    int newEdgeOrbit = (*multiEdgeOrbits)[i]; //contains the number of the orbit of the edge (v1, v2)
 
     DEBUGMSG("End isCanonicalMultiEdge")
     return newEdgeOrbit==0;
@@ -930,8 +933,15 @@ void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
             DEBUGPPGRAPHPRINT(ppgraph)
             apply_deg2_operation1(ppgraph, edgeList[i][0], edgeList[i][1]);
 
-            if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1))
-                handle_deg2_operation_result(ppgraph);
+            VERTEXPAIR *multiEdgeList;
+            int multiEdgeListSize;
+            int *multiEdgeOrbits;
+            int multiEdgeOrbitCount;
+
+            if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1, &multiEdgeList, &multiEdgeListSize, &multiEdgeOrbits, &multiEdgeOrbitCount))
+                handle_deg2_operation_result(ppgraph, multiEdgeList, multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount);
+
+            //multiEdgeList and multiEdgeOrbits are freed in do_deg2_operations
 
             revert_deg2_operation1(ppgraph, edgeList[i][0], edgeList[i][1]);
             DEBUGPPGRAPHPRINT(ppgraph)
@@ -940,60 +950,86 @@ void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("End handle_deg2_operation1")
 }
 
-void handle_deg2_operation2(PRIMPREGRAPH *ppgraph){
+void handle_deg2_operation2(PRIMPREGRAPH *ppgraph,
+        VERTEXPAIR **oldMultiEdgeList, int *oldMultiEdgeListSize, int **oldMultiEdgeOrbits, int *oldMultiEdgeOrbitCount){
     DEBUGMSG("Start handle_deg2_operation2")
-    int maxSize = ppgraph->multiEdgeCount;
-    VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all multi-edges
-    int listSize;
-    get_multi_edges(ppgraph, edgeList, &listSize);
+    if(*oldMultiEdgeList==NULL){
+        //if the multi-edges have't been determined, do it now and store the result
+        int maxSize = ppgraph->multiEdgeCount;
+        *oldMultiEdgeList = malloc(sizeof(VERTEXPAIR)*maxSize);//initialize an array that is large enough to hold all multi-edges
 
-    int orbitCount;
-    int orbits[listSize];
-    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount);
+        
+        get_multi_edges(ppgraph, *oldMultiEdgeList, oldMultiEdgeListSize);
 
+        DEBUGASSERT(*oldMultiEdgeListSize == ppgraph->multiEdgeCount)
+
+        *oldMultiEdgeOrbits = malloc(sizeof(int)*maxSize);
+        determine_vertex_pairs_orbits(*oldMultiEdgeList, *oldMultiEdgeListSize, *oldMultiEdgeOrbits, oldMultiEdgeOrbitCount);
+    }
     int i;
-    for (i = 0; i < listSize; i++) {
-        if(orbits[i]==i){
+    for (i = 0; i < *oldMultiEdgeListSize; i++) {
+        if((*oldMultiEdgeOrbits)[i]==i){
             DEBUGPPGRAPHPRINT(ppgraph)
-            apply_deg2_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
+            apply_deg2_operation2(ppgraph, (*oldMultiEdgeList)[i][0], (*oldMultiEdgeList)[i][1]);
 
-            if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1))
-                handle_deg2_operation_result(ppgraph);
+            VERTEXPAIR *multiEdgeList;
+            int multiEdgeListSize;
+            int *multiEdgeOrbits;
+            int multiEdgeOrbitCount;
 
-            revert_deg2_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
+            if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1, &multiEdgeList, &multiEdgeListSize, &multiEdgeOrbits, &multiEdgeOrbitCount))
+                handle_deg2_operation_result(ppgraph, multiEdgeList, multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount);
+
+            //multiEdgeList and multiEdgeOrbits are freed in do_deg2_operations
+
+            revert_deg2_operation2(ppgraph, (*oldMultiEdgeList)[i][0], (*oldMultiEdgeList)[i][1]);
             DEBUGPPGRAPHPRINT(ppgraph)
         }
     }
-    DEBUGMSG("END handle_deg2_operation2")
+    DEBUGMSG("End handle_deg2_operation2")
 }
 
-void handle_deg2_operation3(PRIMPREGRAPH *ppgraph){
+void handle_deg2_operation3(PRIMPREGRAPH *ppgraph,
+        VERTEXPAIR **oldMultiEdgeList, int *oldMultiEdgeListSize, int **oldMultiEdgeOrbits, int *oldMultiEdgeOrbitCount){
     DEBUGMSG("Start handle_deg2_operation3")
-    int maxSize = ppgraph->multiEdgeCount;
-    VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all multi-edges
-    int listSize;
-    get_multi_edges(ppgraph, edgeList, &listSize);
+    if(*oldMultiEdgeList==NULL){
+        //if the multi-edges have't been determined, do it now and store the result
+        int maxSize = ppgraph->multiEdgeCount;
+        *oldMultiEdgeList = malloc(sizeof(VERTEXPAIR)*maxSize);//initialize an array that is large enough to hold all multi-edges
 
-    int orbitCount;
-    int orbits[listSize];
-    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount);
-    //TODO: the calculation above is done both for operation 2 and 3: avoid duplicating this work!!!
+        get_multi_edges(ppgraph, *oldMultiEdgeList, oldMultiEdgeListSize);
 
+        DEBUGASSERT(*oldMultiEdgeListSize == ppgraph->multiEdgeCount)
+
+        *oldMultiEdgeOrbits = malloc(sizeof(int)*maxSize);
+        determine_vertex_pairs_orbits(*oldMultiEdgeList, *oldMultiEdgeListSize, *oldMultiEdgeOrbits, oldMultiEdgeOrbitCount);
+    }
     int i;
-    for (i = 0; i < listSize; i++) {
-        if(orbits[i]==i){
+    for (i = 0; i < *oldMultiEdgeListSize; i++) {
+        if((*oldMultiEdgeOrbits)[i]==i){
             //check if the second neighbour of u and v aren't equal
             int x, y;
-            x = (ppgraph->adjList[edgeList[i][0]*3] == edgeList[i][1]) ? ppgraph->adjList[edgeList[i][0]*3+1] : ppgraph->adjList[edgeList[i][0]*3];
-            y = (ppgraph->adjList[edgeList[i][1]*3] == edgeList[i][0]) ? ppgraph->adjList[edgeList[i][1]*3+1] : ppgraph->adjList[edgeList[i][1]*3];
+            x = (ppgraph->adjList[(*oldMultiEdgeList)[i][0]*3] == (*oldMultiEdgeList)[i][1]) ?
+                ppgraph->adjList[(*oldMultiEdgeList)[i][0]*3+1] :
+                ppgraph->adjList[(*oldMultiEdgeList)[i][0]*3];
+            y = (ppgraph->adjList[(*oldMultiEdgeList)[i][1]*3] == (*oldMultiEdgeList)[i][0]) ?
+                ppgraph->adjList[(*oldMultiEdgeList)[i][1]*3+1] :
+                ppgraph->adjList[(*oldMultiEdgeList)[i][1]*3];
             if(x!=y){
                 DEBUGPPGRAPHPRINT(ppgraph)
-                apply_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
+                apply_deg2_operation3(ppgraph, (*oldMultiEdgeList)[i][0], (*oldMultiEdgeList)[i][1]);
 
-                if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1))
-                    handle_deg2_operation_result(ppgraph);
+                VERTEXPAIR *multiEdgeList;
+                int multiEdgeListSize;
+                int *multiEdgeOrbits;
+                int multiEdgeOrbitCount;
 
-                revert_deg2_operation3(ppgraph, edgeList[i][0], edgeList[i][1]);
+                if(isCanonicalMultiEdge(ppgraph, ppgraph->order-2, ppgraph->order-1, &multiEdgeList, &multiEdgeListSize, &multiEdgeOrbits, &multiEdgeOrbitCount))
+                    handle_deg2_operation_result(ppgraph, multiEdgeList, multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount);
+
+                //multiEdgeList and multiEdgeOrbits are freed in do_deg2_operations
+
+                revert_deg2_operation3(ppgraph, (*oldMultiEdgeList)[i][0], (*oldMultiEdgeList)[i][1]);
                 DEBUGPPGRAPHPRINT(ppgraph)
             }
         }
@@ -1017,13 +1053,18 @@ void do_deg1_operations(PRIMPREGRAPH *ppgraph){
  * Performs the different degree 2 operations. When this method returns &ppgraph
  * will be unchanged.
  */
-void do_deg2_operations(PRIMPREGRAPH *ppgraph){
+void do_deg2_operations(PRIMPREGRAPH *ppgraph,
+        VERTEXPAIR *multiEdgeList, int multiEdgeListSize, int *multiEdgeOrbits, int multiEdgeOrbitCount){
     DEBUGMSG("Start do_deg2_operations")
     DEBUGASSERT(allowMultiEdges)
     if(ppgraph->order<=maxVertexCount-2){
         handle_deg2_operation1(ppgraph);
-        handle_deg2_operation2(ppgraph);
-        handle_deg2_operation3(ppgraph);
+        //the orbits of the multi-edges are already determined, so we pass them on
+        handle_deg2_operation2(ppgraph, &multiEdgeList, &multiEdgeListSize, &multiEdgeOrbits, &multiEdgeOrbitCount);
+        handle_deg2_operation3(ppgraph, &multiEdgeList, &multiEdgeListSize, &multiEdgeOrbits, &multiEdgeOrbitCount);
+        //free the multiEdgeList and multiEdgeOrbits before returning
+        free(multiEdgeList);
+        free(multiEdgeOrbits);
     }
     DEBUGMSG("End do_deg2_operations")
 }
@@ -1038,7 +1079,7 @@ void grow(PRIMPREGRAPH *ppgraph){
         do_deg1_operations(ppgraph);
     }
     if(allowMultiEdges){
-        do_deg2_operations(ppgraph);
+        do_deg2_operations(ppgraph, NULL, 0, NULL, 0);
     }
     DEBUGMSG("End grow")
 }
