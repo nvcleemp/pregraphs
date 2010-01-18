@@ -146,15 +146,15 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph);
 void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph);
 void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph,
         VERTEXPAIR *multiEdgeList, int multiEdgeListSize, int *multiEdgeOrbits, int multiEdgeOrbitCount);
-void handle_deg1_operation1(PRIMPREGRAPH *ppgraph);
-void handle_deg1_operation2(PRIMPREGRAPH *ppgraph);
-void handle_deg2_operation1(PRIMPREGRAPH *ppgraph);
-void handle_deg2_operation2(PRIMPREGRAPH *ppgraph,
+void handle_deg1_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators);
+void handle_deg1_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators);
+void handle_deg2_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators);
+void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators,
         VERTEXPAIR **oldMultiEdgeList, int *oldMultiEdgeListSize, int **oldMultiEdgeOrbits, int *oldMultiEdgeOrbitCount);
-void handle_deg2_operation3(PRIMPREGRAPH *ppgraph,
+void handle_deg2_operation3(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators,
         VERTEXPAIR **oldMultiEdgeList, int *oldMultiEdgeListSize, int **oldMultiEdgeOrbits, int *oldMultiEdgeOrbitCount);
-void do_deg1_operations(PRIMPREGRAPH *ppgraph);
-void do_deg2_operations(PRIMPREGRAPH *ppgraph,
+void do_deg1_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators);
+void do_deg2_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators,
         VERTEXPAIR *multiEdgeList, int multiEdgeListSize, int *multiEdgeOrbits, int multiEdgeOrbitCount);
 void grow(PRIMPREGRAPH *ppgraph);
 void start();
@@ -166,5 +166,6 @@ void construct_K3_with_spike(PRIMPREGRAPH *ppgraph);
 
 void save_generators(int count, permutation perm[], nvector orbits[],
         int numorbits, int stabvertex, int n);
+void copy_generators(permutation (*copy)[MAXN][MAXN], int n);
 #endif	/* _PREGRAPHS_H */
 

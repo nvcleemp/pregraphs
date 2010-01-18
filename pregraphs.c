@@ -528,7 +528,7 @@ void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ver
  * belongs and orbitCount will contain the number of orbits.
  * The first two parameters are read-only, the last two are write-only.
  */
-void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairListSize, int *vertexPairOrbits, int *orbitCount){
+void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairListSize, int *vertexPairOrbits, int *orbitCount, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators){
     DEBUGMSG("Start determine_vertex_pairs_orbits")
     DEBUG2DARRAYDUMP(vertexPairList, vertexPairListSize, 2, "%d")
 
@@ -544,10 +544,9 @@ void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairLis
 
     permutation *permutation;
     VERTEXPAIR pair;
-    DEBUGDUMP(number_of_generators, "%d")
-    for(i = 0; i < number_of_generators; i++) {
-        //the generators were stored in the global variable generators by the method save_generators
-        permutation = generators[i];
+    DEBUGDUMP(currentNumberOfGenerators, "%d")
+    for(i = 0; i < currentNumberOfGenerators; i++) {
+        permutation = (*currentGenerators)[i];
         DEBUGARRAYDUMP(permutation, currentVertexCount, "%d")
 
         for(j = 0; j<vertexPairListSize; j++){
@@ -768,10 +767,25 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
         handle_primpregraph_result(ppgraph);
 
-    do_deg1_operations(ppgraph); //when this returns &ppgraph is unchanged
+    permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
+    int currentNumberOfGenerators = number_of_generators;
+    copy_generators(&currentGenerators, ppgraph->order);
+
+    #ifdef _DEBUG
+    //check that the generators were copied correctly
+    int i, j;
+    for(i=0; i<number_of_generators; i++){
+        for (j = 0; j < ppgraph->order; j++) {
+            DEBUGASSERT(currentGenerators[i][j]==generators[i][j])
+        }
+    }
+    DEBUG2DARRAYDUMP(currentGenerators, number_of_generators, ppgraph->order, "%d")
+    #endif
+
+    do_deg1_operations(ppgraph, &currentGenerators, currentNumberOfGenerators); //when this returns &ppgraph is unchanged
 
     if(allowMultiEdges){
-        do_deg2_operations(ppgraph, NULL, 0, NULL, 0);
+        do_deg2_operations(ppgraph, &currentGenerators, currentNumberOfGenerators, NULL, 0, NULL, 0);
     }
     DEBUGMSG("End handle_deg1_operation_result")
 }
@@ -788,7 +802,22 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph,
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
         handle_primpregraph_result(ppgraph);
 
-    do_deg2_operations(ppgraph, multiEdgeList, multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount);
+    permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
+    int currentNumberOfGenerators = number_of_generators;
+    copy_generators(&currentGenerators, ppgraph->order);
+
+    #ifdef _DEBUG
+    //check that the generators were copied correctly
+    int i, j;
+    for(i=0; i<number_of_generators; i++){
+        for (j = 0; j < ppgraph->order; j++) {
+            DEBUGASSERT(currentGenerators[i][j]==generators[i][j])
+        }
+    }
+    DEBUG2DARRAYDUMP(currentGenerators, number_of_generators, ppgraph->order, "%d")
+    #endif
+
+    do_deg2_operations(ppgraph, &currentGenerators, currentNumberOfGenerators, multiEdgeList, multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount);
     DEBUGMSG("End handle_deg2_operation_result")
 }
 
@@ -796,8 +825,9 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph,
  * Handles the first degree 1 operation, i.e. find all the degree 1 pairs, determine the orbits
  * apply the operation for each pair, handle the result and then revert the operation.
  */
-void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
+void handle_deg1_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators){
     DEBUGMSG("Start handle_deg1_operation1")
+    DEBUG2DARRAYDUMP((*currentGenerators), currentNumberOfGenerators, ppgraph->order, "%d")
     int maxSize = ppgraph->degree1Count*ppgraph->degree1Count/2;
     VERTEXPAIR deg1PairList[maxSize]; //initialize an array that is large enough to hold all the degree 1 pairs
     int listSize;
@@ -805,7 +835,7 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
 
     int orbitCount;
     int orbits[listSize];
-    determine_vertex_pairs_orbits(deg1PairList, listSize, orbits, &orbitCount);
+    determine_vertex_pairs_orbits(deg1PairList, listSize, orbits, &orbitCount, currentGenerators, currentNumberOfGenerators);
 
     int i;
     for (i = 0; i < listSize; i++) {
@@ -816,7 +846,10 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
             //the only deg 1 vertex after this operation is v. This is a valid action
             //if v belongs to the first orbit of degree 1 vertices
             int orbits[ppgraph->order];
+            DEBUGMSG("Start nauty")
+            number_of_generators = 0; //reset the generators
             nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+            DEBUGMSG("End nauty")
             int vOrbit = orbits[deg1PairList[i][1]];
             int j = 0;
             while(j<vOrbit && ppgraph->degree[j]>1) j++;
@@ -834,8 +867,9 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("End handle_deg1_operation1")
 }
 
-void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
+void handle_deg1_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators){
     DEBUGMSG("Start handle_deg1_operation2")
+    DEBUG2DARRAYDUMP((*currentGenerators), currentNumberOfGenerators, ppgraph->order, "%d")
     int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
     VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all single edges
     int listSize;
@@ -843,7 +877,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
 
     int orbitCount;
     int orbits[listSize];
-    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount);
+    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount, currentGenerators, currentNumberOfGenerators);
     //TODO: the calculation above is done both for degree 1 operation 2 and degree 2 operation 1: avoid duplicating this work!!!
     DEBUGARRAYDUMP(orbits, orbitCount, "%d")
 
@@ -859,6 +893,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
                 //if t belongs to the first orbit of degree 1 vertices
                 int orbits[ppgraph->order];
                 DEBUGMSG("Start nauty")
+                number_of_generators = 0; //reset the generators
                 nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
                 DEBUGMSG("End nauty")
                 DEBUGARRAYDUMP(orbits, ppgraph->order, "%d")
@@ -895,7 +930,10 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2,
         v2 = temp;
     }
     int orbits[ppgraph->order];
+    DEBUGMSG("Start nauty")
+    number_of_generators = 0; //reset the generators
     nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    DEBUGMSG("End nauty")
 
     int maxSize = ppgraph->multiEdgeCount;
     *multiEdgeList = malloc(sizeof(VERTEXPAIR)*maxSize); //initialize an array that is large enough to hold all multi-edges
@@ -904,7 +942,7 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2,
     DEBUGASSERT(*multiEdgeListSize == ppgraph->multiEdgeCount)
 
     *multiEdgeOrbits = malloc(sizeof(int)*maxSize);
-    determine_vertex_pairs_orbits(*multiEdgeList, *multiEdgeListSize, *multiEdgeOrbits, multiEdgeOrbitCount);
+    determine_vertex_pairs_orbits(*multiEdgeList, *multiEdgeListSize, *multiEdgeOrbits, multiEdgeOrbitCount, &generators, number_of_generators);
 
     int i = 0;
     while(i<*multiEdgeListSize && !((*multiEdgeList)[i][0]==v1 && (*multiEdgeList)[i][1]==v2)) i++;
@@ -916,8 +954,9 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2,
     //because multiEdgeList only contains the multi edges
 }
 
-void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
+void handle_deg2_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators){
     DEBUGMSG("Start handle_deg2_operation1")
+    DEBUG2DARRAYDUMP((*currentGenerators), currentNumberOfGenerators, ppgraph->order, "%d")
     int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
     VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all single edges
     int listSize;
@@ -925,7 +964,7 @@ void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
 
     int orbitCount;
     int orbits[listSize];
-    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount);
+    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount, currentGenerators, currentNumberOfGenerators);
 
     int i;
     for (i = 0; i < listSize; i++) {
@@ -950,9 +989,10 @@ void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("End handle_deg2_operation1")
 }
 
-void handle_deg2_operation2(PRIMPREGRAPH *ppgraph,
+void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators,
         VERTEXPAIR **oldMultiEdgeList, int *oldMultiEdgeListSize, int **oldMultiEdgeOrbits, int *oldMultiEdgeOrbitCount){
     DEBUGMSG("Start handle_deg2_operation2")
+    DEBUG2DARRAYDUMP((*currentGenerators), currentNumberOfGenerators, ppgraph->order, "%d")
     if(*oldMultiEdgeList==NULL){
         //if the multi-edges have't been determined, do it now and store the result
         int maxSize = ppgraph->multiEdgeCount;
@@ -964,7 +1004,7 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph,
         DEBUGASSERT(*oldMultiEdgeListSize == ppgraph->multiEdgeCount)
 
         *oldMultiEdgeOrbits = malloc(sizeof(int)*maxSize);
-        determine_vertex_pairs_orbits(*oldMultiEdgeList, *oldMultiEdgeListSize, *oldMultiEdgeOrbits, oldMultiEdgeOrbitCount);
+        determine_vertex_pairs_orbits(*oldMultiEdgeList, *oldMultiEdgeListSize, *oldMultiEdgeOrbits, oldMultiEdgeOrbitCount, currentGenerators, currentNumberOfGenerators);
     }
     int i;
     for (i = 0; i < *oldMultiEdgeListSize; i++) {
@@ -989,9 +1029,10 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph,
     DEBUGMSG("End handle_deg2_operation2")
 }
 
-void handle_deg2_operation3(PRIMPREGRAPH *ppgraph,
+void handle_deg2_operation3(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators,
         VERTEXPAIR **oldMultiEdgeList, int *oldMultiEdgeListSize, int **oldMultiEdgeOrbits, int *oldMultiEdgeOrbitCount){
     DEBUGMSG("Start handle_deg2_operation3")
+    DEBUG2DARRAYDUMP((*currentGenerators), currentNumberOfGenerators, ppgraph->order, "%d")
     if(*oldMultiEdgeList==NULL){
         //if the multi-edges have't been determined, do it now and store the result
         int maxSize = ppgraph->multiEdgeCount;
@@ -1002,7 +1043,7 @@ void handle_deg2_operation3(PRIMPREGRAPH *ppgraph,
         DEBUGASSERT(*oldMultiEdgeListSize == ppgraph->multiEdgeCount)
 
         *oldMultiEdgeOrbits = malloc(sizeof(int)*maxSize);
-        determine_vertex_pairs_orbits(*oldMultiEdgeList, *oldMultiEdgeListSize, *oldMultiEdgeOrbits, oldMultiEdgeOrbitCount);
+        determine_vertex_pairs_orbits(*oldMultiEdgeList, *oldMultiEdgeListSize, *oldMultiEdgeOrbits, oldMultiEdgeOrbitCount, currentGenerators, currentNumberOfGenerators);
     }
     int i;
     for (i = 0; i < *oldMultiEdgeListSize; i++) {
@@ -1041,11 +1082,11 @@ void handle_deg2_operation3(PRIMPREGRAPH *ppgraph,
  * Performs the different degree 1 operations. When this method returns &ppgraph
  * will be unchanged.
  */
-void do_deg1_operations(PRIMPREGRAPH *ppgraph){
+void do_deg1_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators){
     DEBUGMSG("Start do_deg1_operations")
     DEBUGASSERT(allowLoops || allowSemiEdges)
-    if(ppgraph->order<=maxVertexCount) handle_deg1_operation1(ppgraph);
-    if(ppgraph->order<=maxVertexCount-2) handle_deg1_operation2(ppgraph);
+    if(ppgraph->order<=maxVertexCount) handle_deg1_operation1(ppgraph, currentGenerators, currentNumberOfGenerators);
+    if(ppgraph->order<=maxVertexCount-2) handle_deg1_operation2(ppgraph, currentGenerators, currentNumberOfGenerators);
     DEBUGMSG("End do_deg1_operations")
 }
 
@@ -1053,15 +1094,15 @@ void do_deg1_operations(PRIMPREGRAPH *ppgraph){
  * Performs the different degree 2 operations. When this method returns &ppgraph
  * will be unchanged.
  */
-void do_deg2_operations(PRIMPREGRAPH *ppgraph,
+void do_deg2_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators,
         VERTEXPAIR *multiEdgeList, int multiEdgeListSize, int *multiEdgeOrbits, int multiEdgeOrbitCount){
     DEBUGMSG("Start do_deg2_operations")
     DEBUGASSERT(allowMultiEdges)
     if(ppgraph->order<=maxVertexCount-2){
-        handle_deg2_operation1(ppgraph);
+        handle_deg2_operation1(ppgraph, currentGenerators, currentNumberOfGenerators);
         //the orbits of the multi-edges are already determined, so we pass them on
-        handle_deg2_operation2(ppgraph, &multiEdgeList, &multiEdgeListSize, &multiEdgeOrbits, &multiEdgeOrbitCount);
-        handle_deg2_operation3(ppgraph, &multiEdgeList, &multiEdgeListSize, &multiEdgeOrbits, &multiEdgeOrbitCount);
+        handle_deg2_operation2(ppgraph, currentGenerators, currentNumberOfGenerators, &multiEdgeList, &multiEdgeListSize, &multiEdgeOrbits, &multiEdgeOrbitCount);
+        handle_deg2_operation3(ppgraph, currentGenerators, currentNumberOfGenerators, &multiEdgeList, &multiEdgeListSize, &multiEdgeOrbits, &multiEdgeOrbitCount);
         //free the multiEdgeList and multiEdgeOrbits before returning
         free(multiEdgeList);
         free(multiEdgeOrbits);
@@ -1072,14 +1113,31 @@ void do_deg2_operations(PRIMPREGRAPH *ppgraph,
 void grow(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("Start grow")
     int orbits[ppgraph->order];
+    DEBUGMSG("Start nauty")
+    number_of_generators = 0; //reset the generators
     nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    DEBUGMSG("End nauty")
     //the generators for these start graphs need to be calculated
+    permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
+    int currentNumberOfGenerators = number_of_generators;
+    copy_generators(&currentGenerators, ppgraph->order);
+
+    #ifdef _DEBUG
+    //check that the generators were copied correctly
+    int i, j;
+    for(i=0; i<number_of_generators; i++){
+        for (j = 0; j < ppgraph->order; j++) {
+            DEBUGASSERT(currentGenerators[i][j]==generators[i][j])
+        }
+    }
+    DEBUG2DARRAYDUMP(currentGenerators, number_of_generators, ppgraph->order, "%d")
+    #endif
 
     if(allowLoops || allowSemiEdges){
-        do_deg1_operations(ppgraph);
+        do_deg1_operations(ppgraph, &currentGenerators, currentNumberOfGenerators);
     }
     if(allowMultiEdges){
-        do_deg2_operations(ppgraph, NULL, 0, NULL, 0);
+        do_deg2_operations(ppgraph, &currentGenerators, currentNumberOfGenerators, NULL, 0, NULL, 0);
     }
     DEBUGMSG("End grow")
 }
@@ -1133,6 +1191,7 @@ void construct_K2(PRIMPREGRAPH *ppgraph){
     EMPTYSET(g1, MAXM);
     ADDELEMENT(g0, 1);
     ADDELEMENT(g1, 0);
+    DEBUGMSG("Created K2")
 }
 
 /*
@@ -1176,6 +1235,7 @@ void construct_C4(PRIMPREGRAPH *ppgraph){
     ADDELEMENT(g1, 0); ADDELEMENT(g1, 2);
     ADDELEMENT(g2, 1); ADDELEMENT(g2, 3);
     ADDELEMENT(g3, 2); ADDELEMENT(g3, 0);
+    DEBUGMSG("Created C4")
 }
 
 /*    o
@@ -1216,6 +1276,7 @@ void construct_K3_with_spike(PRIMPREGRAPH *ppgraph){
     ADDELEMENT(g1, 0); ADDELEMENT(g1, 2);
     ADDELEMENT(g2, 1); ADDELEMENT(g2, 0);
     ADDELEMENT(g3, 0);
+    DEBUGMSG("Created K3 with spike")
 }
 
 //-------------------------End start graphs------------------------------
@@ -1226,8 +1287,11 @@ void init_nauty_options() {
     //TODO also options without getcanon?
     options.getcanon = TRUE;
     options.userautomproc = save_generators;
+    #ifdef _DEBUG
     options.writeautoms = TRUE;
     //options.writemarkers = TRUE;
+    options.outfile = stderr;
+    #endif
 }
 
 void save_generators(int count, permutation perm[], nvector orbits[],
@@ -1235,6 +1299,13 @@ void save_generators(int count, permutation perm[], nvector orbits[],
     memcpy(generators + number_of_generators, perm, sizeof(permutation) * n);
 
     number_of_generators++;
+}
+
+void copy_generators(permutation (*copy)[MAXN][MAXN], int n) {
+    int i;
+    for(i=0; i<number_of_generators; i++){
+        memcpy((*copy) + i, generators + i, sizeof(permutation) * n);
+    }
 }
 
 //------------------------End Nauty interaction-------------------------
@@ -1248,6 +1319,7 @@ void save_generators(int count, permutation perm[], nvector orbits[],
  *
  */
 int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
+    init_nauty_options();
     structureCount=0;
     allowLoops = TRUE;
     allowMultiEdges = TRUE;
