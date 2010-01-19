@@ -20,7 +20,7 @@
 #define DEBUGMSG(msg) fprintf(stderr, "%s:%u %s\n", __FILE__, __LINE__, msg); fflush(stderr);
 
 
-#define DEBUGCONDITIONALMSG(condition, msg) if(condition) fprintf(stderr, "%s:%u %s\n", __FILE__, __LINE__, msg); fflush(stderr);
+#define DEBUGCONDITIONALMSG(condition, msg) if(condition){ fprintf(stderr, "%s:%u %s\n", __FILE__, __LINE__, msg); fflush(stderr);}
 
 #define DEBUGDUMP(var, format) fprintf(stderr, "%s:%u %s=" format "\n", __FILE__, __LINE__, #var, var); fflush(stderr);
 
