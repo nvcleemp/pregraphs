@@ -782,10 +782,23 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     if(semiEdgeCount>0){
         int position = 0;
         set tempSet[MAXM];
+        EMPTYSET(tempSet, MAXM);
         determine_possible_sets_of_degree1_vertices(tempSet, vertexSetList, &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph);
         DEBUGDUMP(position, "%d")
         DEBUGDUMP(listSize, "%d")
         DEBUGASSERT(position==listSize)
+        #ifdef _DEBUG
+        // print the sets
+        for(i=0;i<listSize;i++){
+            fprintf(stderr, "%s:%u set %d= [", __FILE__, __LINE__, i);
+            int l;
+            for(l=-1; (l = nextelement(vertexSetList + i*MAXM, MAXM, l)) >=0;){
+                fprintf(stderr, "%d ", l);
+            }
+            fprintf(stderr, "]\n");
+        }
+        #endif
+
     } //else: listsize is already 1 and that set is already empty
 
     int orbitCount;
@@ -823,7 +836,10 @@ void determine_possible_sets_of_degree1_vertices
         DEBUGDUMP(currentSetElement, "%d added")
         if(currentSetSize + 1 == maximumSetSize){
             //add to list
-            vertexSetList[*currentListPosition] = *tempSet;
+            int i;
+            for(i=0;i<MAXM;i++){
+                vertexSetList[(*currentListPosition)*MAXM+i] = tempSet[i];
+            }
             (*currentListPosition)++;
         } else {
             determine_possible_sets_of_degree1_vertices
