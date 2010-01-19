@@ -656,7 +656,49 @@ int find_root_of_element(int *forest, int element) {
     return forest[element];
 }
 
-//--------------------------------------------------------------------
+//--------------------OUTPUT------------------------------------
+
+char writePregraphTable(FILE *f, PREGRAPH *pregraph) {
+    fprintf(f, "==============================\n");
+    fprintf(f, "|  Graph number: %10ld  |\n", structureCount);
+    fprintf(f, "|  Number of vertices: %4d  |\n", pregraph->order);
+    fprintf(f, "==============================\n");
+    
+    unsigned short i, j;
+    PRIMPREGRAPH *ppgraph = pregraph->ppgraph;
+    int primPregraph2Pregraph[ppgraph->order];
+    j = 1; //vertices are labeled starting from 1
+    for (i = 0; i < ppgraph->order; i++) {
+        if (ISELEMENT(pregraph->semiEdgeVertices, i)) {
+            primPregraph2Pregraph[i] = pregraph->order + 1;
+        } else {
+            primPregraph2Pregraph[i] = j++;
+        }
+    }
+    for (i = 0; i < ppgraph->order; i++) {
+        if (primPregraph2Pregraph[i] != pregraph->order + 1) { //don't write vertices that correspond to semi-edges
+            fprintf(f, "|%4d ||", primPregraph2Pregraph[i]);
+            for (j = 0; j < ppgraph->degree[i]; j++) {
+                if(primPregraph2Pregraph[ppgraph->adjList[i * 3 + j]] == pregraph->order + 1){
+                    fprintf(f, "    S |");
+                } else {
+                    fprintf(f, " %4d |", primPregraph2Pregraph[ppgraph->adjList[i * 3 + j]]);
+                }
+            }
+            if (j == 1) {
+                //add loop
+                fprintf(f, "    L |      |");
+            } else if (j == 2) {
+                //add multi-edge
+                fprintf(f, " %4d |", primPregraph2Pregraph[ppgraph->multiedge[i]]);
+            }
+            fprintf(f,"|\n");
+        }
+    }    
+    fprintf(f, "==============================\n");
+    fprintf(f,"\n");
+    return (ferror(f) ? 2 : 1);
+}
 
 char write_2byte_number(FILE *f, unsigned short n, short writeEndian) {
     if (writeEndian == BIG_ENDIAN) {
@@ -667,7 +709,7 @@ char write_2byte_number(FILE *f, unsigned short n, short writeEndian) {
     return (ferror(f) ? 2 : 1);
 }
 
-char writePregraphCode(FILE *f, PREGRAPH *pregraph, boolean header) {
+char writePregraphCode(FILE *f, PREGRAPH *pregraph) {
     unsigned short i, j;
     PRIMPREGRAPH *ppgraph = pregraph->ppgraph;
     unsigned short primPregraph2Pregraph[ppgraph->order];
@@ -679,7 +721,7 @@ char writePregraphCode(FILE *f, PREGRAPH *pregraph, boolean header) {
             primPregraph2Pregraph[i] = j++;
         }
     }
-    if (header) {
+    if (structureCount == 1) { //if first graph
         fprintf(f, ">>pregraph_code %s<<", (endian == LITTLE_ENDIAN ? "le" : "be"));
     }
     if (pregraph->order + 1 <= UCHAR_MAX) {
@@ -711,14 +753,23 @@ char writePregraphCode(FILE *f, PREGRAPH *pregraph, boolean header) {
                         return (2);
                     }
                 }
+            } else if (j == 2) {
+                //add multi-edge
+                if (pregraph->order + 1 <= UCHAR_MAX) {
+                    fprintf(f, "%c", (unsigned char) primPregraph2Pregraph[ppgraph->multiedge[i]]);
+                } else {
+                    if (write_2byte_number(f, primPregraph2Pregraph[ppgraph->multiedge[i]], endian) == 2) {
+                        return (2);
+                    }
+                }
             }
-        }
-        //closing 0
-        if (pregraph->order + 1 <= UCHAR_MAX) {
-            fprintf(f, "%c", 0);
-        } else {
-            if (write_2byte_number(f, 0, endian) == 2) {
-                return (2);
+            //closing 0
+            if (pregraph->order + 1 <= UCHAR_MAX) {
+                fprintf(f, "%c", 0);
+            } else {
+                if (write_2byte_number(f, 0, endian) == 2) {
+                    return (2);
+                }
             }
         }
     }
@@ -740,7 +791,7 @@ void write_pregraph(PREGRAPH *pregraph, FILE *file){
 void handle_pregraph_result(PREGRAPH *pregraph){
     DEBUGMSG("Start handle_pregraph_result")
     structureCount++;
-    if (writePregraphCode(stdout, pregraph, structureCount == 1) == 2) {
+    if (writePregraphTable(stdout, pregraph) == 2) {
         fprintf(stderr, "Error while writing graph %ld\n", structureCount);
         exit(1);
     }
