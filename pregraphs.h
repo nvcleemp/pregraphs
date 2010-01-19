@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <limits.h>
 
 #ifdef _TEST
     #include "tests.h"
@@ -96,6 +97,8 @@ int currentVertexCount;
 int minVertexCount;
 int maxVertexCount;
 long structureCount;
+
+short endian = LITTLE_ENDIAN; // defines which endian should be used while exporting pregraph code
 
 boolean onlyCount = FALSE; /* TRUE if the graphs don't need to be outputted*/
 boolean allowLoops = FALSE; /* TRUE if loops are allowed*/

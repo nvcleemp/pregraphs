@@ -658,9 +658,92 @@ int find_root_of_element(int *forest, int element) {
 
 //--------------------------------------------------------------------
 
+char write_2byte_number(FILE *f, unsigned short n, short writeEndian) {
+    if (writeEndian == BIG_ENDIAN) {
+        fprintf(f, "%c%c", n / 256, n % 256);
+    } else {
+        fprintf(f, "%c%c", n % 256, n / 256);
+    }
+    return (ferror(f) ? 2 : 1);
+}
+
+char writePregraphCode(FILE *f, PREGRAPH *pregraph, boolean header) {
+    unsigned short i, j;
+    PRIMPREGRAPH *ppgraph = pregraph->ppgraph;
+    unsigned short primPregraph2Pregraph[ppgraph->order];
+    j = 1; //vertices are labeled starting from 1
+    for (i = 0; i < ppgraph->order; i++) {
+        if (ISELEMENT(pregraph->semiEdgeVertices, i)) {
+            primPregraph2Pregraph[i] = pregraph->order + 1;
+        } else {
+            primPregraph2Pregraph[i] = j++;
+        }
+    }
+    if (header) {
+        fprintf(f, ">>pregraph_code %s<<", (endian == LITTLE_ENDIAN ? "le" : "be"));
+    }
+    if (pregraph->order + 1 <= UCHAR_MAX) {
+        fprintf(f, "%c", (unsigned char) pregraph->order);
+    } else {
+        fprintf(f, "%c", 0);
+        /* big graph */
+        if (write_2byte_number(f, (unsigned short) pregraph->order, endian) == 2) {
+            return (2);
+        }
+    }
+    for (i = 0; i < ppgraph->order; i++) {
+        if (primPregraph2Pregraph[i] != pregraph->order + 1) { //don't write vertices that correspond to semi-edges
+            for (j = 0; j < ppgraph->degree[i]; j++) {
+                if (pregraph->order + 1 <= UCHAR_MAX) {
+                    fprintf(f, "%c", (unsigned char) primPregraph2Pregraph[ppgraph->adjList[i * 3 + j]]);
+                } else {
+                    if (write_2byte_number(f, primPregraph2Pregraph[ppgraph->adjList[i * 3 + j]], endian) == 2) {
+                        return (2);
+                    }
+                }
+            }
+            if (j == 1) {
+                //add loop
+                if (pregraph->order + 1 <= UCHAR_MAX) {
+                    fprintf(f, "%c", (unsigned char) primPregraph2Pregraph[i]);
+                } else {
+                    if (write_2byte_number(f, primPregraph2Pregraph[i], endian) == 2) {
+                        return (2);
+                    }
+                }
+            }
+        }
+        //closing 0
+        if (pregraph->order + 1 <= UCHAR_MAX) {
+            fprintf(f, "%c", 0);
+        } else {
+            if (write_2byte_number(f, 0, endian) == 2) {
+                return (2);
+            }
+        }
+    }
+    return (ferror(f) ? 2 : 1);
+}
+
+/*
+void write_pregraph(PREGRAPH *pregraph, FILE *file){
+    fprintf(file, "%d ", pregraph->order);
+    int i, j;
+    for (i = 0; i < pregraph->order; i++) {
+        for (j = 0; j < (pregraph->ppgraph)->degree[i]; j++) {
+        }
+        fprintf(file, "0 ", pregraph->order);
+    }
+}
+*/
+
 void handle_pregraph_result(PREGRAPH *pregraph){
     DEBUGMSG("Start handle_pregraph_result")
     structureCount++;
+    if (writePregraphCode(stdout, pregraph, structureCount == 1) == 2) {
+        fprintf(stderr, "Error while writing graph %ld\n", structureCount);
+        exit(1);
+    }
     DEBUGMSG("End handle_pregraph_result")
 }
 
