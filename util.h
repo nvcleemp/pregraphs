@@ -25,12 +25,19 @@
 #define DEBUGDUMP(var, format) { fprintf(stderr, "%s:%u %s=" format "\n", __FILE__, __LINE__, #var, var); fflush(stderr); }
 
 #define DEBUGARRAYDUMP(var, size, format) { \
-                                            fprintf(stderr, "%s:%u %s= [" format, __FILE__, __LINE__, #var, var[0]);\
-                                            int debugarraydumpcounter;\
-                                            for(debugarraydumpcounter=1; debugarraydumpcounter<size-1; debugarraydumpcounter++){ \
-                                                fprintf(stderr, ", " format, var[debugarraydumpcounter]);\
+                                            if(size > 0) {\
+                                                fprintf(stderr, "%s:%u %s= [" format, __FILE__, __LINE__, #var, var[0]);\
+                                                if(size > 1) {\
+                                                    int debugarraydumpcounter;\
+                                                    for(debugarraydumpcounter=1; debugarraydumpcounter<size-1; debugarraydumpcounter++){ \
+                                                        fprintf(stderr, ", " format, var[debugarraydumpcounter]);\
+                                                    }\
+                                                    fprintf(stderr, ", " format "]", var[size-1]);\
+                                                 }\
+                                                 fprintf(stderr,"\n"); fflush(stderr);\
+                                            } else {\
+                                                fprintf(stderr, "%s:%u %s= []\n", __FILE__, __LINE__, #var);\
                                             }\
-                                            fprintf(stderr, ", " format "]\n", var[size-1]); fflush(stderr);\
                                           }
 
 #define DEBUG2DARRAYDUMP(var, size1, size2, format) { \
