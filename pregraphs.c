@@ -791,9 +791,29 @@ void write_pregraph(PREGRAPH *pregraph, FILE *file){
 void handle_pregraph_result(PREGRAPH *pregraph){
     DEBUGMSG("Start handle_pregraph_result")
     structureCount++;
-    if (writePregraphTable(stdout, pregraph) == 2) {
-        fprintf(stderr, "Error while writing graph %ld\n", structureCount);
-        exit(1);
+    if(outputType != 'n'){
+        FILE *file = stdout;
+        if(outputFile != NULL){
+            file = fopen(outputFile, "a");
+            DEBUGMSG("Opened file")
+        }
+
+        if(outputType == 'h'){
+            if (writePregraphTable(file, pregraph) == 2) {
+                fprintf(stderr, "Error while writing graph %ld\n", structureCount);
+                exit(1);
+            }
+        } else if(outputType == 'p'){
+            if (writePregraphCode(file, pregraph) == 2) {
+                fprintf(stderr, "Error while writing graph %ld\n", structureCount);
+                exit(1);
+            }
+        }
+
+        if(outputFile != NULL){
+            fclose(file);
+            DEBUGMSG("Closed file")
+        }
     }
     DEBUGMSG("End handle_pregraph_result")
 }
@@ -1294,6 +1314,7 @@ void grow(PRIMPREGRAPH *ppgraph){
 
 void start(){
     DEBUGMSG("Start start")
+    structureCount=0;
     if(!allowSemiEdges){
         minVertexCount = maxVertexCount = vertexCount;
     } else {
@@ -1460,6 +1481,32 @@ void copy_generators(permutation (*copy)[MAXN][MAXN], int n) {
 
 //------------------------End Nauty interaction-------------------------
 
+/*
+print a usage message. name is the name of the current program.
+ */
+void usage(char *name) {
+    fprintf(stderr, "Usage: %s [options] n\n", name);
+    fprintf(stderr, "For more information type: %s -h \n\n", name);
+}
+
+/*
+print a help message. name is the name of the current program.
+ */
+void help(char *name) {
+    fprintf(stderr, "The program %s calculates canonical pregraphs of a given order n.\n", name);
+    fprintf(stderr, "Usage: %s [options] n \n\n", name);
+    fprintf(stderr, "Valid options:\n");
+    fprintf(stderr, "  -h          : Print this help and return.\n");
+    fprintf(stderr, "  -L          : Allow loops.\n");
+    fprintf(stderr, "  -S          : Allow semi-edges.\n");
+    fprintf(stderr, "  -M          : Allow multi-edges.\n");
+    fprintf(stderr, "  -f file     : Specifies the output file. If absent, the output is written to standard out.\n");
+    fprintf(stderr, "  -o c        : Specifies the export format where c is one of\n");
+    fprintf(stderr, "                p    planar code\n");
+    fprintf(stderr, "                h    human-readable output in tabular format\n");
+    fprintf(stderr, "                n    no output: only count (default)\n");
+}
+
 #ifdef PREGRAPH_NO_MAIN
     #define PREGRAPH_MAIN_FUNCTION pregraphnomain
 #else
@@ -1469,16 +1516,81 @@ void copy_generators(permutation (*copy)[MAXN][MAXN], int n) {
  *
  */
 int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
+
+    /*=========== commandline parsing ===========*/
+
+    int c;
+    char *name = argv[0];
+
+    while ((c = getopt(argc, argv, "LSMf:o:h")) != -1) {
+        switch (c) {
+            case 'L': //(defaults to FALSE)
+                allowLoops = TRUE;
+                break;
+            case 'S': //(defaults to FALSE)
+                allowSemiEdges = TRUE;
+                break;
+            case 'M': //(defaults to FALSE)
+                allowMultiEdges = TRUE;
+                break;
+            case 'f': //(defaults to stdout)
+                outputFile = optarg;
+                break;
+            case 'o':
+                outputType = optarg[0];
+                switch (outputType) {
+                    case 'n': //no output (default)
+                    case 'p': //pregraph code
+                    case 'h': //human-readable
+                        break;
+                    default:
+                        usage(name);
+                        return 1;
+                }
+                break;
+            case 'h':
+                help(name);
+                return EXIT_SUCCESS;
+            default:
+                usage(name);
+                return EXIT_FAILURE;
+        }
+    }
+
+    // check the non-option arguments
+    if (argc - optind != 1) {
+        usage(name);
+        return EXIT_FAILURE;
+    }
+
+    //parse the order
+    vertexCount = strtol(argv[optind], NULL, 10);
+    DEBUGDUMP(vertexCount, "%d")
+
+    /*=========== initialization ===========*/
+
+    if(outputFile != NULL){
+        //To make sure the output appears in a new file instead of being appended to an existing file
+        FILE *file = fopen(outputFile, "w");
+        fclose(file);
+    }
+
+    #ifdef _DEBUG
+        fprintf(stderr, "%s:%u MAXN: %d and MAXM: %d \n", __FILE__, __LINE__, MAXN, MAXM);
+        fprintf(stderr, "%s:%u Wordsize: %d \n", __FILE__, __LINE__, WORDSIZE);
+        fprintf(stderr, "%s:%u Default workspacesize %d \n", __FILE__, __LINE__, WORKSIZE);
+    #endif
+
+    nauty_check(WORDSIZE, 1, 30, NAUTYVERSIONID);
+    
     init_nauty_options();
-    structureCount=0;
-    allowLoops = TRUE;
-    allowMultiEdges = TRUE;
-    allowSemiEdges = TRUE;
-    vertexCount = 6;
+
+    /*=========== generation ===========*/
+
     start();
 
     fprintf(stderr, "Found %ld structures.\n", structureCount);
 
-    return (EXIT_SUCCESS);
+    return EXIT_SUCCESS;
 }
 
