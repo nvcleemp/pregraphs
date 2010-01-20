@@ -47,6 +47,18 @@
                                             fprintf(stderr, "\n");\
                                         }\
                                         fprintf(stderr, "==========================\n");\
+                                        fprintf(stderr, "Nauty:\n");\
+                                        for(debugppgraphprintcounter=0;debugppgraphprintcounter<(ppgraph)->order;debugppgraphprintcounter++){\
+                                            set *debugGraphRow;\
+                                            debugGraphRow = GRAPHROW((ppgraph)->ulgraph, debugppgraphprintcounter, MAXM);\
+                                            fprintf(stderr, "%2d) ", debugppgraphprintcounter);\
+                                            int debugppgraphprintcounter2;\
+                                            for(debugppgraphprintcounter2=-1;(debugppgraphprintcounter2 = nextelement(debugGraphRow, MAXM, debugppgraphprintcounter2)) >=0;){\
+                                                fprintf(stderr, "%2d ", debugppgraphprintcounter2);\
+                                            }\
+                                            fprintf(stderr, "\n");\
+                                        }\
+                                        fprintf(stderr, "==========================\n");\
                                         fflush(stderr);\
                                     }
 
