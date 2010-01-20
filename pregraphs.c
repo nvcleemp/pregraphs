@@ -86,13 +86,16 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->adjList[v*3]=u;
     ppgraph->degree1Count--;
 
-    set *gu, *gv;
+    set *gu, *gv, *gt;
     gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
     gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
+    gt = GRAPHROW(ppgraph->ulgraph, t, MAXM);
     ADDELEMENT(gu, v);
     DELELEMENT(gv,t);
     ADDELEMENT(gv,u);
     ADDELEMENT(gu,t);
+    DELELEMENT(gt,v);
+    ADDELEMENT(gt,u);
     DEBUGMSG("End apply_deg1_operation1")
 }
 
@@ -110,13 +113,16 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ppgraph->adjList[t*3+i]=v;
     ppgraph->degree1Count++;
     
-    set *gu, *gv;
+    set *gu, *gv, *gt;
     gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
     gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
+    gt = GRAPHROW(ppgraph->ulgraph, t, MAXM);
     DELELEMENT(gv, u);
-    ADDELEMENT(gv, ppgraph->adjList[u*3+2]);
+    ADDELEMENT(gv, t);
     DELELEMENT(gu, v);
-    DELELEMENT(gu, ppgraph->adjList[u*3+2]);
+    DELELEMENT(gu, t);
+    ADDELEMENT(gt, v);
+    DELELEMENT(gt, u);
     DEBUGMSG("End revert_deg1_operation1")
 }
 
@@ -950,7 +956,8 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
             DEBUGASSERT(currentGenerators[i][j]==generators[i][j])
         }
     }
-    DEBUG2DARRAYDUMP(currentGenerators, number_of_generators, ppgraph->order, "%d")
+    DEBUGDUMP(currentNumberOfGenerators, "%d")
+    DEBUG2DARRAYDUMP(currentGenerators, currentNumberOfGenerators, ppgraph->order, "%d")
     #endif
 
     do_deg1_operations(ppgraph, &currentGenerators, currentNumberOfGenerators); //when this returns &ppgraph is unchanged
