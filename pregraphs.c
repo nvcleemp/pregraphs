@@ -791,6 +791,7 @@ void write_pregraph(PREGRAPH *pregraph, FILE *file){
 void handle_pregraph_result(PREGRAPH *pregraph){
     DEBUGMSG("Start handle_pregraph_result")
     structureCount++;
+    DEBUGDUMP(structureCount, "%ld")
     if(outputType != 'n'){
         FILE *file = stdout;
         if(outputFile != NULL){
