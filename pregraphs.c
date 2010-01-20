@@ -90,9 +90,9 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
     gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
     ADDELEMENT(gu, v);
-    DELELEMENT(gv,ppgraph->adjList[v*3]);
+    DELELEMENT(gv,t);
     ADDELEMENT(gv,u);
-    ADDELEMENT(gu,ppgraph->adjList[v*3]);
+    ADDELEMENT(gu,t);
     DEBUGMSG("End apply_deg1_operation1")
 }
 
