@@ -1277,7 +1277,15 @@ void do_deg2_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[
         VERTEXPAIR *multiEdgeList, int multiEdgeListSize, int *multiEdgeOrbits, int multiEdgeOrbitCount){
     DEBUGMSG("Start do_deg2_operations")
     DEBUGASSERT(allowMultiEdges)
-    if(ppgraph->order<=maxVertexCount-2){
+
+    boolean stillPossible = ppgraph->order<=maxVertexCount-2;
+    if(stillPossible && !allowSemiEdges){ //the degree 2 operations preserve the parity
+        stillPossible = (ppgraph->order%2 == vertexCount%2);
+    }
+    if(stillPossible){ //if we turn all the degree 1 vertices into semi-edges and we still have too much vertices, then we can stop
+        stillPossible = ppgraph->order - ppgraph->degree1Count + 2 <= vertexCount;
+    }
+    if(stillPossible){
         handle_deg2_operation1(ppgraph, currentGenerators, currentNumberOfGenerators);
         //the orbits of the multi-edges are already determined, so we pass them on
         handle_deg2_operation2(ppgraph, currentGenerators, currentNumberOfGenerators, &multiEdgeList, &multiEdgeListSize, &multiEdgeOrbits, &multiEdgeOrbitCount);
