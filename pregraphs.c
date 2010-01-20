@@ -1336,7 +1336,7 @@ void start(){
         minVertexCount = maxVertexCount = vertexCount;
     } else {
         minVertexCount = vertexCount;
-        maxVertexCount = 2*vertexCount; //TODO: better and correct(?) upperbound
+        maxVertexCount = 2*vertexCount+2;
     }
     DEBUGDUMP(minVertexCount, "%d")
     DEBUGDUMP(maxVertexCount, "%d")
