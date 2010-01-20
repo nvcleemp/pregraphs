@@ -1016,12 +1016,13 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
 
             //the only deg 1 vertex after this operation is v. This is a valid action
             //if v belongs to the first orbit of degree 1 vertices
-            int orbits[ppgraph->order];
+            int vOrbits[ppgraph->order];
             DEBUGMSG("Start nauty")
             number_of_generators = 0; //reset the generators
-            nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+            nauty(ppgraph->ulgraph, lab, ptn, NULL, vOrbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
             DEBUGMSG("End nauty")
-            int vOrbit = orbits[deg1PairList[i][1]];
+            DEBUGARRAYDUMP(vOrbits, ppgraph->order, "%d")
+            int vOrbit = vOrbits[deg1PairList[i][1]];
             int j = 0;
             while(j<vOrbit && ppgraph->degree[j]>1) j++;
 
@@ -1062,13 +1063,13 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
                 
                 //the new deg 1 vertex after this operation is t. This is a valid action
                 //if t belongs to the first orbit of degree 1 vertices
-                int orbits[ppgraph->order];
+                int vOrbits[ppgraph->order];
                 DEBUGMSG("Start nauty")
                 number_of_generators = 0; //reset the generators
-                nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+                nauty(ppgraph->ulgraph, lab, ptn, NULL, vOrbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
                 DEBUGMSG("End nauty")
-                DEBUGARRAYDUMP(orbits, ppgraph->order, "%d")
-                int tOrbit = orbits[ppgraph->order-1];
+                DEBUGARRAYDUMP(vOrbits, ppgraph->order, "%d")
+                int tOrbit = vOrbits[ppgraph->order-1];
                 int j = 0;
                 while(j<tOrbit && ppgraph->degree[j]>1) j++;
 
