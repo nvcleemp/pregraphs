@@ -176,6 +176,8 @@ void do_deg2_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[
 void grow(PRIMPREGRAPH *ppgraph);
 void start();
 
+void writeFatK2();
+
 void construct_K2(PRIMPREGRAPH *ppgraph);
 void construct_C4(PRIMPREGRAPH *ppgraph);
 void construct_K3_with_spike(PRIMPREGRAPH *ppgraph);

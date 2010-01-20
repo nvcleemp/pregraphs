@@ -1354,8 +1354,58 @@ void start(){
         grow(&ppgraph);
     }
     //TODO: start generation of cubic graphs
+
+    if(allowMultiEdges && vertexCount == 2){
+        writeFatK2();
+    }
     DEBUGMSG("End start")
 }
+
+//--------------------Begin extra output graph---------------------------
+
+/*   __
+ *  /  \
+ * o----o
+ *  \__/
+ *
+ */
+void writeFatK2(){
+    structureCount++;
+    FILE *file = stdout;
+    if(outputFile != NULL){
+        file = fopen(outputFile, "a");
+        DEBUGMSG("Opened file")
+    }
+
+    if(outputType == 'h'){
+        fprintf(file, "==============================\n");
+        fprintf(file, "|  Graph number: %10ld  |\n", structureCount);
+        fprintf(file, "|  Number of vertices:    2  |\n");
+        fprintf(file, "==============================\n");
+        fprintf(file, "|   1 ||    2 |    2 |    2 ||\n");
+        fprintf(file, "|   2 ||    1 |    1 |    1 ||\n");
+        fprintf(file, "==============================\n\n");
+    } else if(outputType == 'p'){
+        if (structureCount == 1) { //if first graph
+            fprintf(file, ">>pregraph_code %s<<", (endian == LITTLE_ENDIAN ? "le" : "be"));
+        }
+        fprintf(file, "%c", 2);
+        fprintf(file, "%c", 2);
+        fprintf(file, "%c", 2);
+        fprintf(file, "%c", 2);
+        fprintf(file, "%c", 1);
+        fprintf(file, "%c", 1);
+        fprintf(file, "%c", 1);
+        fprintf(file, "%c", 0);
+    }
+
+    if(outputFile != NULL){
+        fclose(file);
+        DEBUGMSG("Closed file")
+    }
+}
+
+//---------------------End extra output graph----------------------------
 
 //------------------------Begin start graphs-----------------------------
 
