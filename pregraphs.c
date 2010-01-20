@@ -1319,6 +1319,10 @@ void grow(PRIMPREGRAPH *ppgraph){
     }
     DEBUG2DARRAYDUMP(currentGenerators, number_of_generators, ppgraph->order, "%d")
     #endif
+            
+    if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
+        handle_primpregraph_result(ppgraph);
+
 
     if(allowLoops || allowSemiEdges){
         do_deg1_operations(ppgraph, &currentGenerators, currentNumberOfGenerators);
