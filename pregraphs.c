@@ -1698,7 +1698,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
 
     start();
 
-    fprintf(stderr, "Found %ld structures.\n", structureCount);
+    fprintf(stderr, "Found %ld structure%s.\n", structureCount, structureCount==1 ? (char *)"" : (char *)"s");
 
     return EXIT_SUCCESS;
 }
