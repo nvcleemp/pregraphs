@@ -1679,9 +1679,11 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     /*=========== initialization ===========*/
 
     if(outputFile != NULL){
-        //To make sure the output appears in a new file instead of being appended to an existing file
-        FILE *file = fopen(outputFile, "w");
-        fclose(file);
+        FILE *file = fopen(outputFile, "r");
+        if(file != NULL){
+            fprintf(stderr, "File %s already exists: aborting!\n", outputFile);
+            return EXIT_FAILURE;
+        }
     }
 
     #ifdef _DEBUG
