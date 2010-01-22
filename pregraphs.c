@@ -1392,7 +1392,7 @@ void start(){
 
     int i;
     currentPpgraph = &ppgraph;
-    for(i = 4; i <= vertexCount; i++){//TODO: is this the correct upperbound for i
+    for(i = 4; i <= vertexCount; i+=2){//TODO: is this the correct upperbound for i
         current3RegOrder = i;
         //TODO: call into snarkhunter
     }
