@@ -570,7 +570,7 @@ void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairLis
             //search the pair in the list
             for(k = 0; k<vertexPairListSize; k++){
                 if(pair[0] == vertexPairList[k][0] && pair[1] == vertexPairList[k][1]){
-                    union_elements(vertexPairOrbits, orbitSize, orbitCount, j, k);
+                    unionElements(vertexPairOrbits, orbitSize, orbitCount, j, k);
                     break; //the list of pairs doesn't contain any duplicates so we can stop
                 }
             }
@@ -624,7 +624,7 @@ void determine_vertex_sets_orbits(set *vertexSetList, int vertexSetListSize, int
                     l = nextelement(set, MAXM, l);
                 }
                 if(l==-1){
-                    union_elements(vertexSetOrbits, orbitSize, orbitCount, j, k);
+                    unionElements(vertexSetOrbits, orbitSize, orbitCount, j, k);
                     break; //the list of sets doesn't contain any duplicates so we can stop
                 }
             }
@@ -632,9 +632,9 @@ void determine_vertex_sets_orbits(set *vertexSetList, int vertexSetListSize, int
     }
 }
 
-void union_elements(int *forest, int *treeSizes, int *numberOfComponents, int element1, int element2){
-    int root1 = find_root_of_element(forest, element1);
-    int root2 = find_root_of_element(forest, element2);
+void unionElements(int *forest, int *treeSizes, int *numberOfComponents, int element1, int element2){
+    int root1 = findRootOfElement(forest, element1);
+    int root2 = findRootOfElement(forest, element2);
 
     DEBUGMSG("Union:")
     DEBUGDUMP(element1, "%d")
@@ -654,10 +654,10 @@ void union_elements(int *forest, int *treeSizes, int *numberOfComponents, int el
     (*numberOfComponents)--;
 }
 
-int find_root_of_element(int *forest, int element) {
+int findRootOfElement(int *forest, int element) {
     //find with path-compression
     if(element!=forest[element]){
-        forest[element]=find_root_of_element(forest, forest[element]);
+        forest[element]=findRootOfElement(forest, forest[element]);
     }
     return forest[element];
 }
@@ -1392,7 +1392,7 @@ void start(){
 
     int i;
     currentPpgraph = &ppgraph;
-    for(i = 4; i < vertexCount; i++){//TODO: is this the correct upperbound for i
+    for(i = 4; i <= vertexCount; i++){//TODO: is this the correct upperbound for i
         current3RegOrder = i;
         //TODO: call into snarkhunter
     }
@@ -1563,10 +1563,10 @@ void construct_K3_with_spike(PRIMPREGRAPH *ppgraph){
 
 //----------------------Begin Nauty interaction--------------------------
 
-void init_nauty_options() {
+void initNautyOptions() {
     //TODO also options without getcanon?
     options.getcanon = TRUE;
-    options.userautomproc = save_generators;
+    options.userautomproc = saveGenerators;
     #ifdef _DEBUG
     options.writeautoms = TRUE;
     //options.writemarkers = TRUE;
@@ -1574,7 +1574,7 @@ void init_nauty_options() {
     #endif
 }
 
-void save_generators(int count, permutation perm[], nvector orbits[],
+void saveGenerators(int count, permutation perm[], nvector orbits[],
         int numorbits, int stabvertex, int n) {
     memcpy(generators + number_of_generators, perm, sizeof(permutation) * n);
 
@@ -1692,7 +1692,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
 
     nauty_check(WORDSIZE, 1, 30, NAUTYVERSIONID);
     
-    init_nauty_options();
+    initNautyOptions();
 
     /*=========== generation ===========*/
 

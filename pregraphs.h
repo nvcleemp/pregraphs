@@ -152,8 +152,8 @@ void get_single_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ve
 void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize);
 
 //union-find algorithm
-void union_elements(int *forest, int *treeSizes, int *numberOfComponents, int element1, int element2);
-int find_root_of_element(int *forest, int element);
+void unionElements(int *forest, int *treeSizes, int *numberOfComponents, int element1, int element2);
+int findRootOfElement(int *forest, int element);
 
 int nextDegree1Vertex(int current, PRIMPREGRAPH *ppgraph);
 void determine_possible_sets_of_degree1_vertices(set *tempSet, set *vertexSetList, int* currentListPosition, int maximumSetSize, int currentSetSize, int currentSetElement, PRIMPREGRAPH *ppgraph);
@@ -184,7 +184,7 @@ void construct_C4(PRIMPREGRAPH *ppgraph);
 void construct_K3_with_spike(PRIMPREGRAPH *ppgraph);
 
 
-void save_generators(int count, permutation perm[], nvector orbits[],
+void saveGenerators(int count, permutation perm[], nvector orbits[],
         int numorbits, int stabvertex, int n);
 void copy_generators(permutation (*copy)[MAXN][MAXN], int n);
 #endif	/* _PREGRAPHS_H */
