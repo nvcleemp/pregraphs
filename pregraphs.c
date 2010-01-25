@@ -604,9 +604,9 @@ void determine_vertex_sets_orbits(set *vertexSetList, int vertexSetListSize, int
 
     permutation *permutation;
     set set[MAXM];
-    for(i = 0; i < number_of_generators; i++) {
+    for(i = 0; i < numberOfGenerators; i++) {
         //the generators were stored in the global variable generators by the method save_generators
-        permutation = generators[i];
+        permutation = automorphismGroupGenerators[i];
         DEBUGARRAYDUMP(permutation, currentVertexCount, "%d")
 
         for(j = 0; j<vertexSetListSize; j++){
@@ -950,15 +950,15 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
         handle_primpregraph_result(ppgraph);
 
     permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
-    int currentNumberOfGenerators = number_of_generators;
-    copy_generators(&currentGenerators, ppgraph->order);
+    int currentNumberOfGenerators = numberOfGenerators;
+    copyGenerators(&currentGenerators, ppgraph->order);
 
     #ifdef _DEBUG
     //check that the generators were copied correctly
     int i, j;
-    for(i=0; i<number_of_generators; i++){
+    for(i=0; i<numberOfGenerators; i++){
         for (j = 0; j < ppgraph->order; j++) {
-            DEBUGASSERT(currentGenerators[i][j]==generators[i][j])
+            DEBUGASSERT(currentGenerators[i][j]==automorphismGroupGenerators[i][j])
         }
     }
     DEBUGDUMP(currentNumberOfGenerators, "%d")
@@ -986,18 +986,18 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph,
         handle_primpregraph_result(ppgraph);
 
     permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
-    int currentNumberOfGenerators = number_of_generators;
-    copy_generators(&currentGenerators, ppgraph->order);
+    int currentNumberOfGenerators = numberOfGenerators;
+    copyGenerators(&currentGenerators, ppgraph->order);
 
     #ifdef _DEBUG
     //check that the generators were copied correctly
     int i, j;
-    for(i=0; i<number_of_generators; i++){
+    for(i=0; i<numberOfGenerators; i++){
         for (j = 0; j < ppgraph->order; j++) {
-            DEBUGASSERT(currentGenerators[i][j]==generators[i][j])
+            DEBUGASSERT(currentGenerators[i][j]==automorphismGroupGenerators[i][j])
         }
     }
-    DEBUG2DARRAYDUMP(currentGenerators, number_of_generators, ppgraph->order, "%d")
+    DEBUG2DARRAYDUMP(currentGenerators, numberOfGenerators, ppgraph->order, "%d")
     #endif
 
     do_deg2_operations(ppgraph, &currentGenerators, currentNumberOfGenerators, multiEdgeList, multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount);
@@ -1030,8 +1030,8 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
             //if v belongs to the first orbit of degree 1 vertices
             int vOrbits[ppgraph->order];
             DEBUGMSG("Start nauty")
-            number_of_generators = 0; //reset the generators
-            nauty(ppgraph->ulgraph, lab, ptn, NULL, vOrbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+            numberOfGenerators = 0; //reset the generators
+            nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vOrbits, &nautyOptions, &nautyStats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
             DEBUGMSG("End nauty")
             DEBUGARRAYDUMP(vOrbits, ppgraph->order, "%d")
             int vOrbit = vOrbits[deg1PairList[i][1]];
@@ -1077,8 +1077,8 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
                 //if t belongs to the first orbit of degree 1 vertices
                 int vOrbits[ppgraph->order];
                 DEBUGMSG("Start nauty")
-                number_of_generators = 0; //reset the generators
-                nauty(ppgraph->ulgraph, lab, ptn, NULL, vOrbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+                numberOfGenerators = 0; //reset the generators
+                nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vOrbits, &nautyOptions, &nautyStats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
                 DEBUGMSG("End nauty")
                 DEBUGARRAYDUMP(vOrbits, ppgraph->order, "%d")
                 int tOrbit = vOrbits[ppgraph->order-1];
@@ -1115,8 +1115,8 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2,
     }
     int orbits[ppgraph->order];
     DEBUGMSG("Start nauty")
-    number_of_generators = 0; //reset the generators
-    nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    numberOfGenerators = 0; //reset the generators
+    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
     DEBUGMSG("End nauty")
 
     int maxSize = ppgraph->multiEdgeCount;
@@ -1126,7 +1126,7 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2,
     DEBUGASSERT(*multiEdgeListSize == ppgraph->multiEdgeCount)
 
     *multiEdgeOrbits = malloc(sizeof(int)*maxSize);
-    determine_vertex_pairs_orbits(*multiEdgeList, *multiEdgeListSize, *multiEdgeOrbits, multiEdgeOrbitCount, &generators, number_of_generators);
+    determine_vertex_pairs_orbits(*multiEdgeList, *multiEdgeListSize, *multiEdgeOrbits, multiEdgeOrbitCount, &automorphismGroupGenerators, numberOfGenerators);
 
     int i = 0;
     while(i<*multiEdgeListSize && !((*multiEdgeList)[i][0]==v1 && (*multiEdgeList)[i][1]==v2)) i++;
@@ -1306,23 +1306,23 @@ void grow(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("Start grow")
     int orbits[ppgraph->order];
     DEBUGMSG("Start nauty")
-    number_of_generators = 0; //reset the generators
-    nauty(ppgraph->ulgraph, lab, ptn, NULL, orbits, &options, &stats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    numberOfGenerators = 0; //reset the generators
+    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
     DEBUGMSG("End nauty")
     //the generators for these start graphs need to be calculated
     permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
-    int currentNumberOfGenerators = number_of_generators;
-    copy_generators(&currentGenerators, ppgraph->order);
+    int currentNumberOfGenerators = numberOfGenerators;
+    copyGenerators(&currentGenerators, ppgraph->order);
 
     #ifdef _DEBUG
     //check that the generators were copied correctly
     int i, j;
-    for(i=0; i<number_of_generators; i++){
+    for(i=0; i<numberOfGenerators; i++){
         for (j = 0; j < ppgraph->order; j++) {
-            DEBUGASSERT(currentGenerators[i][j]==generators[i][j])
+            DEBUGASSERT(currentGenerators[i][j]==automorphismGroupGenerators[i][j])
         }
     }
-    DEBUG2DARRAYDUMP(currentGenerators, number_of_generators, ppgraph->order, "%d")
+    DEBUG2DARRAYDUMP(currentGenerators, numberOfGenerators, ppgraph->order, "%d")
     #endif
 
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
@@ -1572,26 +1572,26 @@ void construct_K3_with_spike(PRIMPREGRAPH *ppgraph){
 
 void initNautyOptions() {
     //TODO also options without getcanon?
-    options.getcanon = TRUE;
-    options.userautomproc = saveGenerators;
+    nautyOptions.getcanon = TRUE;
+    nautyOptions.userautomproc = saveGenerators;
     #ifdef _DEBUG
-    options.writeautoms = TRUE;
+    nautyOptions.writeautoms = TRUE;
     //options.writemarkers = TRUE;
-    options.outfile = stderr;
+    nautyOptions.outfile = stderr;
     #endif
 }
 
 void saveGenerators(int count, permutation perm[], nvector orbits[],
         int numorbits, int stabvertex, int n) {
-    memcpy(generators + number_of_generators, perm, sizeof(permutation) * n);
+    memcpy(automorphismGroupGenerators + numberOfGenerators, perm, sizeof(permutation) * n);
 
-    number_of_generators++;
+    numberOfGenerators++;
 }
 
-void copy_generators(permutation (*copy)[MAXN][MAXN], int n) {
+void copyGenerators(permutation (*copy)[MAXN][MAXN], int n) {
     int i;
-    for(i=0; i<number_of_generators; i++){
-        memcpy((*copy) + i, generators + i, sizeof(permutation) * n);
+    for(i=0; i<numberOfGenerators; i++){
+        memcpy((*copy) + i, automorphismGroupGenerators + i, sizeof(permutation) * n);
     }
 }
 

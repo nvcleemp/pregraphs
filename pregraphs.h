@@ -119,13 +119,13 @@ boolean allowLoops = FALSE; /* TRUE if loops are allowed*/
 boolean allowMultiEdges = FALSE; /* TRUE if multi-edges are allowed*/
 boolean allowSemiEdges = FALSE; /* TRUE if semi-edges are allowed*/
 
-permutation generators[MAXN][MAXN];
-int number_of_generators;
+permutation automorphismGroupGenerators[MAXN][MAXN];
+int numberOfGenerators;
 
 /* Variables for nauty */
-int lab[MAXN], ptn[MAXN];
-static DEFAULTOPTIONS_GRAPH(options);
-statsblk stats;
+int nautyLabelling[MAXN], nautyPtn[MAXN];
+static DEFAULTOPTIONS_GRAPH(nautyOptions);
+statsblk nautyStats;
 setword workspace[50 * MAXM];
 graph canonicalGraph[MAXN * MAXM];
 
@@ -186,6 +186,6 @@ void construct_K3_with_spike(PRIMPREGRAPH *ppgraph);
 
 void saveGenerators(int count, permutation perm[], nvector orbits[],
         int numorbits, int stabvertex, int n);
-void copy_generators(permutation (*copy)[MAXN][MAXN], int n);
+void copyGenerators(permutation (*copy)[MAXN][MAXN], int n);
 #endif	/* _PREGRAPHS_H */
 
