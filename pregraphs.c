@@ -893,7 +893,7 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
             handle_pregraph_result(&pregraph);
         }
     }
-    DEBUGMSG("Start handle_primpregraph_result")
+    DEBUGMSG("End handle_primpregraph_result")
 }
 
 int nextDegree1Vertex(int current, PRIMPREGRAPH *ppgraph){
@@ -1341,6 +1341,7 @@ static PRIMPREGRAPH *currentPpgraph;
  * and feeding it to the grow method.
  */
 void handle_3_regular_result(graph *g){
+    DEBUGMSG("Start handle_3_regular_result")
     PRIMPREGRAPH *ppgraph = currentPpgraph;
     ppgraph->order = current3RegOrder;
     ppgraph->degree1Count = 0;
@@ -1363,6 +1364,7 @@ void handle_3_regular_result(graph *g){
     }
 
     grow(ppgraph);
+    DEBUGMSG("End handle_3_regular_result")
 }
 
 void start(){
