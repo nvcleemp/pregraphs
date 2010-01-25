@@ -1031,7 +1031,7 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
             int vOrbits[ppgraph->order];
             DEBUGMSG("Start nauty")
             numberOfGenerators = 0; //reset the generators
-            nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vOrbits, &nautyOptions, &nautyStats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+            nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
             DEBUGMSG("End nauty")
             DEBUGARRAYDUMP(vOrbits, ppgraph->order, "%d")
             int vOrbit = vOrbits[deg1PairList[i][1]];
@@ -1078,7 +1078,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
                 int vOrbits[ppgraph->order];
                 DEBUGMSG("Start nauty")
                 numberOfGenerators = 0; //reset the generators
-                nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vOrbits, &nautyOptions, &nautyStats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+                nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
                 DEBUGMSG("End nauty")
                 DEBUGARRAYDUMP(vOrbits, ppgraph->order, "%d")
                 int tOrbit = vOrbits[ppgraph->order-1];
@@ -1116,7 +1116,7 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2,
     int orbits[ppgraph->order];
     DEBUGMSG("Start nauty")
     numberOfGenerators = 0; //reset the generators
-    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
     DEBUGMSG("End nauty")
 
     int maxSize = ppgraph->multiEdgeCount;
@@ -1307,7 +1307,7 @@ void grow(PRIMPREGRAPH *ppgraph){
     int orbits[ppgraph->order];
     DEBUGMSG("Start nauty")
     numberOfGenerators = 0; //reset the generators
-    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, workspace, WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
     DEBUGMSG("End nauty")
     //the generators for these start graphs need to be calculated
     permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
@@ -1696,7 +1696,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     #ifdef _DEBUG
         fprintf(stderr, "%s:%u MAXN: %d and MAXM: %d \n", __FILE__, __LINE__, MAXN, MAXM);
         fprintf(stderr, "%s:%u Wordsize: %d \n", __FILE__, __LINE__, WORDSIZE);
-        fprintf(stderr, "%s:%u Default workspacesize %d \n", __FILE__, __LINE__, WORKSIZE);
+        fprintf(stderr, "%s:%u Default workspacesize %d \n", __FILE__, __LINE__, NAUTY_WORKSIZE);
     #endif
 
     nauty_check(WORDSIZE, 1, 30, NAUTYVERSIONID);

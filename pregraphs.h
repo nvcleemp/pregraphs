@@ -101,7 +101,7 @@ typedef struct _pregraph PREGRAPH;
 
 typedef int VERTEXPAIR[2];
 
-#define WORKSIZE 50 * MAXM
+#define NAUTY_WORKSIZE 50 * MAXM
 
 /******************Global Variables**********************/
 int vertexCount;
@@ -126,7 +126,7 @@ int numberOfGenerators;
 int nautyLabelling[MAXN], nautyPtn[MAXN];
 static DEFAULTOPTIONS_GRAPH(nautyOptions);
 statsblk nautyStats;
-setword workspace[50 * MAXM];
+setword nautyWorkspace[50 * MAXM];
 graph canonicalGraph[MAXN * MAXM];
 
 /******************Methods*******************************/
