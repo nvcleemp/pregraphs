@@ -55,12 +55,12 @@ boolean isBridge(PRIMPREGRAPH *ppgraph, int u, int v){
             ADDELEMENT(visited, ppgraph->adjList[u*3+i]);
             if(DFSearch(ppgraph, ppgraph->adjList[u*3+i], v, visited)){
                 DEBUGMSG("End isBridge")
-                return TRUE;
+                return FALSE;
             }
         }
     }
     DEBUGMSG("End isBridge")
-    return FALSE;
+    return TRUE;
 }
 //-----------------------------------------------------------------
 
