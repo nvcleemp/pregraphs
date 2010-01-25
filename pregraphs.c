@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   pregraphs.c
  * Author: nvcleemp
  *
@@ -112,7 +112,7 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     while(ppgraph->adjList[t*3+i]!=u) i++; //u and t are adjacent so will stop before i == 3
     ppgraph->adjList[t*3+i]=v;
     ppgraph->degree1Count++;
-    
+
     set *gu, *gv, *gt;
     gu = GRAPHROW(ppgraph->ulgraph, u, MAXM);
     gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
@@ -523,7 +523,7 @@ void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ver
             (*vertexPairListSize)++;
         }
     }
-    
+
 }
 
 /*
@@ -643,7 +643,7 @@ void unionElements(int *forest, int *treeSizes, int *numberOfComponents, int ele
     DEBUGDUMP(root2, "%d")
 
     if(root1==root2) return;
-    
+
     if(treeSizes[root1]<treeSizes[root2]){
         forest[root1]=root2;
         treeSizes[root2]+=treeSizes[root1];
@@ -669,7 +669,7 @@ char writePregraphTable(FILE *f, PREGRAPH *pregraph) {
     fprintf(f, "|  Graph number: %10ld  |\n", structureCount);
     fprintf(f, "|  Number of vertices: %4d  |\n", pregraph->order);
     fprintf(f, "==============================\n");
-    
+
     unsigned short i, j;
     PRIMPREGRAPH *ppgraph = pregraph->ppgraph;
     int primPregraph2Pregraph[ppgraph->order];
@@ -700,7 +700,7 @@ char writePregraphTable(FILE *f, PREGRAPH *pregraph) {
             }
             fprintf(f,"|\n");
         }
-    }    
+    }
     fprintf(f, "==============================\n");
     fprintf(f,"\n");
     return (ferror(f) ? 2 : 1);
@@ -836,11 +836,16 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     DEBUGDUMP(vertexCount, "%d")
     DEBUGASSERT(ppgraph->order >= vertexCount)
     DEBUGASSERT(allowSemiEdges || vertexCount == ppgraph->order)
-    
+
     int semiEdgeCount = ppgraph->order - vertexCount; DEBUGDUMP(semiEdgeCount, "%d")
     int degree1Count = ppgraph->degree1Count; DEBUGDUMP(degree1Count, "%d")
     DEBUGASSERT(semiEdgeCount <= degree1Count)
     int loopCount = degree1Count - semiEdgeCount;
+
+    if(!allowLoops && loopCount>0){
+        DEBUGMSG("End handle_primpregraph_result")
+        return;
+    }
 
     //determine up to automorphism all the ways to select semiEdgeCount vertices
     //of degree 1 by using union-find
@@ -882,7 +887,7 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     int orbitCount;
     int orbits[listSize];
     determine_vertex_sets_orbits(vertexSetList, listSize, orbits, &orbitCount);
-    
+
     //output pregraph
     PREGRAPH pregraph;
     pregraph.order = vertexCount;
@@ -1067,7 +1072,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
             if(isBridge(ppgraph, edgeList[i][0], edgeList[i][1])){
                 DEBUGPPGRAPHPRINT(ppgraph)
                 apply_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
-                
+
                 //the new deg 1 vertex after this operation is t. This is a valid action
                 //if t belongs to the first orbit of degree 1 vertices
                 int vOrbits[ppgraph->order];
@@ -1177,7 +1182,7 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
         int maxSize = ppgraph->multiEdgeCount;
         *oldMultiEdgeList = malloc(sizeof(VERTEXPAIR)*maxSize);//initialize an array that is large enough to hold all multi-edges
 
-        
+
         get_multi_edges(ppgraph, *oldMultiEdgeList, oldMultiEdgeListSize);
 
         DEBUGASSERT(*oldMultiEdgeListSize == ppgraph->multiEdgeCount)
@@ -1319,7 +1324,7 @@ void grow(PRIMPREGRAPH *ppgraph){
     }
     DEBUG2DARRAYDUMP(currentGenerators, number_of_generators, ppgraph->order, "%d")
     #endif
-            
+
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
         handle_primpregraph_result(ppgraph);
 
@@ -1695,7 +1700,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     #endif
 
     nauty_check(WORDSIZE, 1, 30, NAUTYVERSIONID);
-    
+
     initNautyOptions();
 
     /*=========== generation ===========*/
