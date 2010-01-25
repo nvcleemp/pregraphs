@@ -1707,7 +1707,8 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
 
     start();
 
-    fprintf(stderr, "Found %ld structure%s.\n", structureCount, structureCount==1 ? (char *)"" : (char *)"s");
+    fprintf(stderr, "Found %ld structure%s with %d %s.\n", structureCount, structureCount==1 ? (char *)"" : (char *)"s",
+                                                            vertexCount, vertexCount==1 ? (char *)"vertex" : (char *)"vertices");
 
     return EXIT_SUCCESS;
 }
