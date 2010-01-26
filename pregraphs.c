@@ -1004,6 +1004,32 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph,
     DEBUGMSG("End handle_deg2_operation_result")
 }
 
+boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, int *vertexOrbits){
+    DEBUGASSERT(ppgraph->degree[v]==1)
+    DEBUGDUMP(v,"%d")
+    DEBUGARRAYDUMP(nautyLabelling, ppgraph->order, "%d")
+    int reverseLabelling[ppgraph->order];
+    int i;
+    for (i = 0; i < ppgraph->order; i++) {
+        reverseLabelling[nautyLabelling[i]]=i;
+    }
+    DEBUGARRAYDUMP(reverseLabelling, ppgraph->order, "%d")
+    int smallestLabelOrbitV = reverseLabelling[v]; //i.e. the smallest label of a vertex in the orbit of vertex v
+    int smallestOtherDegree1Label = ppgraph->order;
+    for (i = 0; i < ppgraph->order; i++) {
+        if(ppgraph->degree[i]==1){
+            if(vertexOrbits[i]==vertexOrbits[v]){
+                if(reverseLabelling[i]<smallestLabelOrbitV) smallestLabelOrbitV = reverseLabelling[i];
+            } else {
+                if(reverseLabelling[i]<smallestOtherDegree1Label) smallestOtherDegree1Label = reverseLabelling[i];
+            }
+        }
+    }
+    DEBUGDUMP(smallestLabelOrbitV, "%d")
+    DEBUGDUMP(smallestOtherDegree1Label, "%d")
+    return (smallestLabelOrbitV < smallestOtherDegree1Label);
+}
+
 /*
  * Handles the first degree 1 operation, i.e. find all the degree 1 pairs, determine the orbits
  * apply the operation for each pair, handle the result and then revert the operation.
@@ -1034,11 +1060,8 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
             nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
             DEBUGMSG("End nauty")
             DEBUGARRAYDUMP(vOrbits, ppgraph->order, "%d")
-            int vOrbit = vOrbits[deg1PairList[i][1]];
-            int j = 0;
-            while(j<vOrbit && ppgraph->degree[j]>1) j++;
-
-            if(j==vOrbit){
+            
+            if(isCanonicalDegree1Edge(ppgraph, deg1PairList[i][1], vOrbits)){
                 //v belongs to the orbit of degree 1 vertices with the smallest representant
                 //Therefore this graph was created from the correct parent.
                 handle_deg1_operation_result(ppgraph);
@@ -1081,11 +1104,8 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
                 nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
                 DEBUGMSG("End nauty")
                 DEBUGARRAYDUMP(vOrbits, ppgraph->order, "%d")
-                int tOrbit = vOrbits[ppgraph->order-1];
-                int j = 0;
-                while(j<tOrbit && ppgraph->degree[j]>1) j++;
 
-                if(j==tOrbit){
+                if(isCanonicalDegree1Edge(ppgraph, ppgraph->order-1, vOrbits)){
                     //t belongs to the orbit of degree 1 vertices with the smallest representant
                     //Therefore this graph was created from the correct parent.
                     handle_deg1_operation_result(ppgraph);
@@ -1133,9 +1153,45 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2,
     DEBUGASSERT(i<*multiEdgeListSize)
     int newEdgeOrbit = (*multiEdgeOrbits)[i]; //contains the number of the orbit of the edge (v1, v2)
 
+    DEBUGARRAYDUMP(nautyLabelling, ppgraph->order, "%d")
+    int reverseLabelling[ppgraph->order];
+    for (i = 0; i < ppgraph->order; i++) {
+        reverseLabelling[nautyLabelling[i]]=i;
+    }
+    DEBUGARRAYDUMP(reverseLabelling, ppgraph->order, "%d")
+
+    VERTEXPAIR smallestRepresentantNewEdge;
+    VERTEXPAIR smallestOtherMultiEdge;
+    VERTEXPAIR currentEdge;
+    smallestRepresentantNewEdge[0]=smallestRepresentantNewEdge[1]=ppgraph->order;
+    smallestOtherMultiEdge[0]=smallestOtherMultiEdge[1]=ppgraph->order;
+
+    for (i = 0; i < *multiEdgeListSize; i++) {
+        currentEdge[0]=reverseLabelling[(*multiEdgeList)[i][0]];
+        currentEdge[1]=reverseLabelling[(*multiEdgeList)[i][1]];
+        if(currentEdge[1]<currentEdge[0]){
+            int temp = currentEdge[0];
+            currentEdge[0] = currentEdge[1];
+            currentEdge[1] = temp;
+        }
+        if((*multiEdgeOrbits)[i]==newEdgeOrbit){
+            if(currentEdge[0]<smallestRepresentantNewEdge[0] ||
+                    (currentEdge[0]==smallestRepresentantNewEdge[0] && currentEdge[1] < smallestRepresentantNewEdge[1])){
+                smallestRepresentantNewEdge[0]=currentEdge[0];
+                smallestRepresentantNewEdge[1]=currentEdge[1];
+            }
+        } else {
+            if(currentEdge[0]<smallestOtherMultiEdge[0] ||
+                    (currentEdge[0]==smallestOtherMultiEdge[0] && currentEdge[1] < smallestOtherMultiEdge[1])){
+                smallestOtherMultiEdge[0]=currentEdge[0];
+                smallestOtherMultiEdge[1]=currentEdge[1];
+            }
+        }
+    }
+
     DEBUGMSG("End isCanonicalMultiEdge")
-    return newEdgeOrbit==0;
-    //because multiEdgeList only contains the multi edges
+    return smallestRepresentantNewEdge[0] < smallestOtherMultiEdge[0] ||
+            (smallestRepresentantNewEdge[0] == smallestOtherMultiEdge[0] && smallestRepresentantNewEdge[1] < smallestOtherMultiEdge[1]);
 }
 
 void handle_deg2_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators){
