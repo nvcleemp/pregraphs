@@ -174,6 +174,7 @@ void do_deg1_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[
 void do_deg2_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators,
         VERTEXPAIR *multiEdgeList, int multiEdgeListSize, int *multiEdgeOrbits, int multiEdgeOrbitCount);
 void grow(PRIMPREGRAPH *ppgraph);
+void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph);
 void handle_3_regular_result(graph *g);
 void start();
 

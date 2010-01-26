@@ -1394,6 +1394,38 @@ void grow(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("End grow")
 }
 
+void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start growWithoutDeg1Operations")
+    int orbits[ppgraph->order];
+    DEBUGMSG("Start nauty")
+    numberOfGenerators = 0; //reset the generators
+    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    DEBUGMSG("End nauty")
+    //the generators for these start graphs need to be calculated
+    permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
+    int currentNumberOfGenerators = numberOfGenerators;
+    copyGenerators(&currentGenerators, ppgraph->order);
+
+    #ifdef _DEBUG
+    //check that the generators were copied correctly
+    int i, j;
+    for(i=0; i<numberOfGenerators; i++){
+        for (j = 0; j < ppgraph->order; j++) {
+            DEBUGASSERT(currentGenerators[i][j]==automorphismGroupGenerators[i][j])
+        }
+    }
+    DEBUG2DARRAYDUMP(currentGenerators, numberOfGenerators, ppgraph->order, "%d")
+    #endif
+
+    if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
+        handle_primpregraph_result(ppgraph);
+
+    if(allowMultiEdges){
+        do_deg2_operations(ppgraph, &currentGenerators, currentNumberOfGenerators, NULL, 0, NULL, 0);
+    }
+    DEBUGMSG("End growWithoutDeg1Operations")
+}
+
 static int current3RegOrder;
 static PRIMPREGRAPH *currentPpgraph;
 
@@ -1452,7 +1484,7 @@ void start(){
     }
     if((allowLoops || allowSemiEdges) && allowMultiEdges){
         construct_K3_with_spike(&ppgraph);
-        grow(&ppgraph);
+        growWithoutDeg1Operations(&ppgraph);
     }
 
     int i;
