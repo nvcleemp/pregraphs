@@ -1424,6 +1424,8 @@ void handle_3_regular_result(graph *g){
         }
     }
 
+    DEBUGPPGRAPHPRINT(ppgraph)
+
     grow(ppgraph);
     DEBUGMSG("End handle_3_regular_result")
 }
@@ -1456,6 +1458,9 @@ void start(){
     int i;
     currentPpgraph = &ppgraph;
     for(i = 4; i <= vertexCount; i+=2){//TODO: is this the correct upperbound for i
+        #ifdef _DEBUG
+        fprintf(stderr, "Starting snarkhunter for %d vertices\n", i);
+        #endif
         current3RegOrder = i;
         //TODO: call into snarkhunter
     }
