@@ -1480,7 +1480,7 @@ void start(){
     }
     if(allowMultiEdges){
         construct_C4(&ppgraph);
-        grow(&ppgraph);
+        growWithoutDeg1Operations(&ppgraph);
     }
     if((allowLoops || allowSemiEdges) && allowMultiEdges){
         construct_K3_with_spike(&ppgraph);
