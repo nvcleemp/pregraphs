@@ -1495,6 +1495,7 @@ void start(){
         #endif
         current3RegOrder = i;
         //TODO: call into snarkhunter
+        init_irreducible_graphs(i);
     }
 
     if(allowMultiEdges && vertexCount == 2){

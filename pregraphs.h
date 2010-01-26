@@ -188,5 +188,7 @@ void construct_K3_with_spike(PRIMPREGRAPH *ppgraph);
 void saveGenerators(int count, permutation perm[], nvector orbits[],
         int numorbits, int stabvertex, int n);
 void copyGenerators(permutation (*copy)[MAXN][MAXN], int n);
+
+void init_irreducible_graphs(int n);
 #endif	/* _PREGRAPHS_H */
 
