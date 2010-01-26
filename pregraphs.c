@@ -1233,6 +1233,14 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
         VERTEXPAIR **oldMultiEdgeList, int *oldMultiEdgeListSize, int **oldMultiEdgeOrbits, int *oldMultiEdgeOrbitCount){
     DEBUGMSG("Start handle_deg2_operation2")
     DEBUG2DARRAYDUMP((*currentGenerators), currentNumberOfGenerators, ppgraph->order, "%d")
+    DEBUGDUMP(*oldMultiEdgeList, "%p")
+    #ifdef _DEBUG
+    if(*oldMultiEdgeList!=NULL){
+        DEBUGDUMP(*oldMultiEdgeListSize, "%d")
+        DEBUG2DARRAYDUMP((*oldMultiEdgeList), (*oldMultiEdgeListSize), 2, "%d")
+        DEBUGARRAYDUMP((*oldMultiEdgeOrbits), (*oldMultiEdgeListSize), "%d")
+    }
+    #endif
     if(*oldMultiEdgeList==NULL){
         //if the multi-edges have't been determined, do it now and store the result
         int maxSize = ppgraph->multiEdgeCount;
@@ -1273,6 +1281,14 @@ void handle_deg2_operation3(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
         VERTEXPAIR **oldMultiEdgeList, int *oldMultiEdgeListSize, int **oldMultiEdgeOrbits, int *oldMultiEdgeOrbitCount){
     DEBUGMSG("Start handle_deg2_operation3")
     DEBUG2DARRAYDUMP((*currentGenerators), currentNumberOfGenerators, ppgraph->order, "%d")
+    DEBUGDUMP(*oldMultiEdgeList, "%p")
+    #ifdef _DEBUG
+    if(*oldMultiEdgeList!=NULL){
+        DEBUGDUMP(*oldMultiEdgeListSize, "%d")
+        DEBUG2DARRAYDUMP((*oldMultiEdgeList), (*oldMultiEdgeListSize), 2, "%d")
+        DEBUGARRAYDUMP((*oldMultiEdgeOrbits), (*oldMultiEdgeListSize), "%d")
+    }
+    #endif
     if(*oldMultiEdgeList==NULL){
         //if the multi-edges have't been determined, do it now and store the result
         int maxSize = ppgraph->multiEdgeCount;
