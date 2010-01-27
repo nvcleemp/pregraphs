@@ -1215,17 +1215,46 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2,
             currentEdge[0] = currentEdge[1];
             currentEdge[1] = temp;
         }
-        if((*multiEdgeOrbits)[i]==newEdgeOrbit){
-            if(currentEdge[0]<smallestRepresentantNewEdge[0] ||
-                    (currentEdge[0]==smallestRepresentantNewEdge[0] && currentEdge[1] < smallestRepresentantNewEdge[1])){
-                smallestRepresentantNewEdge[0]=currentEdge[0];
-                smallestRepresentantNewEdge[1]=currentEdge[1];
-            }
-        } else {
-            if(currentEdge[0]<smallestOtherMultiEdge[0] ||
-                    (currentEdge[0]==smallestOtherMultiEdge[0] && currentEdge[1] < smallestOtherMultiEdge[1])){
-                smallestOtherMultiEdge[0]=currentEdge[0];
-                smallestOtherMultiEdge[1]=currentEdge[1];
+        //check if this is a valid edge
+        /*
+         *    v
+         *    o       ___
+         *    |\t   s/   \
+         *    | o---o     o---
+         *    |/     \___/
+         *    o
+         *    u
+         *
+         *  This type of edge on the left side can't be constructed and therefore can't count as valid multi-edge for the construction
+         */
+        int neighbourV, neighbourU, t, s;
+        boolean validEdge = TRUE;
+        neighbourV = (ppgraph->adjList[((*multiEdgeList)[i][0])*3] == (*multiEdgeList)[i][1]) ? ppgraph->adjList[((*multiEdgeList)[i][0])*3 + 1] : ppgraph->adjList[((*multiEdgeList)[i][0])*3];
+        neighbourU = (ppgraph->adjList[((*multiEdgeList)[i][1])*3] == (*multiEdgeList)[i][0]) ? ppgraph->adjList[((*multiEdgeList)[i][1])*3 + 1] : ppgraph->adjList[((*multiEdgeList)[i][1])*3];
+        if(neighbourU == neighbourV){
+            t = neighbourU;
+            if(ppgraph->adjList[t*3]!=(*multiEdgeList)[i][0] && ppgraph->adjList[t*3]!=(*multiEdgeList)[i][1])
+                s = ppgraph->adjList[t*3];
+            else if(ppgraph->adjList[t*3+1]!=(*multiEdgeList)[i][0] && ppgraph->adjList[t*3+1]!=(*multiEdgeList)[i][1])
+                s = ppgraph->adjList[t*3+1];
+            else
+                s = ppgraph->adjList[t*3+2];
+            validEdge = (ppgraph->degree[s]!=2);
+        }
+
+        if(validEdge){
+            if((*multiEdgeOrbits)[i]==newEdgeOrbit){
+                if(currentEdge[0]<smallestRepresentantNewEdge[0] ||
+                        (currentEdge[0]==smallestRepresentantNewEdge[0] && currentEdge[1] < smallestRepresentantNewEdge[1])){
+                    smallestRepresentantNewEdge[0]=currentEdge[0];
+                    smallestRepresentantNewEdge[1]=currentEdge[1];
+                }
+            } else {
+                if(currentEdge[0]<smallestOtherMultiEdge[0] ||
+                        (currentEdge[0]==smallestOtherMultiEdge[0] && currentEdge[1] < smallestOtherMultiEdge[1])){
+                    smallestOtherMultiEdge[0]=currentEdge[0];
+                    smallestOtherMultiEdge[1]=currentEdge[1];
+                }
             }
         }
     }
