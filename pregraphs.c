@@ -949,6 +949,13 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
         handle_primpregraph_result(ppgraph);
 
+    if(ppgraph->order - ppgraph->degree1Count + 1 > vertexCount){
+        //+1 because deg1 operation always adds 1 vertex of degree 3 and degree 2 operation always add 2 vertices (of degree 2 or 3)
+        //too many degree 3 and 2 vertices
+        DEBUGMSG("End handle_deg1_operation_result")
+        return;
+    }
+
     permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
     int currentNumberOfGenerators = numberOfGenerators;
     copyGenerators(&currentGenerators, ppgraph->order);
@@ -967,7 +974,7 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
 
     do_deg1_operations(ppgraph, &currentGenerators, currentNumberOfGenerators); //when this returns &ppgraph is unchanged
 
-    if(allowMultiEdges){
+    if(allowMultiEdges && ppgraph->order - ppgraph->degree1Count + 2 <= vertexCount){
         do_deg2_operations(ppgraph, &currentGenerators, currentNumberOfGenerators, NULL, 0, NULL, 0);
     }
     DEBUGMSG("End handle_deg1_operation_result")
@@ -984,6 +991,13 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph,
     //if correct number of vertices
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
         handle_primpregraph_result(ppgraph);
+
+    if(ppgraph->order - ppgraph->degree1Count + 2 > vertexCount){
+        //+2 because degree 2 operations always add 2 vertices (of degree 2 or 3)
+        //too many degree 3 and 2 vertices
+        DEBUGMSG("End handle_deg2_operation_result")
+        return;
+    }
 
     permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
     int currentNumberOfGenerators = numberOfGenerators;
