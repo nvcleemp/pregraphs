@@ -110,6 +110,16 @@ int minVertexCount;
 int maxVertexCount;
 long structureCount;
 
+boolean logStatistics = FALSE;
+//used for statistics
+long *graphsWithLoopsCount;
+long *graphsWithSemiEdgesCount;
+long *graphsWithMultiEdgesCount;
+long graphsWithOnlyLoopsCount;
+long graphsWithOnlySemiEdgesCount;
+long graphsWithOnlyMultiEdgesCount;
+long simplegraphsCount;
+
 char outputType = 'n'; //defaults to no output
 char *outputFile = NULL; //NULL == standard out
 
@@ -190,5 +200,9 @@ void saveGenerators(int count, permutation perm[], nvector orbits[],
 void copyGenerators(permutation (*copy)[MAXN][MAXN], int n);
 
 void init_irreducible_graphs(int n);
+
+void initInfo();
+void logInfo(PREGRAPH *pregraph);
+void printInfo();
 #endif	/* _PREGRAPHS_H */
 

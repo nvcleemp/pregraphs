@@ -822,6 +822,7 @@ void handle_pregraph_result(PREGRAPH *pregraph){
             DEBUGMSG("Closed file")
         }
     }
+    if(logStatistics) logInfo(pregraph);
     DEBUGMSG("End handle_pregraph_result")
 }
 
@@ -1697,6 +1698,13 @@ void writeFatK2(){
         fclose(file);
         DEBUGMSG("Closed file")
     }
+
+    if(logStatistics){
+        graphsWithOnlyMultiEdgesCount++;
+        graphsWithMultiEdgesCount[1]++;
+        graphsWithLoopsCount[0]++;
+        graphsWithSemiEdgesCount[0]++;
+    }
 }
 
 //---------------------End extra output graph----------------------------
@@ -1858,6 +1866,7 @@ void help(char *name) {
     fprintf(stderr, "Usage: %s [options] n \n\n", name);
     fprintf(stderr, "Valid options:\n");
     fprintf(stderr, "  -h          : Print this help and return.\n");
+    fprintf(stderr, "  -i          : Causes %s to print extra info about the generated structures.\n", name);
     fprintf(stderr, "  -L          : Allow loops.\n");
     fprintf(stderr, "  -S          : Allow semi-edges.\n");
     fprintf(stderr, "  -M          : Allow multi-edges.\n");
@@ -1866,6 +1875,83 @@ void help(char *name) {
     fprintf(stderr, "                p    planar code\n");
     fprintf(stderr, "                h    human-readable output in tabular format\n");
     fprintf(stderr, "                n    no output: only count (default)\n");
+}
+
+void initInfo(){
+    int i;
+    //initialize arrays and variables
+    graphsWithLoopsCount = (long *)malloc(sizeof(long)*(vertexCount + 1));
+    for(i = 0; i <= vertexCount; i++) graphsWithLoopsCount[i]=0;
+
+    graphsWithSemiEdgesCount = (long *)malloc(sizeof(long)*(vertexCount+2 + 1));
+    for(i = 0; i <= vertexCount + 2; i++) graphsWithSemiEdgesCount[i]=0;
+
+    graphsWithMultiEdgesCount = (long *)malloc(sizeof(long)*(vertexCount/2 + 1));
+    for(i = 0; i <= vertexCount/2; i++) graphsWithMultiEdgesCount[i]=0;
+
+    graphsWithOnlyLoopsCount = 0;
+    graphsWithOnlySemiEdgesCount = 0;
+    graphsWithOnlyMultiEdgesCount = 0;
+    simplegraphsCount = 0;
+}
+
+void logInfo(PREGRAPH *pregraph){
+    int multiEdgeCount, loopCount, semiEdgeCount;
+    multiEdgeCount = pregraph->ppgraph->multiEdgeCount;
+    semiEdgeCount = pregraph->ppgraph->order - pregraph->order;
+    loopCount = pregraph->ppgraph->degree1Count - semiEdgeCount;
+    DEBUGASSERT(multiEdgeCount<=vertexCount/2)
+    DEBUGASSERT(semiEdgeCount<=vertexCount+2)
+    DEBUGASSERT(loopCount<=vertexCount)
+
+    graphsWithLoopsCount[loopCount]++;
+    graphsWithSemiEdgesCount[semiEdgeCount]++;
+    graphsWithMultiEdgesCount[multiEdgeCount]++;
+
+    if(multiEdgeCount == 0 && semiEdgeCount == 0 && loopCount == 0) simplegraphsCount++;
+    if(multiEdgeCount == 0 && semiEdgeCount == 0 && loopCount != 0) graphsWithOnlyLoopsCount++;
+    if(multiEdgeCount == 0 && semiEdgeCount != 0 && loopCount == 0) graphsWithOnlySemiEdgesCount++;
+    if(multiEdgeCount != 0 && semiEdgeCount == 0 && loopCount == 0) graphsWithOnlyMultiEdgesCount++;
+}
+
+void printInfo(){
+    int i;
+    boolean printSpacer = FALSE;
+    for(i = 0; i <= vertexCount; i++){
+        if(graphsWithLoopsCount[i]!=0){
+            fprintf(stderr, "Generated %ld graphs with %d loop%s.\n", graphsWithLoopsCount[i], i, i==1 ? (char *)"" : (char *)"s");
+            printSpacer = TRUE;
+        }
+    }
+    if(printSpacer){
+        fprintf(stderr, "\n");
+        printSpacer = FALSE;
+    }
+    for(i = 0; i <= vertexCount + 2; i++){
+        if(graphsWithSemiEdgesCount[i]!=0){
+            fprintf(stderr, "Generated %ld graphs with %d semi-edge%s.\n", graphsWithSemiEdgesCount[i], i, i==1 ? (char *)"" : (char *)"s");
+            printSpacer = TRUE;
+        }
+    }
+    if(printSpacer){
+        fprintf(stderr, "\n");
+        printSpacer = FALSE;
+    }
+    for(i = 0; i <= vertexCount/2; i++){
+        if(graphsWithMultiEdgesCount[i]!=0){
+            fprintf(stderr, "Generated %ld graphs with %d multi-edge%s.\n", graphsWithMultiEdgesCount[i], i, i==1 ? (char *)"" : (char *)"s");
+            printSpacer = TRUE;
+        }
+    }
+    if(printSpacer){
+        fprintf(stderr, "\n");
+        printSpacer = FALSE;
+    }
+
+    fprintf(stderr, "Generated %ld simple graph%s.\n", simplegraphsCount, simplegraphsCount==1 ? (char *)"" : (char *)"s");
+    fprintf(stderr, "Generated %ld graph%s with only loops (and at least one loop).\n", graphsWithOnlyLoopsCount, graphsWithOnlyLoopsCount==1 ? (char *)"" : (char *)"s");
+    fprintf(stderr, "Generated %ld graph%s with only semi-edges (and at least one semi-edge).\n", graphsWithOnlySemiEdgesCount, graphsWithOnlySemiEdgesCount==1 ? (char *)"" : (char *)"s");
+    fprintf(stderr, "Generated %ld graph%s with only multi-edges (and at least one multi-edge).\n", graphsWithOnlyMultiEdgesCount, graphsWithOnlyMultiEdgesCount==1 ? (char *)"" : (char *)"s");
 }
 
 #ifdef PREGRAPH_NO_MAIN
@@ -1883,7 +1969,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     int c;
     char *name = argv[0];
 
-    while ((c = getopt(argc, argv, "LSMf:o:h")) != -1) {
+    while ((c = getopt(argc, argv, "LSMf:o:hi")) != -1) {
         switch (c) {
             case 'L': //(defaults to FALSE)
                 allowLoops = TRUE;
@@ -1912,6 +1998,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
             case 'h':
                 help(name);
                 return EXIT_SUCCESS;
+            case 'i':
+                logStatistics = TRUE;
+                break;
             default:
                 usage(name);
                 return EXIT_FAILURE;
@@ -1929,6 +2018,8 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     DEBUGDUMP(vertexCount, "%d")
 
     /*=========== initialization ===========*/
+
+    if(logStatistics) initInfo();
 
     if(outputFile != NULL){
         FILE *file = fopen(outputFile, "r");
@@ -1954,6 +2045,8 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
 
     fprintf(stderr, "Found %ld structure%s with %d %s.\n", structureCount, structureCount==1 ? (char *)"" : (char *)"s",
                                                             vertexCount, vertexCount==1 ? (char *)"vertex" : (char *)"vertices");
+
+    if(logStatistics) printInfo();
 
     return EXIT_SUCCESS;
 }
