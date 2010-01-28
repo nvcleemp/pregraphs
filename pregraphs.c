@@ -2041,6 +2041,11 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
 
     /*=========== generation ===========*/
 
+    fprintf(stderr, "Generating %s with %d %s%s%s%s.\n", allowMultiEdges ? (char *)"multigraphs" : (char *)"simple graphs",
+            vertexCount, vertexCount==1 ? (char *)"vertex" : (char *)"vertices",
+            allowLoops && allowSemiEdges ? (char *)", " : (allowLoops ? (char *)" and " : (char *)""),
+            allowLoops ? (char *)"loops" : (char *)"", allowSemiEdges ? (char *)" and semi-edges" : (char *)"");
+
     start();
 
     fprintf(stderr, "Found %ld structure%s with %d %s.\n", structureCount, structureCount==1 ? (char *)"" : (char *)"s",
