@@ -109,6 +109,7 @@ int currentVertexCount;
 int minVertexCount;
 int maxVertexCount;
 long structureCount;
+long primitivesCount;
 
 boolean logStatistics = FALSE;
 //used for statistics

@@ -848,6 +848,8 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
         return;
     }
 
+    primitivesCount++;
+
     //determine up to automorphism all the ways to select semiEdgeCount vertices
     //of degree 1 by using union-find
     int listSize, i;
@@ -1617,6 +1619,7 @@ void handle_3_regular_result(graph *g){
 void start(){
     DEBUGMSG("Start start")
     structureCount=0;
+    primitivesCount=0;
     if(!allowSemiEdges){
         minVertexCount = maxVertexCount = vertexCount;
     } else {
@@ -1952,6 +1955,7 @@ void printInfo(){
     fprintf(stderr, "Generated %ld graph%s with only loops (and at least one loop).\n", graphsWithOnlyLoopsCount, graphsWithOnlyLoopsCount==1 ? (char *)"" : (char *)"s");
     fprintf(stderr, "Generated %ld graph%s with only semi-edges (and at least one semi-edge).\n", graphsWithOnlySemiEdgesCount, graphsWithOnlySemiEdgesCount==1 ? (char *)"" : (char *)"s");
     fprintf(stderr, "Generated %ld graph%s with only multi-edges (and at least one multi-edge).\n", graphsWithOnlyMultiEdgesCount, graphsWithOnlyMultiEdgesCount==1 ? (char *)"" : (char *)"s");
+    fprintf(stderr, "\nGenerated %ld pregraph primitive%s.\n", primitivesCount, primitivesCount==1 ? (char *)"" : (char *)"s");
 }
 
 #ifdef PREGRAPH_NO_MAIN
