@@ -742,11 +742,14 @@ char writePregraphCode(FILE *f, PREGRAPH *pregraph) {
     for (i = 0; i < ppgraph->order; i++) {
         if (primPregraph2Pregraph[i] != pregraph->order + 1) { //don't write vertices that correspond to semi-edges
             for (j = 0; j < ppgraph->degree[i]; j++) {
-                if (pregraph->order + 1 <= UCHAR_MAX) {
-                    fprintf(f, "%c", (unsigned char) primPregraph2Pregraph[ppgraph->adjList[i * 3 + j]]);
-                } else {
-                    if (write_2byte_number(f, primPregraph2Pregraph[ppgraph->adjList[i * 3 + j]], endian) == 2) {
-                        return (2);
+                if(primPregraph2Pregraph[ppgraph->adjList[i * 3 + j]]>primPregraph2Pregraph[i]){
+                    //only include adjacency information for vertices with a larger index
+                    if (pregraph->order + 1 <= UCHAR_MAX) {
+                        fprintf(f, "%c", (unsigned char) primPregraph2Pregraph[ppgraph->adjList[i * 3 + j]]);
+                    } else {
+                        if (write_2byte_number(f, primPregraph2Pregraph[ppgraph->adjList[i * 3 + j]], endian) == 2) {
+                            return (2);
+                        }
                     }
                 }
             }
