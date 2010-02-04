@@ -126,6 +126,7 @@ char *outputFile = NULL; //NULL == standard out
 
 short endian = LITTLE_ENDIAN; // defines which endian should be used while exporting pregraph code
 
+boolean onlyPrimitives = FALSE;
 boolean allowLoops = FALSE; /* TRUE if loops are allowed*/
 boolean allowMultiEdges = FALSE; /* TRUE if multi-edges are allowed*/
 boolean allowSemiEdges = FALSE; /* TRUE if semi-edges are allowed*/

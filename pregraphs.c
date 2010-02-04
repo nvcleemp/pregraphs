@@ -782,6 +782,63 @@ char writePregraphCode(FILE *f, PREGRAPH *pregraph) {
     return (ferror(f) ? 2 : 1);
 }
 
+char writePrimpregraphTable(FILE *f, PRIMPREGRAPH *ppgraph) {
+    fprintf(f, "==============================\n");
+    fprintf(f, "|  Graph number: %10ld  |\n", primitivesCount);
+    fprintf(f, "|  Number of vertices: %4d  |\n", ppgraph->order);
+    fprintf(f, "==============================\n");
+
+    unsigned short i, j;
+    for (i = 0; i < ppgraph->order; i++) {
+        fprintf(f, "|%4d ||", i+1);
+        for (j = 0; j < ppgraph->degree[i]; j++) {
+            fprintf(f, " %4d |", ppgraph->adjList[i * 3 + j] + 1);
+        }
+        fprintf(f,"|\n");
+    }
+    fprintf(f, "==============================\n");
+    fprintf(f,"\n");
+    return (ferror(f) ? 2 : 1);
+}
+
+char writePrimpregraphCode(FILE *f, PRIMPREGRAPH *ppgraph) {
+    unsigned short i, j;
+    if (structureCount == 1) { //if first graph
+        fprintf(f, ">>multi_code %s<<", (endian == LITTLE_ENDIAN ? "le" : "be"));
+    }
+    if (ppgraph->order <= UCHAR_MAX) {
+        fprintf(f, "%c", (unsigned char) ppgraph->order);
+    } else {
+        fprintf(f, "%c", 0);
+        /* big graph */
+        if (write_2byte_number(f, (unsigned short) ppgraph->order, endian) == 2) {
+            return (2);
+        }
+    }
+    for (i = 0; i < ppgraph->order; i++) {
+            for (j = 0; j < ppgraph->degree[i]; j++) {
+                if(ppgraph->adjList[i * 3 + j]>i){
+                    if (ppgraph->order + 1 <= UCHAR_MAX) {
+                        fprintf(f, "%c", (unsigned char) ppgraph->adjList[i * 3 + j] + 1);
+                    } else {
+                        if (write_2byte_number(f, ppgraph->adjList[i * 3 + j] + 1, endian) == 2) {
+                            return (2);
+                        }
+                    }
+                }
+            }
+            //closing 0
+            if (ppgraph->order <= UCHAR_MAX) {
+                fprintf(f, "%c", 0);
+            } else {
+                if (write_2byte_number(f, 0, endian) == 2) {
+                    return (2);
+                }
+            }
+    }
+    return (ferror(f) ? 2 : 1);
+}
+
 /*
 void write_pregraph(PREGRAPH *pregraph, FILE *file){
     fprintf(file, "%d ", pregraph->order);
@@ -810,7 +867,7 @@ void handle_pregraph_result(PREGRAPH *pregraph){
                 fprintf(stderr, "Error while writing graph %ld\n", structureCount);
                 exit(1);
             }
-        } else if(outputType == 'p'){
+        } else if(outputType == 'c'){
             if (writePregraphCode(file, pregraph) == 2) {
                 fprintf(stderr, "Error while writing graph %ld\n", structureCount);
                 exit(1);
@@ -824,6 +881,33 @@ void handle_pregraph_result(PREGRAPH *pregraph){
     }
     if(logStatistics) logInfo(pregraph);
     DEBUGMSG("End handle_pregraph_result")
+}
+
+void doPrimpregraphExport(PRIMPREGRAPH *ppgraph){
+    if(outputType != 'n'){
+        FILE *file = stdout;
+        if(outputFile != NULL){
+            file = fopen(outputFile, "a");
+            DEBUGMSG("Opened file")
+        }
+
+        if(outputType == 'h'){
+            if (writePrimpregraphTable(file, ppgraph) == 2) {
+                fprintf(stderr, "Error while writing pregraph primitive %ld\n", primitivesCount);
+                exit(1);
+            }
+        } else if(outputType == 'c'){
+            if (writePrimpregraphCode(file, ppgraph) == 2) {
+                fprintf(stderr, "Error while writing pregraph primitive %ld\n", primitivesCount);
+                exit(1);
+            }
+        }
+
+        if(outputFile != NULL){
+            fclose(file);
+            DEBUGMSG("Closed file")
+        }
+    }
 }
 
 /*
@@ -849,6 +933,11 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     }
 
     primitivesCount++;
+    if(onlyPrimitives){
+        doPrimpregraphExport(ppgraph);
+        DEBUGMSG("End handle_primpregraph_result")
+        return;
+    }
 
     //determine up to automorphism all the ways to select semiEdgeCount vertices
     //of degree 1 by using union-find
@@ -1873,9 +1962,10 @@ void help(char *name) {
     fprintf(stderr, "  -L          : Allow loops.\n");
     fprintf(stderr, "  -S          : Allow semi-edges.\n");
     fprintf(stderr, "  -M          : Allow multi-edges.\n");
+    fprintf(stderr, "  -P          : Only generate the corresponding pregraph primitives.\n");
     fprintf(stderr, "  -f file     : Specifies the output file. If absent, the output is written to standard out.\n");
     fprintf(stderr, "  -o c        : Specifies the export format where c is one of\n");
-    fprintf(stderr, "                p    planar code\n");
+    fprintf(stderr, "                c    pregraph code (or multicode if -P is used)\n");
     fprintf(stderr, "                h    human-readable output in tabular format\n");
     fprintf(stderr, "                n    no output: only count (default)\n");
 }
@@ -1918,43 +2008,45 @@ void logInfo(PREGRAPH *pregraph){
 }
 
 void printInfo(){
-    int i;
-    boolean printSpacer = FALSE;
-    for(i = 0; i <= vertexCount; i++){
-        if(graphsWithLoopsCount[i]!=0){
-            fprintf(stderr, "Generated %ld graphs with %d loop%s.\n", graphsWithLoopsCount[i], i, i==1 ? (char *)"" : (char *)"s");
-            printSpacer = TRUE;
+    if(!onlyPrimitives){
+        int i;
+        boolean printSpacer = FALSE;
+        for(i = 0; i <= vertexCount; i++){
+            if(graphsWithLoopsCount[i]!=0){
+                fprintf(stderr, "Generated %ld graphs with %d loop%s.\n", graphsWithLoopsCount[i], i, i==1 ? (char *)"" : (char *)"s");
+                printSpacer = TRUE;
+            }
         }
-    }
-    if(printSpacer){
-        fprintf(stderr, "\n");
-        printSpacer = FALSE;
-    }
-    for(i = 0; i <= vertexCount + 2; i++){
-        if(graphsWithSemiEdgesCount[i]!=0){
-            fprintf(stderr, "Generated %ld graphs with %d semi-edge%s.\n", graphsWithSemiEdgesCount[i], i, i==1 ? (char *)"" : (char *)"s");
-            printSpacer = TRUE;
+        if(printSpacer){
+            fprintf(stderr, "\n");
+            printSpacer = FALSE;
         }
-    }
-    if(printSpacer){
-        fprintf(stderr, "\n");
-        printSpacer = FALSE;
-    }
-    for(i = 0; i <= vertexCount/2; i++){
-        if(graphsWithMultiEdgesCount[i]!=0){
-            fprintf(stderr, "Generated %ld graphs with %d multi-edge%s.\n", graphsWithMultiEdgesCount[i], i, i==1 ? (char *)"" : (char *)"s");
-            printSpacer = TRUE;
+        for(i = 0; i <= vertexCount + 2; i++){
+            if(graphsWithSemiEdgesCount[i]!=0){
+                fprintf(stderr, "Generated %ld graphs with %d semi-edge%s.\n", graphsWithSemiEdgesCount[i], i, i==1 ? (char *)"" : (char *)"s");
+                printSpacer = TRUE;
+            }
         }
-    }
-    if(printSpacer){
-        fprintf(stderr, "\n");
-        printSpacer = FALSE;
-    }
+        if(printSpacer){
+            fprintf(stderr, "\n");
+            printSpacer = FALSE;
+        }
+        for(i = 0; i <= vertexCount/2; i++){
+            if(graphsWithMultiEdgesCount[i]!=0){
+                fprintf(stderr, "Generated %ld graphs with %d multi-edge%s.\n", graphsWithMultiEdgesCount[i], i, i==1 ? (char *)"" : (char *)"s");
+                printSpacer = TRUE;
+            }
+        }
+        if(printSpacer){
+            fprintf(stderr, "\n");
+            printSpacer = FALSE;
+        }
 
-    fprintf(stderr, "Generated %ld simple graph%s.\n", simplegraphsCount, simplegraphsCount==1 ? (char *)"" : (char *)"s");
-    fprintf(stderr, "Generated %ld graph%s with only loops (and at least one loop).\n", graphsWithOnlyLoopsCount, graphsWithOnlyLoopsCount==1 ? (char *)"" : (char *)"s");
-    fprintf(stderr, "Generated %ld graph%s with only semi-edges (and at least one semi-edge).\n", graphsWithOnlySemiEdgesCount, graphsWithOnlySemiEdgesCount==1 ? (char *)"" : (char *)"s");
-    fprintf(stderr, "Generated %ld graph%s with only multi-edges (and at least one multi-edge).\n", graphsWithOnlyMultiEdgesCount, graphsWithOnlyMultiEdgesCount==1 ? (char *)"" : (char *)"s");
+        fprintf(stderr, "Generated %ld simple graph%s.\n", simplegraphsCount, simplegraphsCount==1 ? (char *)"" : (char *)"s");
+        fprintf(stderr, "Generated %ld graph%s with only loops (and at least one loop).\n", graphsWithOnlyLoopsCount, graphsWithOnlyLoopsCount==1 ? (char *)"" : (char *)"s");
+        fprintf(stderr, "Generated %ld graph%s with only semi-edges (and at least one semi-edge).\n", graphsWithOnlySemiEdgesCount, graphsWithOnlySemiEdgesCount==1 ? (char *)"" : (char *)"s");
+        fprintf(stderr, "Generated %ld graph%s with only multi-edges (and at least one multi-edge).\n", graphsWithOnlyMultiEdgesCount, graphsWithOnlyMultiEdgesCount==1 ? (char *)"" : (char *)"s");
+    }
     fprintf(stderr, "\nGenerated %ld pregraph primitive%s.\n", primitivesCount, primitivesCount==1 ? (char *)"" : (char *)"s");
 }
 
@@ -1973,7 +2065,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     int c;
     char *name = argv[0];
 
-    while ((c = getopt(argc, argv, "LSMf:o:hi")) != -1) {
+    while ((c = getopt(argc, argv, "LSMPf:o:hi")) != -1) {
         switch (c) {
             case 'L': //(defaults to FALSE)
                 allowLoops = TRUE;
@@ -1984,6 +2076,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
             case 'M': //(defaults to FALSE)
                 allowMultiEdges = TRUE;
                 break;
+            case 'P': //(defaults to FALSE)
+                onlyPrimitives = TRUE;
+                break;
             case 'f': //(defaults to stdout)
                 outputFile = optarg;
                 break;
@@ -1991,7 +2086,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                 outputType = optarg[0];
                 switch (outputType) {
                     case 'n': //no output (default)
-                    case 'p': //pregraph code
+                    case 'c': //pregraph code or multicode
                     case 'h': //human-readable
                         break;
                     default:
@@ -2045,17 +2140,18 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
 
     /*=========== generation ===========*/
 
-    fprintf(stderr, "Generating %s with %d %s%s%s%s.\n", allowMultiEdges ? (char *)"multigraphs" : (char *)"simple graphs",
+    fprintf(stderr, "Generating %s%s with %d %s%s%s%s.\n", onlyPrimitives ? (char *)"pregraph primitives of " : (char *)"" , allowMultiEdges ? (char *)"multigraphs" : (char *)"simple graphs",
             vertexCount, vertexCount==1 ? (char *)"vertex" : (char *)"vertices",
             allowLoops && allowSemiEdges ? (char *)", " : (allowLoops ? (char *)" and " : (char *)""),
             allowLoops ? (char *)"loops" : (char *)"", allowSemiEdges ? (char *)" and semi-edges" : (char *)"");
 
     start();
 
-    fprintf(stderr, "Found %ld structure%s with %d %s.\n", structureCount, structureCount==1 ? (char *)"" : (char *)"s",
+    if(!onlyPrimitives)
+        fprintf(stderr, "Found %ld pregraph%s with %d %s.\n", structureCount, structureCount==1 ? (char *)"" : (char *)"s",
                                                             vertexCount, vertexCount==1 ? (char *)"vertex" : (char *)"vertices");
 
-    if(logStatistics) printInfo();
+    if(logStatistics || onlyPrimitives ) printInfo();
 
     return EXIT_SUCCESS;
 }
