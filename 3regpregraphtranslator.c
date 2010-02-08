@@ -412,11 +412,12 @@ print a help message. name is the name of the current program.
  */
 void help(char *name) {
     fprintf(stderr, "The program %s .\n", name);
-    fprintf(stderr, "Usage: %s [t/m/h] \n\n", name);
+    fprintf(stderr, "Usage: %s [t/m/h][X] \n\n", name);
     fprintf(stderr, "Valid options:\n");
     fprintf(stderr, "  -h          : Print this help and return.\n");
     fprintf(stderr, "  -t          : .\n");
     fprintf(stderr, "  -m          : .\n");
+    fprintf(stderr, "  -X          : don't include a header in case multicode is exported.\n");
 }
 
 /*
@@ -428,12 +429,13 @@ int main(int argc, char** argv) {
 
     boolean table = FALSE;
     boolean multicode = FALSE;
+    boolean header = TRUE;
 
     int c;
     char *name = argv[0];
     int endian = defaultEndian;
 
-    while ((c = getopt(argc, argv, "htmd")) != -1) {
+    while ((c = getopt(argc, argv, "htmdX")) != -1) {
         switch (c) {
             case 't':
                 table = TRUE;
@@ -443,6 +445,9 @@ int main(int argc, char** argv) {
                 break;
             case 'd':
                 debugOutput = TRUE;
+                break;
+            case 'X':
+                header = FALSE;
                 break;
             case 'h':
                 help(name);
@@ -488,7 +493,7 @@ int main(int argc, char** argv) {
         if(table)
             writePregraphTable(stdout, &pregraph, count);
         else if (multicode)
-            writeMulticode(stdout, &pregraph, count==1, endian);
+            writeMulticode(stdout, &pregraph, header && count==1, endian);
     }
 
     return EXIT_SUCCESS;
