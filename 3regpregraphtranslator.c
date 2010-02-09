@@ -165,7 +165,6 @@ char readPregraphCodeNoHeader(FILE *f, PREGRAPH *pregraph, int endian) {
         if (read_old_or_new(f, signum == 0, endian, &number) == 2) {
             return (2);
         }
-        //fprintf(stderr, "%d ", number);
         DEBUGDUMP(i, "%d")
         DEBUGDUMP(number, "%d")
         if (number != 0) {
@@ -205,7 +204,7 @@ char readPregraphCodeNoHeader(FILE *f, PREGRAPH *pregraph, int endian) {
                 }
             }
         } else {
-            DEBUGMSG("next vertex")
+            DEBUGMSG("=========next vertex=========")
             i++;
             //fprintf(stderr, "%d \n", number);
         }
@@ -500,6 +499,7 @@ int main(int argc, char** argv) {
     while(readPregraphCode(stdin, &pregraph, &endian, count)==(char)1){
         //fprintf(outputFile, "\n\n");
         count++;
+        DEBUGDUMP(count, "%ld")
         if(table)
             writePregraphTable(stdout, &pregraph, count);
         else if (multicode)
