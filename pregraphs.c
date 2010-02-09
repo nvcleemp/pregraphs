@@ -1756,6 +1756,27 @@ void start(){
     DEBUGMSG("End start")
 }
 
+/* For debugging purposes
+void start2(){
+    DEBUGMSG("Start start2")
+    structureCount=0;
+    primitivesCount=0;
+    if(!allowSemiEdges){
+        minVertexCount = maxVertexCount = vertexCount;
+    } else {
+        minVertexCount = vertexCount;
+        maxVertexCount = 2*vertexCount+2;
+    }
+    DEBUGDUMP(minVertexCount, "%d")
+    DEBUGDUMP(maxVertexCount, "%d")
+    PRIMPREGRAPH ppgraph;
+    construct_K3_3(&ppgraph);
+    grow(&ppgraph);
+    DEBUGMSG("End start2")
+}
+*/
+
+
 //--------------------Begin extra output graph---------------------------
 
 /*   __
