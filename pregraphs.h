@@ -131,6 +131,12 @@ boolean allowLoops = FALSE; /* TRUE if loops are allowed*/
 boolean allowMultiEdges = FALSE; /* TRUE if multi-edges are allowed*/
 boolean allowSemiEdges = FALSE; /* TRUE if semi-edges are allowed*/
 
+boolean operation11Disabled = FALSE;
+boolean operation12Disabled = FALSE;
+boolean operation21Disabled = FALSE;
+boolean operation22Disabled = FALSE;
+boolean operation23Disabled = FALSE;
+
 permutation automorphismGroupGenerators[MAXN][MAXN];
 int numberOfGenerators;
 

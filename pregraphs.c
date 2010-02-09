@@ -1144,6 +1144,7 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, int *vertexOrbits){
  * apply the operation for each pair, handle the result and then revert the operation.
  */
 void handle_deg1_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators){
+    if(operation11Disabled) return;
     DEBUGMSG("Start handle_deg1_operation1")
     DEBUG2DARRAYDUMP((*currentGenerators), currentNumberOfGenerators, ppgraph->order, "%d")
     int maxSize = ppgraph->degree1Count*ppgraph->degree1Count/2;
@@ -1184,6 +1185,7 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
 }
 
 void handle_deg1_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators){
+    if(operation12Disabled) return;
     DEBUGMSG("Start handle_deg1_operation2")
     DEBUG2DARRAYDUMP((*currentGenerators), currentNumberOfGenerators, ppgraph->order, "%d")
     int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
@@ -1374,6 +1376,7 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2,
 }
 
 void handle_deg2_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators){
+    if(operation21Disabled) return;
     DEBUGMSG("Start handle_deg2_operation1")
     DEBUG2DARRAYDUMP((*currentGenerators), currentNumberOfGenerators, ppgraph->order, "%d")
     int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
@@ -1410,6 +1413,7 @@ void handle_deg2_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
 
 void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators,
         VERTEXPAIR **oldMultiEdgeList, int *oldMultiEdgeListSize, int **oldMultiEdgeOrbits, int *oldMultiEdgeOrbitCount){
+    if(operation22Disabled) return;
     DEBUGMSG("Start handle_deg2_operation2")
     DEBUG2DARRAYDUMP((*currentGenerators), currentNumberOfGenerators, ppgraph->order, "%d")
     DEBUGDUMP(*oldMultiEdgeList, "%p")
@@ -1458,6 +1462,7 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
 
 void handle_deg2_operation3(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators,
         VERTEXPAIR **oldMultiEdgeList, int *oldMultiEdgeListSize, int **oldMultiEdgeOrbits, int *oldMultiEdgeOrbitCount){
+    if(operation23Disabled) return;
     DEBUGMSG("Start handle_deg2_operation3")
     DEBUG2DARRAYDUMP((*currentGenerators), currentNumberOfGenerators, ppgraph->order, "%d")
     DEBUGDUMP(*oldMultiEdgeList, "%p")
@@ -2067,8 +2072,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
 
     int c;
     char *name = argv[0];
+    char *disabled;
 
-    while ((c = getopt(argc, argv, "LSMPf:o:hi")) != -1) {
+    while ((c = getopt(argc, argv, "LSMPf:o:D:hi")) != -1) {
         switch (c) {
             case 'L': //(defaults to FALSE)
                 allowLoops = TRUE;
@@ -2093,8 +2099,37 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                     case 'h': //human-readable
                         break;
                     default:
+                        fprintf(stderr, "Illegal output format %c.\n", c);
                         usage(name);
                         return 1;
+                }
+                break;
+            case 'D':
+                //disable certain operations
+                disabled = optarg;
+                while(*disabled != 0){
+                    switch (*disabled) {
+                        case '1': //disable operation 1.1
+                            operation11Disabled = TRUE;
+                            break;
+                        case '2': //disable operation 1.2
+                            operation12Disabled = TRUE;
+                            break;
+                        case '3': //disable operation 2.1
+                            operation21Disabled = TRUE;
+                            break;
+                        case '4': //disable operation 2.2
+                            operation22Disabled = TRUE;
+                            break;
+                        case '5': //disable operation 2.3
+                            operation23Disabled = TRUE;
+                            break;
+                        default:
+                            fprintf(stderr, "Illegal parameter %c for option -D.\n", *disabled);
+                            usage(name);
+                            return 1;
+                    }
+                    disabled++;
                 }
                 break;
             case 'h':
@@ -2104,6 +2139,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                 logStatistics = TRUE;
                 break;
             default:
+                fprintf(stderr, "Illegal option %c.\n", c);
                 usage(name);
                 return EXIT_FAILURE;
         }
