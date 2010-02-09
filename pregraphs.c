@@ -818,7 +818,7 @@ char writePrimpregraphCode(FILE *f, PRIMPREGRAPH *ppgraph) {
             return (2);
         }
     }
-    for (i = 0; i < ppgraph->order; i++) {
+    for (i = 0; i < ppgraph->order - 1; i++) {
             for (j = 0; j < ppgraph->degree[i]; j++) {
                 if(ppgraph->adjList[i * 3 + j]>i){
                     if (ppgraph->order + 1 <= UCHAR_MAX) {
