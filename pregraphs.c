@@ -1930,7 +1930,7 @@ void construct_K3_3(PRIMPREGRAPH *ppgraph){
     ppgraph->adjList[0*3+2] = 5;
     ppgraph->adjList[1*3] = 3;
     ppgraph->adjList[1*3+1] = 4;
-    ppgraph->adjList[1*3+5] = 5;
+    ppgraph->adjList[1*3+2] = 5;
     ppgraph->adjList[2*3] = 3;
     ppgraph->adjList[2*3+1] = 4;
     ppgraph->adjList[2*3+2] = 5;
