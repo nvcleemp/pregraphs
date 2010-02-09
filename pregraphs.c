@@ -1919,6 +1919,59 @@ void construct_K3_with_spike(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("Created K3 with spike")
 }
 
+/*  For testing purposes
+ */
+void construct_K3_3(PRIMPREGRAPH *ppgraph){
+    ppgraph->order = 6;
+    ppgraph->degree1Count = 0;
+    ppgraph->multiEdgeCount = 0;
+    ppgraph->adjList[0*3] = 3;
+    ppgraph->adjList[0*3+1] = 4;
+    ppgraph->adjList[0*3+2] = 5;
+    ppgraph->adjList[1*3] = 3;
+    ppgraph->adjList[1*3+1] = 4;
+    ppgraph->adjList[1*3+5] = 5;
+    ppgraph->adjList[2*3] = 3;
+    ppgraph->adjList[2*3+1] = 4;
+    ppgraph->adjList[2*3+2] = 5;
+    ppgraph->adjList[3*3] = 0;
+    ppgraph->adjList[3*3+1] = 1;
+    ppgraph->adjList[3*3+2] = 2;
+    ppgraph->adjList[4*3] = 0;
+    ppgraph->adjList[4*3+1] = 1;
+    ppgraph->adjList[4*3+2] = 2;
+    ppgraph->adjList[5*3] = 0;
+    ppgraph->adjList[5*3+1] = 1;
+    ppgraph->adjList[5*3+2] = 2;
+    ppgraph->degree[0]=3;
+    ppgraph->degree[1]=3;
+    ppgraph->degree[2]=3;
+    ppgraph->degree[3]=3;
+    ppgraph->degree[4]=3;
+    ppgraph->degree[5]=3;
+
+    set *g0, *g1, *g2, *g3, *g4, *g5;
+    g0 = GRAPHROW(ppgraph->ulgraph, 0, MAXM);
+    g1 = GRAPHROW(ppgraph->ulgraph, 1, MAXM);
+    g2 = GRAPHROW(ppgraph->ulgraph, 2, MAXM);
+    g3 = GRAPHROW(ppgraph->ulgraph, 3, MAXM);
+    g4 = GRAPHROW(ppgraph->ulgraph, 4, MAXM);
+    g5 = GRAPHROW(ppgraph->ulgraph, 5, MAXM);
+    EMPTYSET(g0, MAXM);
+    EMPTYSET(g1, MAXM);
+    EMPTYSET(g2, MAXM);
+    EMPTYSET(g3, MAXM);
+    EMPTYSET(g4, MAXM);
+    EMPTYSET(g5, MAXM);
+    ADDELEMENT(g0, 3); ADDELEMENT(g0, 4); ADDELEMENT(g0, 5);
+    ADDELEMENT(g1, 3); ADDELEMENT(g1, 4); ADDELEMENT(g1, 5);
+    ADDELEMENT(g2, 3); ADDELEMENT(g2, 4); ADDELEMENT(g2, 5);
+    ADDELEMENT(g3, 0); ADDELEMENT(g3, 1); ADDELEMENT(g3, 2);
+    ADDELEMENT(g4, 0); ADDELEMENT(g4, 1); ADDELEMENT(g4, 2);
+    ADDELEMENT(g5, 0); ADDELEMENT(g5, 1); ADDELEMENT(g5, 2);
+    DEBUGMSG("Created K3,3")
+}
+
 //-------------------------End start graphs------------------------------
 
 //----------------------Begin Nauty interaction--------------------------
