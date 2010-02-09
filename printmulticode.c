@@ -84,8 +84,8 @@ int main(int argc, char** argv) {
 
     /*=========== commandline parsing ===========*/
 
-    int c;
-    char *name = argv[0];
+    //int c;
+    //char *name = argv[0];
     int endian = defaultEndian;
 
     /*
