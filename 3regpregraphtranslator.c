@@ -4,7 +4,7 @@
  *
  * Created on February 4, 2010, 9:52 AM
  */
-//#define _DEBUG
+#define _DEBUG
 
 //TODO: currently can't handle fat K2
 
@@ -211,12 +211,14 @@ char readPregraphCodeNoHeader(FILE *f, PREGRAPH *pregraph, int endian) {
         }
     }
     pregraph->ppgraph->multiEdgeCount/=2; //counted twice
+    DEBUGMSG("Graph read")
     return (1);
 }
 
 char readPregraphCode(FILE *f, PREGRAPH *pregraph, int *endian, unsigned long count) {
     if (count == 0) {
         if (read_endian(f, endian) == 2) {
+            DEBUGMSG("Read error")
             return (2);
         }
     }
@@ -312,6 +314,8 @@ char writeMulticode(FILE *f, PREGRAPH *pregraph, boolean header, int endian){
     int offset = ppgraph->order;
 
     for (i = 0; i < ppgraph->order; i++){
+        DEBUGDUMP(i, "%d")
+        DEBUGDUMP(ppgraph->degree[i], "%d")
         if(ppgraph->degree[i]==1){
             adjacency[i*3+0]=ppgraph->adjList[i*3+0];
             if(pregraph->semiEdgeVertices[i]){
@@ -329,6 +333,9 @@ char writeMulticode(FILE *f, PREGRAPH *pregraph, boolean header, int endian){
             }
         } else if(ppgraph->degree[i]==2){
             degree[i]=3;
+            DEBUGDUMP(ppgraph->multiedge[i], "%d")
+            DEBUGDUMP(ppgraph->adjList[i*3+0], "%d")
+            DEBUGDUMP(ppgraph->adjList[i*3+1], "%d")
             if(ppgraph->adjList[i*3+0]==ppgraph->multiedge[i]){
                 adjacency[i*3+0]=ppgraph->adjList[i*3+1];
             } else {
@@ -353,6 +360,7 @@ char writeMulticode(FILE *f, PREGRAPH *pregraph, boolean header, int endian){
             adjacency[i*3+2]=ppgraph->adjList[i*3+2];
         }
     }
+    DEBUGMSG("Graph translated to simple graph")
 
     //next we write out the simple graph
     unsigned short j;
@@ -371,7 +379,9 @@ char writeMulticode(FILE *f, PREGRAPH *pregraph, boolean header, int endian){
         }
     }
     for (i = 0; i < newOrder-1; i++) {
+        DEBUGDUMP(i, "%d")
         for (j = 0; j < degree[i]; j++) {
+            DEBUGDUMP(j, "%d")
             if(adjacency[i * 3 + j]>i){
                 if (debugOutput) {
                     fprintf(f, "%d ", adjacency[i * 3 + j] + 1);
@@ -496,6 +506,7 @@ int main(int argc, char** argv) {
             writeMulticode(stdout, &pregraph, header && count==1, endian);
     }
 
+    fprintf(stderr, "Read %ld graphs.\n", count);
     return EXIT_SUCCESS;
 }
 
