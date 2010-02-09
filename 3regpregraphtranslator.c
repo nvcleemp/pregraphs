@@ -4,7 +4,7 @@
  *
  * Created on February 4, 2010, 9:52 AM
  */
-#define _DEBUG
+//#define _DEBUG
 
 //TODO: currently can't handle fat K2
 
