@@ -1136,6 +1136,7 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, int *vertexOrbits){
     }
     DEBUGDUMP(smallestLabelOrbitV, "%d")
     DEBUGDUMP(smallestOtherDegree1Label, "%d")
+    if(noRejections) return TRUE;
     return (smallestLabelOrbitV < smallestOtherDegree1Label);
 }
 
@@ -1371,6 +1372,7 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2,
     }
 
     DEBUGMSG("End isCanonicalMultiEdge")
+    if(noRejections) return TRUE;
     return smallestRepresentantNewEdge[0] < smallestOtherMultiEdge[0] ||
             (smallestRepresentantNewEdge[0] == smallestOtherMultiEdge[0] && smallestRepresentantNewEdge[1] < smallestOtherMultiEdge[1]);
 }
@@ -2050,6 +2052,14 @@ void help(char *name) {
     fprintf(stderr, "                c    pregraph code (or multicode if -P is used)\n");
     fprintf(stderr, "                h    human-readable output in tabular format\n");
     fprintf(stderr, "                n    no output: only count (default)\n");
+    fprintf(stderr, "  -D #        : Disable some operations:\n");
+    fprintf(stderr, "                1    Disable operation 1.1\n");
+    fprintf(stderr, "                2    Disable operation 1.2\n");
+    fprintf(stderr, "                3    Disable operation 2.1\n");
+    fprintf(stderr, "                4    Disable operation 2.2\n");
+    fprintf(stderr, "                5    Disable operation 2.3\n");
+    fprintf(stderr, "  -X          : No operation will be discarded as being not-canonical. This will cause\n");
+    fprintf(stderr, "                isomorphic graphs to be constructed. (This option is for debugging purposes.)\n");
 }
 
 void initInfo(){
@@ -2148,7 +2158,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     char *name = argv[0];
     char *disabled;
 
-    while ((c = getopt(argc, argv, "LSMPf:o:D:hi")) != -1) {
+    while ((c = getopt(argc, argv, "LSMPXf:o:D:hi")) != -1) {
         switch (c) {
             case 'L': //(defaults to FALSE)
                 allowLoops = TRUE;
@@ -2161,6 +2171,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                 break;
             case 'P': //(defaults to FALSE)
                 onlyPrimitives = TRUE;
+                break;
+            case 'X': //(defaults to FALSE)
+                noRejections = TRUE;
                 break;
             case 'f': //(defaults to stdout)
                 outputFile = optarg;

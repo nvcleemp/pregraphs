@@ -137,6 +137,8 @@ boolean operation21Disabled = FALSE;
 boolean operation22Disabled = FALSE;
 boolean operation23Disabled = FALSE;
 
+boolean noRejections = FALSE;
+
 permutation automorphismGroupGenerators[MAXN][MAXN];
 int numberOfGenerators;
 
