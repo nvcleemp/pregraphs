@@ -1758,7 +1758,7 @@ void start(){
     DEBUGMSG("End start")
 }
 
-/* For debugging purposes
+/* For debugging purposes*/
 void start2(){
     DEBUGMSG("Start start2")
     structureCount=0;
@@ -1776,8 +1776,6 @@ void start2(){
     grow(&ppgraph);
     DEBUGMSG("End start2")
 }
-*/
-
 
 //--------------------Begin extra output graph---------------------------
 
