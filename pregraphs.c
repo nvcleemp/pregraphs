@@ -762,8 +762,8 @@ char writePregraphCode(FILE *f, PREGRAPH *pregraph) {
                         return (2);
                     }
                 }
-            } else if (j == 2) {
-                //add multi-edge
+            } else if (j == 2 && primPregraph2Pregraph[ppgraph->multiedge[i]]>primPregraph2Pregraph[i]) {
+                //add multi-edge if it has a larger index
                 if (pregraph->order + 1 <= UCHAR_MAX) {
                     fprintf(f, "%c", (unsigned char) primPregraph2Pregraph[ppgraph->multiedge[i]]);
                 } else {
@@ -789,6 +789,8 @@ char writePrimpregraphTable(FILE *f, PRIMPREGRAPH *ppgraph) {
     fprintf(f, "==============================\n");
     fprintf(f, "|  Graph number: %10ld  |\n", primitivesCount);
     fprintf(f, "|  Number of vertices: %4d  |\n", ppgraph->order);
+    fprintf(f, "|  Number deg1 vertices: %2d  |\n", ppgraph->degree1Count);
+    fprintf(f, "|  Number multi-edges: %4d  |\n", ppgraph->multiEdgeCount);
     fprintf(f, "==============================\n");
 
     unsigned short i, j;
@@ -796,6 +798,9 @@ char writePrimpregraphTable(FILE *f, PRIMPREGRAPH *ppgraph) {
         fprintf(f, "|%4d ||", i+1);
         for (j = 0; j < ppgraph->degree[i]; j++) {
             fprintf(f, " %4d |", ppgraph->adjList[i * 3 + j] + 1);
+        }
+        if(j==2){
+            fprintf(f, "(%4d)|", ppgraph->multiedge[i] + 1);
         }
         fprintf(f,"|\n");
     }
@@ -1370,6 +1375,10 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2,
             }
         }
     }
+    DEBUGDUMP(smallestRepresentantNewEdge[0], "%d")
+    DEBUGDUMP(smallestRepresentantNewEdge[1], "%d")
+    DEBUGDUMP(smallestOtherMultiEdge[0], "%d")
+    DEBUGDUMP(smallestOtherMultiEdge[1], "%d")
 
     DEBUGMSG("End isCanonicalMultiEdge")
     if(noRejections) return TRUE;
@@ -1777,6 +1786,282 @@ void start2(){
     DEBUGMSG("End start2")
 }
 
+void startFromFile(FILE *inputFile){
+    DEBUGMSG("Start startFromFile")
+    int i, endian = LITTLE_ENDIAN;
+    unsigned char formatIdentifier;
+
+    //initialize some globals
+    structureCount=0;
+    primitivesCount=0;
+    if(!allowSemiEdges){
+        minVertexCount = maxVertexCount = vertexCount;
+    } else {
+        minVertexCount = vertexCount;
+        maxVertexCount = 2*vertexCount+2;
+    }
+    DEBUGDUMP(minVertexCount, "%d")
+    DEBUGDUMP(maxVertexCount, "%d")
+
+    //First we read the header and determine the file format
+    DEBUGMSG("")
+    unsigned char c[1];
+    do {
+        if (fread(c, sizeof (unsigned char), 1, inputFile) == 0) {
+            fprintf(stderr, "Error while reading input file: aborting!\n");
+            exit(EXIT_FAILURE);
+        }
+    } while (isspace(*c));
+    DEBUGMSG("")
+    if(*c!='>'){
+        fprintf(stderr, "First character was %c (%d).\n", *c, *c);
+        fprintf(stderr, "File doesn't start with a header: aborting!\n");
+        exit(EXIT_FAILURE);
+    }
+    DEBUGMSG("")
+    if (fread(c, sizeof (unsigned char), 1, inputFile) == 0) {
+        fprintf(stderr, "Error while reading input file: aborting!\n");
+        exit(EXIT_FAILURE);
+    }
+    DEBUGMSG("")
+    if(*c!='>'){
+        fprintf(stderr, "Second character was %c(%d).\n", *c, *c);
+        fprintf(stderr, "File doesn't start with a header: aborting!\n");
+        exit(EXIT_FAILURE);
+    }
+    DEBUGMSG("")
+    if (fread(c, sizeof (unsigned char), 1, inputFile) == 0) {
+        fprintf(stderr, "Error while reading input file: aborting!\n");
+        exit(EXIT_FAILURE);
+    }
+    DEBUGMSG("")
+    if(*c=='m'){
+        //should be multicode
+        unsigned char format[10];
+        format[0]='m';
+        for(i = 1; i < 10; i++){
+            if (fread(format + i, sizeof (unsigned char), 1, inputFile) == 0) {
+                fprintf(stderr, "Error while reading input file: aborting!\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        if (strncmp((char *)  format, "multi_code", 10) != 0) {
+            DEBUGARRAYDUMP(format, 10, "%c")
+            fprintf(stderr, "Input file is in an illegal file format (expected multi_code): aborting!\n");
+            exit(EXIT_FAILURE);
+        }
+        formatIdentifier = 'm';
+    } else if(*c=='p'){
+        //should be pregraphcode
+        unsigned char format[13];
+        format[0]='p';
+        for(i = 1; i < 13; i++){
+            if (fread(format + i, sizeof (unsigned char), 1, inputFile) == 0) {
+                fprintf(stderr, "Error while reading input file: aborting!\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        if (strncmp((char *)format, "pregraph_code", 13) != 0) {
+            DEBUGARRAYDUMP(format, 13, "%c")
+            fprintf(stderr, "Input file is in an illegal file format (expected pregraph_code): aborting!\n");
+            exit(EXIT_FAILURE);
+        }
+        formatIdentifier = 'p';
+
+    } else {
+        //not supported format
+        fprintf(stderr, "Third character was %c(%d).\n", *c, *c);
+        fprintf(stderr, "Input file is in an illegal file format: aborting!\n");
+        exit(EXIT_FAILURE);
+    }
+    DEBUGMSG("")
+
+    //next we read the endian of the file
+    unsigned char nextTwo[2];
+    do {
+        if (fread(&nextTwo[0], sizeof (unsigned char), 1, inputFile) == 0) {
+            fprintf(stderr, "Error while reading input file: aborting!\n");
+            exit(EXIT_FAILURE);
+        }
+    } while (isspace(nextTwo[0]));
+    if (fread(&nextTwo[1], sizeof (unsigned char), 1, inputFile) == 0) {
+        fprintf(stderr, "Error while reading input file: aborting!\n");
+        exit(EXIT_FAILURE);
+    }
+    //endian defaults to le
+    if (strncmp((char *) nextTwo, "le", 2) == 0) {
+        endian = LITTLE_ENDIAN;
+    } else if (strncmp((char *) & nextTwo[0], "be", 2) == 0) {
+        endian = BIG_ENDIAN;
+    }
+
+    //finally we read on to the end of the header
+    while (strncmp((char *) nextTwo, "<<", 2) != 0) {
+        nextTwo[0] = nextTwo[1];
+        if (fread(&nextTwo[1], sizeof (unsigned char), 1, inputFile) == 0) {
+            fprintf(stderr, "Error while reading input file: aborting!\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    fprintf(stderr, "Reading file in %s format with %s endian.\n",
+            formatIdentifier=='p' ? "pregraph_code" : "multi_code",
+            endian == LITTLE_ENDIAN ? "little" : "big");
+ 
+    //=====================Finished reading header========================
+
+    if(formatIdentifier=='p'){
+        PRIMPREGRAPH ppgraph;
+        while(readPregraphCode(inputFile, &ppgraph, endian)==(char)1){
+            if((!allowLoops && !allowSemiEdges) && ppgraph.degree1Count!=0){
+                fprintf(stderr, "Input graph contains vertex of degree 1, but loops and semi-edges aren't allowed.\n");
+            }
+            if(!allowMultiEdges && ppgraph.multiEdgeCount!=0){
+                fprintf(stderr, "Input graph contains vertices of degree 2, but multi-edges aren't allowed.\n");
+            }
+
+            if(ppgraph.multiEdgeCount==0){
+                grow(&ppgraph);
+            } else {
+                growWithoutDeg1Operations(&ppgraph);
+            }
+        }
+    } else if(formatIdentifier=='m'){
+        fprintf(stderr, "Multi_code not yet implemented.\n");
+    }
+    
+    DEBUGMSG("End startFromFile")
+}
+
+//----------------------Begin input methods------------------------------
+
+char read_2byte_number(FILE *f, unsigned short *n, int endian) {
+    unsigned char c[2];
+    if (fread(&c[0], sizeof (unsigned char), 2, f) < 2) {
+        return (2);
+    }
+    if (endian == BIG_ENDIAN) {
+        *n = c[0]*256 + c[1];
+    } else {
+        *n = c[1]*256 + c[0];
+    }
+    return (1);
+}
+
+char read_old_or_new(FILE *f, boolean bignum, int endian, unsigned short *number) {
+    unsigned char k;
+    if (bignum) {
+        if (read_2byte_number(f, number, endian) == 2) {
+            return (2);
+        }
+    } else {
+        if (fread(&k, sizeof (unsigned char), 1, f) == 0) {
+            return (2);
+        }
+        *number = (unsigned short) k;
+    }
+    return (1);
+}
+
+/*
+ * Reads the pregraph primitive of a given graph in pregraphcode.
+ * Returns 2 or larger number if an error occurred. Returns 0 if
+ * EOF was reached. Returns 1 if all went OK.
+ */
+char readPregraphCode(FILE *f, PRIMPREGRAPH *ppgraph, int endian) {
+    DEBUGMSG("Start readPregraphCode")
+    int i, j, n, dummyVertex;
+    unsigned short signum, number;
+    if (read_old_or_new(f, FALSE, endian, &signum) == 2) {
+        DEBUGMSG("End readPregraphCode")
+        return (feof(f) ? 0 : 2);
+    }
+    //if the code starts with a zero, all the entries are two bytes
+    //else the number we just read was the order of the graph
+    if (signum == 0) {
+        if (read_old_or_new(f, TRUE, endian, &number) == 2) {
+            DEBUGMSG("End readPregraphCode")
+            return (2);
+        }
+    } else {
+        number = signum;
+    }
+
+    if ((n = (int) number) > MAXN) {
+        DEBUGMSG("End readPregraphCode")
+        return (3);
+    }
+
+    //initialize the pregraph
+    ppgraph->order=n; //will be increased when we find semi-edges
+    for(i = 0; i < MAXN; i++){
+        ppgraph->degree[i]=0;
+    }
+    ppgraph->degree1Count=0;
+    ppgraph->multiEdgeCount=0;
+
+    i = 1;
+    dummyVertex = n;
+    while (i <= n) {
+        if (read_old_or_new(f, signum == 0, endian, &number) == 2) {
+            DEBUGMSG("End readPregraphCode")
+            return (2);
+        }
+        DEBUGDUMP(i, "%d")
+        DEBUGDUMP(number, "%d")
+        if (number != 0) {
+            if(number == i){
+                DEBUGMSG("loop")
+                //we found a loop
+                ppgraph->degree1Count++;
+            } else if (number == n+1){
+                DEBUGMSG("semi-edge")
+                //we found a semi-edge
+                ppgraph->degree1Count++;
+                ppgraph->order++;
+                ppgraph->adjList[(i-1)*3 + ppgraph->degree[i-1]] = dummyVertex;
+                ppgraph->degree[i-1]++;
+                ppgraph->adjList[dummyVertex*3 + 0] = i-1;
+                ppgraph->degree[dummyVertex]=1;
+                dummyVertex++;
+            } else {
+                //first check to see if we have a multi-edge
+                j=0;
+                while(j<ppgraph->degree[i-1] && ppgraph->adjList[(i-1)*3 + j] != (number-1)) j++;
+                DEBUGDUMP(j, "%d")
+                DEBUGDUMP(ppgraph->degree[i-1], "%d")
+                if(j != ppgraph->degree[i-1]){
+                    DEBUGMSG("multi-edge")
+                    //we found a multi-edge (do not increase the degree)
+                    ppgraph->multiEdgeCount++;
+                    ppgraph->multiedge[i-1]=number-1;
+                    ppgraph->multiedge[number-1]=i-1;
+                } else {
+                    DEBUGMSG("simple edge")
+                    ppgraph->adjList[(i-1)*3 + ppgraph->degree[i-1]] = number-1;
+                    ppgraph->adjList[(number-1)*3 + ppgraph->degree[number-1]] = i-1;
+                    ppgraph->degree[i-1]++;
+                    ppgraph->degree[number-1]++;
+                }
+            }
+        } else {
+            DEBUGMSG("=========next vertex=========")
+            i++;
+        }
+    }
+
+    for(i = 0; i < ppgraph->order; i++){
+        set *vertex;
+        vertex = GRAPHROW(ppgraph->ulgraph, i, MAXM);
+        EMPTYSET(vertex, MAXM);
+        for(j = 0; j < ppgraph->degree[i]; j++){
+            ADDELEMENT(vertex, ppgraph->adjList[i*3+j]);
+        }
+    }
+    DEBUGMSG("End readPregraphCode")
+    return (1);
+}
+
 //--------------------Begin extra output graph---------------------------
 
 /*   __
@@ -2155,8 +2440,11 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     int c;
     char *name = argv[0];
     char *disabled;
+    boolean fromFile = FALSE;
+    char *inputFileName = NULL;
+    FILE *inputFile = stdin;
 
-    while ((c = getopt(argc, argv, "LSMPXf:o:D:hi")) != -1) {
+    while ((c = getopt(argc, argv, "LSMPXf:F:o:D:Ihi")) != -1) {
         switch (c) {
             case 'L': //(defaults to FALSE)
                 allowLoops = TRUE;
@@ -2175,6 +2463,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                 break;
             case 'f': //(defaults to stdout)
                 outputFile = optarg;
+                break;
+            case 'F': //(defaults to stdin)
+                inputFileName = optarg;
                 break;
             case 'o':
                 outputType = optarg[0];
@@ -2217,6 +2508,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                     disabled++;
                 }
                 break;
+            case 'I':
+                fromFile = TRUE;
+                break;
             case 'h':
                 help(name);
                 return EXIT_SUCCESS;
@@ -2252,6 +2546,14 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
         }
     }
 
+    if(fromFile && inputFileName != NULL){
+        inputFile = fopen(inputFileName, "r");
+        if(inputFile == NULL){
+            fprintf(stderr, "File %s doesn't exist: aborting!\n", inputFileName);
+            return EXIT_FAILURE;
+        }
+    }
+
     #ifdef _DEBUG
         fprintf(stderr, "%s:%u MAXN: %d and MAXM: %d \n", __FILE__, __LINE__, MAXN, MAXM);
         fprintf(stderr, "%s:%u Wordsize: %d \n", __FILE__, __LINE__, WORDSIZE);
@@ -2269,7 +2571,11 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
             allowLoops && allowSemiEdges ? (char *)", " : (allowLoops ? (char *)" and " : (char *)""),
             allowLoops ? (char *)"loops" : (char *)"", allowSemiEdges ? (char *)" and semi-edges" : (char *)"");
 
-    start();
+    if(fromFile){
+        startFromFile(inputFile);
+    } else {
+        start();
+    }
 
     if(!onlyPrimitives)
         fprintf(stderr, "Found %ld pregraph%s with %d %s.\n", structureCount, structureCount==1 ? (char *)"" : (char *)"s",

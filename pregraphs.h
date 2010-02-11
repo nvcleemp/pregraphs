@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <limits.h>
+#include <ctype.h>
 
 #ifdef _TEST
     #include "tests.h"
@@ -197,6 +198,11 @@ void grow(PRIMPREGRAPH *ppgraph);
 void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph);
 void handle_3_regular_result(graph *g);
 void start();
+void startFromFile(FILE *inputFile);
+
+char read_old_or_new(FILE *f, boolean bignum, int endian, unsigned short *number);
+char read_2byte_number(FILE *f, unsigned short *n, int endian);
+char readPregraphCode(FILE *f, PRIMPREGRAPH *ppgraph, int endian);
 
 void writeFatK2();
 
