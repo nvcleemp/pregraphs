@@ -209,7 +209,6 @@ char readPregraphCodeNoHeader(FILE *f, PREGRAPH *pregraph, int endian) {
             //fprintf(stderr, "%d \n", number);
         }
     }
-    pregraph->ppgraph->multiEdgeCount/=2; //counted twice
     DEBUGMSG("Graph read")
     return (1);
 }
