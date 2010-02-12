@@ -577,6 +577,11 @@ void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairLis
         }
     }
 
+    //make sure that each element is connected to its root
+    for(i = 0; i < vertexPairListSize; i++){
+        findRootOfElement(vertexPairOrbits, i);
+    }
+
     DEBUGARRAYDUMP(vertexPairOrbits, vertexPairListSize, "%d")
 
     DEBUGMSG("End determine_vertex_pairs_orbits")
