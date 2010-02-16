@@ -2575,10 +2575,14 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
             allowLoops && allowSemiEdges ? (char *)", " : (allowLoops ? (char *)" and " : (char *)""),
             allowLoops ? (char *)"loops" : (char *)"", allowSemiEdges ? (char *)" and semi-edges" : (char *)"");
 
-    if(fromFile){
-        startFromFile(inputFile);
+    if(!allowSemiEdges && vertexCount%2==1){
+        structureCount = primitivesCount = 0;
     } else {
-        start();
+        if(fromFile){
+            startFromFile(inputFile);
+        } else {
+            start();
+        }
     }
 
     if(!onlyPrimitives)
