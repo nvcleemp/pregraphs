@@ -196,7 +196,7 @@ void do_deg2_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[
         VERTEXPAIR *multiEdgeList, int multiEdgeListSize, int *multiEdgeOrbits, int multiEdgeOrbitCount);
 void grow(PRIMPREGRAPH *ppgraph);
 void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph);
-void handle_3_regular_result(graph *g);
+void handle_3_regular_result(int *adjacencyList);
 void start();
 void startFromFile(FILE *inputFile);
 

@@ -1700,26 +1700,25 @@ static PRIMPREGRAPH *currentPpgraph;
  * Handles the input from the external graph by translating the graph into a pregraph primitive
  * and feeding it to the grow method.
  */
-void handle_3_regular_result(graph *g){
+void handle_3_regular_result(int *adjacencyList){
     DEBUGMSG("Start handle_3_regular_result")
     PRIMPREGRAPH *ppgraph = currentPpgraph;
     ppgraph->order = current3RegOrder;
     ppgraph->degree1Count = 0;
     ppgraph->multiEdgeCount = 0;
 
-    int i, l, j;
+    int i, j;
 
     for(i=0; i<current3RegOrder; i++){
         ppgraph->degree[i]=3;
 
-        set *vNew, *vOld;
-        vNew = GRAPHROW(ppgraph->ulgraph, i, MAXM);
-        vOld = GRAPHROW(g, i, MAXM);
-        EMPTYSET(vNew, MAXM);
+        set *v;
+        v = GRAPHROW(ppgraph->ulgraph, i, MAXM);
+        EMPTYSET(v, MAXM);
         j=0;
-        for(l=-1; (l = nextelement(vOld, MAXM, l)) >=0;){
-            ppgraph->adjList[i*3+(j++)] = l;
-            ADDELEMENT(vNew, l);
+        for(j=0; j<3; j++){
+            ppgraph->adjList[i*3+j] = adjacencyList[i*3+j];
+            ADDELEMENT(v, adjacencyList[i*3+j]);
         }
     }
 
