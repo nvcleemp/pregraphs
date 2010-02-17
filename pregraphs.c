@@ -1050,6 +1050,8 @@ void determine_possible_sets_of_degree1_vertices
  */
 void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("Start handle_deg1_operation_result")
+    degree1OperationsDepth++;
+    if(degree1OperationsDepth>degree1OperationsDepthMaximum) degree1OperationsDepthMaximum = degree1OperationsDepth;
     //if correct number of vertices
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
         handle_primpregraph_result(ppgraph);
@@ -1058,6 +1060,7 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
         //+1 because deg1 operation always adds 1 vertex of degree 3 and degree 2 operation always add 2 vertices (of degree 2 or 3)
         //too many degree 3 and 2 vertices
         DEBUGMSG("End handle_deg1_operation_result")
+        degree1OperationsDepth--;
         return;
     }
 
@@ -1082,6 +1085,7 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
     if(allowMultiEdges && ppgraph->order - ppgraph->degree1Count + 2 <= vertexCount){
         do_deg2_operations(ppgraph, &currentGenerators, currentNumberOfGenerators, NULL, 0, NULL, 0);
     }
+    degree1OperationsDepth--;
     DEBUGMSG("End handle_deg1_operation_result")
 }
 
@@ -1093,6 +1097,8 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
 void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph,
         VERTEXPAIR *multiEdgeList, int multiEdgeListSize, int *multiEdgeOrbits, int multiEdgeOrbitCount){
     DEBUGMSG("Start handle_deg2_operation_result")
+    degree2OperationsDepth++;
+    if(degree2OperationsDepth>degree2OperationsDepthMaximum) degree2OperationsDepthMaximum = degree2OperationsDepth;
     //if correct number of vertices
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
         handle_primpregraph_result(ppgraph);
@@ -1101,6 +1107,7 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph,
         //+2 because degree 2 operations always add 2 vertices (of degree 2 or 3)
         //too many degree 3 and 2 vertices
         DEBUGMSG("End handle_deg2_operation_result")
+        degree2OperationsDepth--;
         return;
     }
 
@@ -1120,6 +1127,7 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph,
     #endif
 
     do_deg2_operations(ppgraph, &currentGenerators, currentNumberOfGenerators, multiEdgeList, multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount);
+    degree2OperationsDepth--;
     DEBUGMSG("End handle_deg2_operation_result")
 }
 
@@ -2432,6 +2440,9 @@ void printInfo(){
         fprintf(stderr, "Generated %ld graph%s with only multi-edges (and at least one multi-edge).\n", graphsWithOnlyMultiEdgesCount, graphsWithOnlyMultiEdgesCount==1 ? (char *)"" : (char *)"s");
     }
     fprintf(stderr, "\nGenerated %ld pregraph primitive%s.\n", primitivesCount, primitivesCount==1 ? (char *)"" : (char *)"s");
+
+    fprintf(stderr, "\nDegree 1 operations maximum recursion depth: %d.\n", degree1OperationsDepthMaximum);
+    fprintf(stderr, "Degree 2 operations maximum recursion depth: %d.\n", degree2OperationsDepthMaximum);
 }
 
 #ifdef PREGRAPH_NO_MAIN

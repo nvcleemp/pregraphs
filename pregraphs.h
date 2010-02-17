@@ -122,6 +122,11 @@ long graphsWithOnlySemiEdgesCount;
 long graphsWithOnlyMultiEdgesCount;
 long simplegraphsCount;
 
+int degree1OperationsDepth = 0;
+int degree1OperationsDepthMaximum = 0;
+int degree2OperationsDepth = 0;
+int degree2OperationsDepthMaximum = 0;
+
 char outputType = 'n'; //defaults to no output
 char *outputFile = NULL; //NULL == standard out
 
