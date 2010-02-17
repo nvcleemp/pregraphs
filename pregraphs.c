@@ -1567,6 +1567,8 @@ void do_deg2_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[
         //the orbits of the multi-edges are already determined, so we pass them on
         handle_deg2_operation2(ppgraph, currentGenerators, currentNumberOfGenerators, &multiEdgeList, &multiEdgeListSize, &multiEdgeOrbits, &multiEdgeOrbitCount);
         handle_deg2_operation3(ppgraph, currentGenerators, currentNumberOfGenerators, &multiEdgeList, &multiEdgeListSize, &multiEdgeOrbits, &multiEdgeOrbitCount);
+    }
+    if(multiEdgeList!=NULL){
         //free the multiEdgeList and multiEdgeOrbits before returning
         free(multiEdgeList);
         free(multiEdgeOrbits);
@@ -1689,6 +1691,9 @@ void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph){
 
     if(allowMultiEdges){
         do_deg2_operations(ppgraph, &currentGenerators, currentNumberOfGenerators, multiEdgeList, multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount);
+    } else {
+        free(multiEdgeOrbits);
+        free(multiEdgeList);
     }
     DEBUGMSG("End growWithoutDeg1Operations")
 }
