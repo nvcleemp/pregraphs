@@ -2544,7 +2544,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     DEBUGDUMP(vertexCount, "%d")
 
     if(vertexCount > MAXN || (allowSemiEdges && 2*vertexCount + 2 > MAXN)) {
-        fprintf("%s needs to be recompiled to support graphs of order %d and with the given option.\n", name, vertexCount);
+        fprintf(stderr, "%s needs to be recompiled to support graphs of order %d and with the given option.\n", name, vertexCount);
         return EXIT_FAILURE;
     }
 
