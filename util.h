@@ -9,11 +9,14 @@
 #ifndef _UTIL_H //if not defined
 #define _UTIL_H
 
-#define HALFFLOOR(n) (n%2==0 ? n/2 : (n-1)/2)
+#define HALFFLOOR(n) ((n)%2==0 ? (n)/2 : ((n)-1)/2)
+#define MAX(a, b) (((a) >= (b)) ? (a) : (b))
+#define MIN(a, b) (((a) <= (b)) ? (a) : (b))
+#define BIT(i) (1 << i)
 
 /******************Debugging macros**********************/
 
-#define _DEBUG
+//#define _DEBUG
 
 #ifdef _DEBUG
 
@@ -27,7 +30,7 @@
 #define DEBUGARRAYDUMP(var, size, format) { \
                                             if(size > 0) {\
                                                 fprintf(stderr, "%s:%u %s= [" format, __FILE__, __LINE__, #var, var[0]);\
-                                                if(size > 1) {\
+                                                if(size > 0) {\
                                                     int debugarraydumpcounter;\
                                                     for(debugarraydumpcounter=1; debugarraydumpcounter<size-1; debugarraydumpcounter++){ \
                                                         fprintf(stderr, ", " format, var[debugarraydumpcounter]);\
@@ -55,6 +58,12 @@
 
 #define DEBUGASSERT(assertion) if(!(assertion)) {fprintf(stderr, "%s:%u Assertion failed: %s\n", __FILE__, __LINE__, #assertion); fflush(stderr); exit(1);}
 
+#define DEBUGASSERTMSG(assertion, msg) if(!(assertion)) {fprintf(stderr, "%s:%u Assertion failed: %s\n", __FILE__, __LINE__, #assertion);\
+                                                         fprintf(stderr, "%s:%u %s\n", __FILE__, __LINE__, msg); exit(1);}
+
+#define DEBUGASSERTMSGDUMP(assertion, msg, var, format) if(!(assertion)) {fprintf(stderr, "%s:%u Assertion failed: %s\n", __FILE__, __LINE__, #assertion);\
+                                                         fprintf(stderr, "%s:%u %s: " format "\n", __FILE__, __LINE__, msg, var); exit(1);}
+
 #else
 
 #define DEBUGMSG(msg)
@@ -68,6 +77,10 @@
 #define DEBUG2DARRAYDUMP(var, size1, size2, format)
 
 #define DEBUGASSERT(assertion)
+
+#define DEBUGASSERTMSG(assertion, msg)
+
+#define DEBUGASSERTMSGDUMP(assertion, msg, var, format) 
 
 #endif
 
