@@ -20,10 +20,29 @@
 
 #ifdef _DEBUG
 
+#define _DEBUGMESSAGES
+#define _DEBUGDUMPS
+#define _DEBUGASSERTS
+
+#endif
+
+//=============== MESSAGE MACRO'S ===============
+
+#ifdef _DEBUGMESSAGES
+
 #define DEBUGMSG(msg) { fprintf(stderr, "%s:%u %s\n", __FILE__, __LINE__, msg); fflush(stderr); }
-
-
 #define DEBUGCONDITIONALMSG(condition, msg) if(condition){ fprintf(stderr, "%s:%u %s\n", __FILE__, __LINE__, msg); fflush(stderr);}
+
+#else
+
+#define DEBUGMSG(msg)
+#define DEBUGCONDITIONALMSG(condition, msg)
+
+#endif
+
+//=============== DUMP MACRO'S ===============
+
+#ifdef _DEBUGDUMPS
 
 #define DEBUGDUMP(var, format) { fprintf(stderr, "%s:%u %s=" format "\n", __FILE__, __LINE__, #var, var); fflush(stderr); }
 
@@ -56,6 +75,18 @@
                                             fflush(stderr);\
                                           }
 
+#else
+
+#define DEBUGDUMP(var, format)
+#define DEBUGARRAYDUMP(var, size, format)
+#define DEBUG2DARRAYDUMP(var, size1, size2, format)
+
+#endif
+
+//=============== ASSERT MACRO'S ===============
+
+#ifdef _DEBUGASSERTS
+
 #define DEBUGASSERT(assertion) if(!(assertion)) {fprintf(stderr, "%s:%u Assertion failed: %s\n", __FILE__, __LINE__, #assertion); fflush(stderr); exit(1);}
 
 #define DEBUGASSERTMSG(assertion, msg) if(!(assertion)) {fprintf(stderr, "%s:%u Assertion failed: %s\n", __FILE__, __LINE__, #assertion);\
@@ -66,21 +97,9 @@
 
 #else
 
-#define DEBUGMSG(msg)
-
-#define DEBUGCONDITIONALMSG(condition, msg)
-
-#define DEBUGDUMP(var, format)
-
-#define DEBUGARRAYDUMP(var, size, format)
-
-#define DEBUG2DARRAYDUMP(var, size1, size2, format)
-
 #define DEBUGASSERT(assertion)
-
 #define DEBUGASSERTMSG(assertion, msg)
-
-#define DEBUGASSERTMSGDUMP(assertion, msg, var, format) 
+#define DEBUGASSERTMSGDUMP(assertion, msg, var, format)
 
 #endif
 
