@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <ctype.h>
+#include <signal.h>
 
 #ifdef _TEST
     #include "tests.h"
@@ -66,6 +67,38 @@
 #else
 
 #define DEBUGPPGRAPHPRINT(ppgraph)
+
+#endif
+
+#ifdef _CONSISTCHECK
+
+    boolean doConsistencyCheck = FALSE;
+
+    #define ENABLECONSISTENCYCHECK { doConsistencyCheck = TRUE; }
+
+    #define DISABLECONSISTENCYCHECK { doConsistencyCheck = FALSE; }
+
+    #define CHECKCONSISTENCY(ppgraph) {\
+                                        if(doConsistencyCheck){\
+                                            int consistencyCheckI, consistencyCheckJ;\
+                                            for(consistencyCheckI = 0; consistencyCheckI < ppgraph->order; consistencyCheckI++){\
+                                                for(consistencyCheckJ = 0; consistencyCheckJ < ppgraph->degree[consistencyCheckI]; consistencyCheckJ++){\
+                                                    if(!areAdjacent(ppgraph, ppgraph->adjList[consistencyCheckI*3 + consistencyCheckJ], consistencyCheckI)){\
+                                                        fprintf(stderr, "%s:%u Consistency check failed:\n", __FILE__, __LINE__);\
+                                                        fprintf(stderr, "   %d and %d are not adjacent.\n", ppgraph->adjList[consistencyCheckI*3 + consistencyCheckJ], consistencyCheckI);\
+                                                        DEBUGPPGRAPHPRINT(ppgraph)\
+                                                        show_stackframe();\
+                                                    }\
+                                                }\
+                                            }\
+                                        }\
+                                    }
+
+#else
+
+    #define ENABLECONSISTENCYCHECK
+    #define DISABLECONSISTENCYCHECK
+    #define CHECKCONSISTENCY(ppgraph)
 
 #endif
 

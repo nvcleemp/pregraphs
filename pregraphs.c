@@ -7,8 +7,26 @@
 
 //#define _TEST
 //#define _DEBUG
+//#define _CONSISTCHECK
 
 #include "pregraphs.h"
+
+#include <stdio.h>
+#include <signal.h>
+#include <execinfo.h>
+
+void show_stackframe() {
+  void *trace[16];
+  char **messages = (char **)NULL;
+  int i, trace_size = 0;
+
+  trace_size = backtrace(trace, 16);
+  messages = backtrace_symbols(trace, trace_size);
+  fprintf(stderr, "[bt] Execution path:\n");
+  for (i=0; i<trace_size; ++i){
+	fprintf(stderr, "[bt] %s\n", messages[i]);
+  }
+}
 
 inline boolean areAdjacent(PRIMPREGRAPH *ppgraph, int u, int v){
     int i;
@@ -96,6 +114,7 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gu,t);
     DELELEMENT(gt,v);
     ADDELEMENT(gt,u);
+    CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End apply_deg1_operation1")
 }
 
@@ -123,6 +142,7 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     DELELEMENT(gu, t);
     ADDELEMENT(gt, v);
     DELELEMENT(gt, u);
+    CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End revert_deg1_operation1")
 }
 
@@ -176,6 +196,7 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gs, v);
     ADDELEMENT(gs, t);
     ADDELEMENT(gt, s);
+    CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End apply_deg1_operation2")
 }
 
@@ -202,6 +223,7 @@ void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     DELELEMENT(gv, s);
     ADDELEMENT(gu, v);
     ADDELEMENT(gv, u);
+    CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End revert_deg1_operation2")
 }
 
@@ -258,6 +280,7 @@ void apply_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gv, t);
     ADDELEMENT(gt, v);
     ADDELEMENT(gt, s);
+    CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End apply_deg2_operation1")
 }
 
@@ -287,6 +310,7 @@ void revert_deg2_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     DELELEMENT(gv, t);
     ADDELEMENT(gu, v);
     ADDELEMENT(gv, u);
+    CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End revert_deg2_operation1")
 }
 
@@ -340,6 +364,7 @@ void apply_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gv, t);
     ADDELEMENT(gt, v);
     ADDELEMENT(gt, s);
+    CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End apply_deg2_operation2")
 }
 
@@ -364,6 +389,7 @@ void revert_deg2_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     gv = GRAPHROW(ppgraph->ulgraph, v, MAXM);
     DELELEMENT(gu, s);
     DELELEMENT(gv, t);
+    CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End revert_deg2_operation2")
 }
 
@@ -437,6 +463,7 @@ void apply_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gt, v);
     ADDELEMENT(gt, s);
 
+    CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End apply_deg2_operation3")
 }
 
@@ -476,6 +503,7 @@ void revert_deg2_operation3(PRIMPREGRAPH *ppgraph, int u, int v){
     DELELEMENT(gu, x);
     ADDELEMENT(gx, v);
     DELELEMENT(gx, u);
+    CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End revert_deg2_operation3")
 }
 
@@ -1188,7 +1216,7 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
             nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
             DEBUGMSG("End nauty")
             DEBUGARRAYDUMP(vOrbits, ppgraph->order, "%d")
-            
+
             if(isCanonicalDegree1Edge(ppgraph, deg1PairList[i][1], vOrbits)){
                 //v belongs to the orbit of degree 1 vertices with the smallest representant
                 //Therefore this graph was created from the correct parent.
@@ -1296,7 +1324,7 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2, boolean *mul
 
     nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order + ppgraph->multiEdgeCount, canonicalGraph);
     nautyOptions.defaultptn = TRUE;
-    
+
     //restore original graph
     for(j = 0; j < ppgraph->multiEdgeCount; j++){
         int n1 = multiEdgeList[j][0];
@@ -1311,7 +1339,7 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2, boolean *mul
     }
 
     DEBUGMSG("End nauty")
-            
+
     int *multiEdgeOrbits = globalMultiEdgeOrbits + ((degree2OperationsDepth+1)*HALFFLOOR(vertexCount));
     int *multiEdgeOrbitCount = globalMultiEdgeOrbitCount + degree2OperationsDepth + 1;
 
@@ -1446,6 +1474,51 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
 
         DEBUGASSERT(*oldMultiEdgeListSize == ppgraph->multiEdgeCount)
 
+        DEBUGMSG("Start nauty")
+        int orbits[ppgraph->order + ppgraph->multiEdgeCount]; //the graph is enlarged so we have to provide a large enough array
+        numberOfGenerators = 0; //reset the generators
+        nautyOptions.defaultptn = FALSE; //use colourings for multigraphs
+
+        int j;
+        for(j = 0; j < ppgraph->order + ppgraph->multiEdgeCount; j++){
+            nautyLabelling[j]=j;
+            nautyPtn[j]=(j!=ppgraph->order-1);
+        }
+        for(j = 0; j < ppgraph->multiEdgeCount; j++){
+            int n1 = oldMultiEdgeList[j][0];
+            int n2 = oldMultiEdgeList[j][1];
+            set *multiEdgeVertex, *v1, *v2;
+            multiEdgeVertex = GRAPHROW(ppgraph->ulgraph, ppgraph->order + j, MAXM);
+            v1 = GRAPHROW(ppgraph->ulgraph, n1, MAXM);
+            v2 = GRAPHROW(ppgraph->ulgraph, n2, MAXM);
+            EMPTYSET(multiEdgeVertex, MAXM);
+            DELELEMENT(v1, n2);
+            DELELEMENT(v2, n1);
+            ADDELEMENT(v1, ppgraph->order + j);
+            ADDELEMENT(v2, ppgraph->order + j);
+            ADDELEMENT(multiEdgeVertex, n1);
+            ADDELEMENT(multiEdgeVertex, n2);
+        }
+
+        nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order + ppgraph->multiEdgeCount, canonicalGraph);
+        nautyOptions.defaultptn = TRUE;
+
+        //restore original graph
+        for(j = 0; j < ppgraph->multiEdgeCount; j++){
+            int n1 = oldMultiEdgeList[j][0];
+            int n2 = oldMultiEdgeList[j][1];
+            set *v1, *v2;
+            v1 = GRAPHROW(ppgraph->ulgraph, n1, MAXM);
+            v2 = GRAPHROW(ppgraph->ulgraph, n2, MAXM);
+            ADDELEMENT(v1, n2);
+            ADDELEMENT(v2, n1);
+            DELELEMENT(v1, ppgraph->order + j);
+            DELELEMENT(v2, ppgraph->order + j);
+        }
+
+        DEBUGMSG("End nauty")
+
+
         determine_vertex_pairs_orbits(oldMultiEdgeList, *oldMultiEdgeListSize, oldMultiEdgeOrbits, oldMultiEdgeOrbitCount, currentGenerators, currentNumberOfGenerators);
         *multiEdgesDetermined = TRUE;
     }
@@ -1482,6 +1555,50 @@ void handle_deg2_operation3(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
         get_multi_edges(ppgraph, oldMultiEdgeList, oldMultiEdgeListSize);
 
         DEBUGASSERT(*oldMultiEdgeListSize == ppgraph->multiEdgeCount)
+
+        DEBUGMSG("Start nauty")
+        int orbits[ppgraph->order + ppgraph->multiEdgeCount]; //the graph is enlarged so we have to provide a large enough array
+        numberOfGenerators = 0; //reset the generators
+        nautyOptions.defaultptn = FALSE; //use colourings for multigraphs
+
+        int j;
+        for(j = 0; j < ppgraph->order + ppgraph->multiEdgeCount; j++){
+            nautyLabelling[j]=j;
+            nautyPtn[j]=(j!=ppgraph->order-1);
+        }
+        for(j = 0; j < ppgraph->multiEdgeCount; j++){
+            int n1 = oldMultiEdgeList[j][0];
+            int n2 = oldMultiEdgeList[j][1];
+            set *multiEdgeVertex, *v1, *v2;
+            multiEdgeVertex = GRAPHROW(ppgraph->ulgraph, ppgraph->order + j, MAXM);
+            v1 = GRAPHROW(ppgraph->ulgraph, n1, MAXM);
+            v2 = GRAPHROW(ppgraph->ulgraph, n2, MAXM);
+            EMPTYSET(multiEdgeVertex, MAXM);
+            DELELEMENT(v1, n2);
+            DELELEMENT(v2, n1);
+            ADDELEMENT(v1, ppgraph->order + j);
+            ADDELEMENT(v2, ppgraph->order + j);
+            ADDELEMENT(multiEdgeVertex, n1);
+            ADDELEMENT(multiEdgeVertex, n2);
+        }
+
+        nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order + ppgraph->multiEdgeCount, canonicalGraph);
+        nautyOptions.defaultptn = TRUE;
+
+        //restore original graph
+        for(j = 0; j < ppgraph->multiEdgeCount; j++){
+            int n1 = oldMultiEdgeList[j][0];
+            int n2 = oldMultiEdgeList[j][1];
+            set *v1, *v2;
+            v1 = GRAPHROW(ppgraph->ulgraph, n1, MAXM);
+            v2 = GRAPHROW(ppgraph->ulgraph, n2, MAXM);
+            ADDELEMENT(v1, n2);
+            ADDELEMENT(v2, n1);
+            DELELEMENT(v1, ppgraph->order + j);
+            DELELEMENT(v2, ppgraph->order + j);
+        }
+
+        DEBUGMSG("End nauty")
 
         determine_vertex_pairs_orbits(oldMultiEdgeList, *oldMultiEdgeListSize, oldMultiEdgeOrbits, oldMultiEdgeOrbitCount, currentGenerators, currentNumberOfGenerators);
         *multiEdgesDetermined = TRUE;
@@ -1887,7 +2004,7 @@ void startFromFile(FILE *inputFile){
     fprintf(stderr, "Reading file in %s format with %s endian.\n",
             formatIdentifier=='p' ? "pregraph_code" : "multi_code",
             endian == LITTLE_ENDIAN ? "little" : "big");
- 
+
     //=====================Finished reading header========================
 
     if(formatIdentifier=='p'){
@@ -1909,7 +2026,7 @@ void startFromFile(FILE *inputFile){
     } else if(formatIdentifier=='m'){
         fprintf(stderr, "Multi_code not yet implemented.\n");
     }
-    
+
     DEBUGMSG("End startFromFile")
 }
 
@@ -2593,10 +2710,11 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     }
 
     //create the different arrays and store the pointers
-    VERTEXPAIR multiEdgeList[depth*HALFFLOOR(vertexCount)];
-    int multiEdgeListSize[depth];
-    int multiEdgeOrbits[depth*HALFFLOOR(vertexCount)];
-    int multiEdgeOrbitCount[depth];
+    //TODO: currently *2 because depth was wrong. It was too small.
+    VERTEXPAIR multiEdgeList[2*depth*HALFFLOOR(vertexCount)];
+    int multiEdgeListSize[2*depth];
+    int multiEdgeOrbits[2*depth*HALFFLOOR(vertexCount)];
+    int multiEdgeOrbitCount[2*depth];
 
     globalMultiEdgeList = multiEdgeList;
     globalMultiEdgeListSize = multiEdgeListSize;
