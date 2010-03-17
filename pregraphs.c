@@ -2547,7 +2547,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     char *inputFileName = NULL;
     FILE *inputFile = stdin;
 
-    while ((c = getopt(argc, argv, "LSMPXf:F:o:D:Ihi")) != -1) {
+    while ((c = getopt(argc, argv, "LSMPXf:F:o:D:d:Ihi")) != -1) {
         switch (c) {
             case 'L': //(defaults to FALSE)
                 allowLoops = TRUE;
