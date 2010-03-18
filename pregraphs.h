@@ -142,18 +142,18 @@ int vertexCount;
 int currentVertexCount;
 int minVertexCount;
 int maxVertexCount;
-long structureCount;
-long primitivesCount;
+unsigned long long structureCount;
+unsigned long long primitivesCount;
 
 boolean logStatistics = FALSE;
 //used for statistics
-long *graphsWithLoopsCount;
-long *graphsWithSemiEdgesCount;
-long *graphsWithMultiEdgesCount;
-long graphsWithOnlyLoopsCount;
-long graphsWithOnlySemiEdgesCount;
-long graphsWithOnlyMultiEdgesCount;
-long simplegraphsCount;
+unsigned long long *graphsWithLoopsCount;
+unsigned long long *graphsWithSemiEdgesCount;
+unsigned long long *graphsWithMultiEdgesCount;
+unsigned long long graphsWithOnlyLoopsCount;
+unsigned long long graphsWithOnlySemiEdgesCount;
+unsigned long long graphsWithOnlyMultiEdgesCount;
+unsigned long long simplegraphsCount;
 
 int degree1OperationsDepth = 0;
 int degree1OperationsDepthMaximum = 0;
