@@ -1158,9 +1158,17 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph, boolean multiEdgesDeter
     DEBUGMSG("End handle_deg2_operation_result")
 }
 
-boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, int *vertexOrbits){
+boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v){
     DEBUGASSERT(ppgraph->degree[v]==1)
     DEBUGDUMP(v,"%d")
+
+    int vertexOrbits[ppgraph->order];
+    DEBUGMSG("Start nauty")
+    numberOfGenerators = 0; //reset the generators
+    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    DEBUGMSG("End nauty")
+    DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
+
     DEBUGARRAYDUMP(nautyLabelling, ppgraph->order, "%d")
     int reverseLabelling[ppgraph->order];
     int i;
@@ -1210,14 +1218,8 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
 
             //the only deg 1 vertex after this operation is v. This is a valid action
             //if v belongs to the first orbit of degree 1 vertices
-            int vOrbits[ppgraph->order];
-            DEBUGMSG("Start nauty")
-            numberOfGenerators = 0; //reset the generators
-            nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
-            DEBUGMSG("End nauty")
-            DEBUGARRAYDUMP(vOrbits, ppgraph->order, "%d")
 
-            if(isCanonicalDegree1Edge(ppgraph, deg1PairList[i][1], vOrbits)){
+            if(isCanonicalDegree1Edge(ppgraph, deg1PairList[i][1])){
                 //v belongs to the orbit of degree 1 vertices with the smallest representant
                 //Therefore this graph was created from the correct parent.
                 handle_deg1_operation_result(ppgraph);
@@ -1255,14 +1257,8 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
 
                 //the new deg 1 vertex after this operation is t. This is a valid action
                 //if t belongs to the first orbit of degree 1 vertices
-                int vOrbits[ppgraph->order];
-                DEBUGMSG("Start nauty")
-                numberOfGenerators = 0; //reset the generators
-                nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
-                DEBUGMSG("End nauty")
-                DEBUGARRAYDUMP(vOrbits, ppgraph->order, "%d")
 
-                if(isCanonicalDegree1Edge(ppgraph, ppgraph->order-1, vOrbits)){
+                if(isCanonicalDegree1Edge(ppgraph, ppgraph->order-1)){
                     //t belongs to the orbit of degree 1 vertices with the smallest representant
                     //Therefore this graph was created from the correct parent.
                     handle_deg1_operation_result(ppgraph);
