@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   pregraphs.h
  * Author: nvcleemp
  *
@@ -137,6 +137,13 @@ typedef int VERTEXPAIR[2];
 
 #define NAUTY_WORKSIZE 50 * MAXM
 
+unsigned int marksArray[MAXN];
+unsigned int markValue = UINT_MAX;
+
+#define MARKED(i) (marksArray[i] == markValue)
+#define SET_MARK(i) (marksArray[i] = markValue)
+#define RESET_MARK {if(markValue == UINT_MAX){int i;for(i=0;i<MAXN;i++){marksArray[i]=0;};markValue=1;}else{markValue++;}}
+
 /******************Global Variables**********************/
 int vertexCount;
 int currentVertexCount;
@@ -194,7 +201,7 @@ setword nautyWorkspace[50 * MAXM];
 graph canonicalGraph[MAXN * MAXM];
 
 /******************Methods*******************************/
-        
+
 inline boolean areAdjacent(PRIMPREGRAPH *ppgraph, int u, int v);
 
 //these operations provide the actual implementation of the different operations
