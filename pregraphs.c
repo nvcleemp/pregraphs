@@ -1159,6 +1159,97 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph, boolean multiEdgesDeter
 }
 
 /**
+ * Returns a vector with the number of vertices at a distance d <= maxdistance
+ * of v. Uses BFS. Vertices at distance 0,1 and 2 aren't included.
+ */
+void vertexNeighbourhoodSizeVector(PRIMPREGRAPH *ppgraph, int v, int maxDistance, int *vector){
+    static int upperboundDistance[MAXN];
+    static int queue[MAXN], queueHead, queueTail;
+    int i;
+
+    for(i=0; i<maxDistance-3+1; i++) vector[i]=0;
+
+    RESET_MARK
+
+    queue[0] = v;
+    queueHead = -1;
+    queueTail = 0;
+    upperboundDistance[v] = 0;
+    SET_MARK(v);
+
+    while (queueHead < queueTail) {
+        queueHead++;
+        int currentVertex = queue[queueHead];
+        int currentDistance = upperboundDistance[currentVertex];
+        if(currentDistance >= 3)
+            vector[currentDistance-3]++;
+        if(currentDistance < maxDistance){
+            for(i = 0; i < ppgraph->degree[currentVertex]; i++){
+                if(MARKED(ppgraph->adjList[currentVertex*3+i])){
+                    //we already have calculated a 'distance' for this vertex
+                    //only check if we need to improve it
+                    if(upperboundDistance[ppgraph->adjList[currentVertex*3+i]] >
+                            currentDistance + 1){
+                        upperboundDistance[ppgraph->adjList[currentVertex*3+i]]
+                                = currentDistance + 1;
+                    }
+                } else {
+                    //first time that we see this vertex
+                    upperboundDistance[ppgraph->adjList[currentVertex*3+i]]
+                            = currentDistance + 1;
+                    //mark the vertex and put it in the queue
+                    SET_MARK(ppgraph->adjList[currentVertex*3+i]);
+                    queueTail++;
+                    queue[queueTail]=ppgraph->adjList[currentVertex*3+i];
+                }
+            }
+        }
+
+    }
+}
+
+/**
+ * Colours each vertex of degree 1 with a vector with the number of vertices
+ * at a distance d <= maxdistance of that vertex.
+ * Returns a vertex with the smallest 'colour' used.
+ */
+int colourDegree1VertexNeighbourhoodSizeVector(PRIMPREGRAPH *ppgraph, int maxDistance, int* minimumCount, int* representants){
+    int i, j, minimum = -1;
+    int vectorSize = maxDistance - 3 + 1;
+    int colours[MAXN*vectorSize];
+    for(i = 0; i < ppgraph->order; i++){
+        if(ppgraph->degree[i]==1){
+            vertexNeighbourhoodSizeVector(ppgraph, i, maxDistance, colours+i*vectorSize);
+            DEBUGDUMP(i, "%d")
+            DEBUGARRAYDUMP(colours, vectorSize, "%d")
+            if(minimum==-1){
+                minimum = i;
+                representants[i]=i;
+                (*minimumCount)=1;
+            } else {
+                j = 0;
+                while(j<vectorSize &&
+                        colours[minimum*vectorSize+j]==colours[i*vectorSize+j])
+                    j++;
+                if(j!=vectorSize &&
+                        colours[minimum*vectorSize+j]>colours[i*vectorSize+j]){
+                    minimum = i;
+                    representants[i]=i;
+                    (*minimumCount)=1;
+                } else if(j==vectorSize){
+                    (*minimumCount)++;
+                    representants[i]=minimum;
+                } else {
+                    representants[i]=-1;
+                }
+            }
+        }
+    }
+    DEBUGDUMP(minimum, "%d")
+    return minimum;
+}
+
+/**
  * Returns the number of vertices at a distance d <= maxdistance of v.
  * Uses BFS.
  */
@@ -1312,6 +1403,90 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v){
     if(noRejections) return TRUE;
     return (smallestLabelOrbitV < smallestOtherDegree1Label);
 }
+
+/*
+ * Unused because more expansive than the time that was saved
+ *
+boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v){
+    DEBUGASSERT(ppgraph->degree[v]==1)
+    DEBUGDUMP(v,"%d")
+    int i, j;
+
+    if(ppgraph->degree1Count==1){
+        //only one degree 1 vertex: garantueed to be canonical
+        //call nauty and return true
+        int vertexOrbits[ppgraph->order];
+        DEBUGMSG("Start nauty")
+        numberOfGenerators = 0; //reset the generators
+        nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+        DEBUGMSG("End nauty")
+        DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
+        return TRUE;
+    }
+
+    //first check colors (which should be cheaper than always calling nauty)
+    int degree1Vertices[ppgraph->degree1Count];
+    int representants[MAXN];
+    int minimumColourCount;
+    j = 0;
+    for (i = 0; i < ppgraph->order; i++){
+        if(ppgraph->degree[i] == 1){
+            degree1Vertices[j] = i;
+            j++;
+        }
+    }
+    DEBUGASSERT(j==ppgraph->degree1Count)
+
+    int minimumColourVertex = colourDegree1VertexNeighbourhoodSizeVector(ppgraph, 5, &minimumColourCount, representants);
+
+    //if v hasn't got the smallest colour, then it isn't canonical
+    if(representants[v]!=minimumColourVertex) return FALSE;
+
+
+    if(minimumColourCount==1){
+        //only one degree 1 vertex with minimal colour, i.e. v is canonical
+        //call nauty and return true
+        int vertexOrbits[ppgraph->order];
+        DEBUGMSG("Start nauty")
+        numberOfGenerators = 0; //reset the generators
+        nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+        DEBUGMSG("End nauty")
+        DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
+        return TRUE;
+    }
+
+    //just call nauty and we'll be sure whether it is canonical
+
+    int vertexOrbits[ppgraph->order];
+    DEBUGMSG("Start nauty")
+    numberOfGenerators = 0; //reset the generators
+    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    DEBUGMSG("End nauty")
+    DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
+
+    DEBUGARRAYDUMP(nautyLabelling, ppgraph->order, "%d")
+    int reverseLabelling[ppgraph->order];
+    for (i = 0; i < ppgraph->order; i++) {
+        reverseLabelling[nautyLabelling[i]]=i;
+    }
+    DEBUGARRAYDUMP(reverseLabelling, ppgraph->order, "%d")
+    int smallestLabelOrbitV = reverseLabelling[v]; //i.e. the smallest label of a vertex in the orbit of vertex v
+    int smallestOtherDegree1Label = ppgraph->order;
+    for (i = 0; i < ppgraph->order; i++) {
+        if(ppgraph->degree[i]==1){
+            if(vertexOrbits[i]==vertexOrbits[v]){
+                if(reverseLabelling[i]<smallestLabelOrbitV) smallestLabelOrbitV = reverseLabelling[i];
+            } else if(representants[i] == minimumColourVertex){
+                if(reverseLabelling[i]<smallestOtherDegree1Label) smallestOtherDegree1Label = reverseLabelling[i];
+            }
+        }
+    }
+    DEBUGDUMP(smallestLabelOrbitV, "%d")
+    DEBUGDUMP(smallestOtherDegree1Label, "%d")
+    if(noRejections) return TRUE;
+    return (smallestLabelOrbitV < smallestOtherDegree1Label);
+}
+*/
 
 /*
  * Handles the first degree 1 operation, i.e. find all the degree 1 pairs, determine the orbits
