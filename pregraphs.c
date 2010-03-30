@@ -996,25 +996,33 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
     }
 
     if(semiEdgeCount>0){
-        int position = 0;
-        set tempSet[MAXM];
-        EMPTYSET(tempSet, MAXM);
-        determine_possible_sets_of_degree1_vertices(tempSet, vertexSetList, &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph, 0);
-        DEBUGDUMP(position, "%d")
-        DEBUGDUMP(listSize, "%d")
-        DEBUGASSERT(position==listSize)
-        #ifdef _DEBUG
-        // print the sets
-        for(i=0;i<listSize;i++){
-            fprintf(stderr, "%s:%u set %d= [", __FILE__, __LINE__, i);
-            int l;
-            for(l=-1; (l = nextelement(vertexSetList + i*MAXM, MAXM, l)) >=0;){
-                fprintf(stderr, "%d ", l);
+        if(loopCount==0){
+            //all the degree 1 vertices correspond to semi-edges
+            DEBUGASSERT(listSize==1)
+            int vertex = -1;
+            while((vertex = nextDegree1Vertex(vertex, ppgraph))!=-1){
+                ADDELEMENT(vertexSetList, vertex);
             }
-            fprintf(stderr, "]\n");
+        } else {
+            int position = 0;
+            set tempSet[MAXM];
+            EMPTYSET(tempSet, MAXM);
+            determine_possible_sets_of_degree1_vertices(tempSet, vertexSetList, &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph, 0);
+            DEBUGDUMP(position, "%d")
+            DEBUGDUMP(listSize, "%d")
+            DEBUGASSERT(position==listSize)
+            #ifdef _DEBUG
+            // print the sets
+            for(i=0;i<listSize;i++){
+                fprintf(stderr, "%s:%u set %d= [", __FILE__, __LINE__, i);
+                int l;
+                for(l=-1; (l = nextelement(vertexSetList + i*MAXM, MAXM, l)) >=0;){
+                    fprintf(stderr, "%d ", l);
+                }
+                fprintf(stderr, "]\n");
+            }
+            #endif
         }
-        #endif
-
     } //else: listsize is already 1 and that set is already empty
 
     int orbitCount;
