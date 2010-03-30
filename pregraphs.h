@@ -227,7 +227,7 @@ void unionElements(int *forest, int *treeSizes, int *numberOfComponents, int ele
 int findRootOfElement(int *forest, int element);
 
 int nextDegree1Vertex(int current, PRIMPREGRAPH *ppgraph);
-void determine_possible_sets_of_degree1_vertices(set *tempSet, set *vertexSetList, int* currentListPosition, int maximumSetSize, int currentSetSize, int currentSetElement, PRIMPREGRAPH *ppgraph);
+void determine_possible_sets_of_degree1_vertices(set *tempSet, set *vertexSetList, int* currentListPosition, int maximumSetSize, int currentSetSize, int currentSetElement, PRIMPREGRAPH *ppgraph, int skippedVertices);
 
 void handle_pregraph_result(PREGRAPH *pregraph);
 void handle_primpregraph_result(PRIMPREGRAPH *ppgraph);

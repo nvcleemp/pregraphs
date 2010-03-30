@@ -999,7 +999,7 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
         int position = 0;
         set tempSet[MAXM];
         EMPTYSET(tempSet, MAXM);
-        determine_possible_sets_of_degree1_vertices(tempSet, vertexSetList, &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph);
+        determine_possible_sets_of_degree1_vertices(tempSet, vertexSetList, &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph, 0);
         DEBUGDUMP(position, "%d")
         DEBUGDUMP(listSize, "%d")
         DEBUGASSERT(position==listSize)
@@ -1045,8 +1045,13 @@ int nextDegree1Vertex(int current, PRIMPREGRAPH *ppgraph){
 
 void determine_possible_sets_of_degree1_vertices
 (set *tempSet, set *vertexSetList, int* currentListPosition, int maximumSetSize,
-        int currentSetSize, int currentSetElement, PRIMPREGRAPH *ppgraph){
+        int currentSetSize, int currentSetElement, PRIMPREGRAPH *ppgraph,
+        int skippedVertices){
     DEBUGMSG("Start determine_possible_sets_of_degree1_vertices")
+    if(ppgraph->degree1Count-skippedVertices < maximumSetSize){
+        DEBUGMSG("End determine_possible_sets_of_degree1_vertices")
+        return;
+    }
     if(currentSetElement!=-1){
         ADDELEMENT(tempSet, currentSetElement);
         DEBUGDUMP(currentSetElement, "%d added")
@@ -1060,13 +1065,15 @@ void determine_possible_sets_of_degree1_vertices
         } else {
             determine_possible_sets_of_degree1_vertices
                     (tempSet, vertexSetList, currentListPosition, maximumSetSize,
-                    currentSetSize + 1, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
+                    currentSetSize + 1, nextDegree1Vertex(currentSetElement, ppgraph),
+                    ppgraph, skippedVertices);
         }
         DELELEMENT(tempSet, currentSetElement);
         DEBUGDUMP(currentSetElement, "%d removed")
         determine_possible_sets_of_degree1_vertices
                (tempSet, vertexSetList, currentListPosition, maximumSetSize,
-                currentSetSize, nextDegree1Vertex(currentSetElement, ppgraph), ppgraph);
+                currentSetSize, nextDegree1Vertex(currentSetElement, ppgraph),
+                ppgraph, skippedVertices+1);
     }
     DEBUGMSG("End determine_possible_sets_of_degree1_vertices")
 }
