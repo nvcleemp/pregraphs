@@ -2787,7 +2787,10 @@ void help(char *name) {
     fprintf(stderr, "  -S          : Allow semi-edges.\n");
     fprintf(stderr, "  -M          : Allow multi-edges.\n");
     fprintf(stderr, "  -P          : Only generate the corresponding pregraph primitives.\n");
+    fprintf(stderr, "  -I          : Only start the generation from the files provided by the input file (see -F).\n", name);
     fprintf(stderr, "  -f file     : Specifies the output file. If absent, the output is written to standard out.\n");
+    fprintf(stderr, "  -F file     : Specifies the input file. If absent, the input is taken from standard in.\n");
+    fprintf(stderr, "                This option is only used if -I is used.\n");
     fprintf(stderr, "  -o c        : Specifies the export format where c is one of\n");
     fprintf(stderr, "                c    pregraph code (or multicode if -P is used)\n");
     fprintf(stderr, "                h    human-readable output in tabular format\n");
