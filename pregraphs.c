@@ -1808,51 +1808,6 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
 
         DEBUGASSERT(*oldMultiEdgeListSize == ppgraph->multiEdgeCount)
 
-        DEBUGMSG("Start nauty")
-        int orbits[ppgraph->order + ppgraph->multiEdgeCount]; //the graph is enlarged so we have to provide a large enough array
-        numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth] = 0; //reset the generators
-        nautyOptions.defaultptn = FALSE; //use colourings for multigraphs
-
-        int j;
-        for(j = 0; j < ppgraph->order + ppgraph->multiEdgeCount; j++){
-            nautyLabelling[j]=j;
-            nautyPtn[j]=(j!=ppgraph->order-1);
-        }
-        for(j = 0; j < ppgraph->multiEdgeCount; j++){
-            int n1 = oldMultiEdgeList[j][0];
-            int n2 = oldMultiEdgeList[j][1];
-            set *multiEdgeVertex, *v1, *v2;
-            multiEdgeVertex = GRAPHROW(ppgraph->ulgraph, ppgraph->order + j, MAXM);
-            v1 = GRAPHROW(ppgraph->ulgraph, n1, MAXM);
-            v2 = GRAPHROW(ppgraph->ulgraph, n2, MAXM);
-            EMPTYSET(multiEdgeVertex, MAXM);
-            DELELEMENT(v1, n2);
-            DELELEMENT(v2, n1);
-            ADDELEMENT(v1, ppgraph->order + j);
-            ADDELEMENT(v2, ppgraph->order + j);
-            ADDELEMENT(multiEdgeVertex, n1);
-            ADDELEMENT(multiEdgeVertex, n2);
-        }
-
-        nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order + ppgraph->multiEdgeCount, canonicalGraph);
-        nautyOptions.defaultptn = TRUE;
-
-        //restore original graph
-        for(j = 0; j < ppgraph->multiEdgeCount; j++){
-            int n1 = oldMultiEdgeList[j][0];
-            int n2 = oldMultiEdgeList[j][1];
-            set *v1, *v2;
-            v1 = GRAPHROW(ppgraph->ulgraph, n1, MAXM);
-            v2 = GRAPHROW(ppgraph->ulgraph, n2, MAXM);
-            ADDELEMENT(v1, n2);
-            ADDELEMENT(v2, n1);
-            DELELEMENT(v1, ppgraph->order + j);
-            DELELEMENT(v2, ppgraph->order + j);
-        }
-
-        DEBUGMSG("End nauty")
-
-
         determine_vertex_pairs_orbits(oldMultiEdgeList, *oldMultiEdgeListSize, oldMultiEdgeOrbits, oldMultiEdgeOrbitCount, currentGenerators, currentNumberOfGenerators);
         *multiEdgesDetermined = TRUE;
     }
@@ -1889,50 +1844,6 @@ void handle_deg2_operation3(PRIMPREGRAPH *ppgraph, permutation (*currentGenerato
         get_multi_edges(ppgraph, oldMultiEdgeList, oldMultiEdgeListSize);
 
         DEBUGASSERT(*oldMultiEdgeListSize == ppgraph->multiEdgeCount)
-
-        DEBUGMSG("Start nauty")
-        int orbits[ppgraph->order + ppgraph->multiEdgeCount]; //the graph is enlarged so we have to provide a large enough array
-        numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth] = 0; //reset the generators
-        nautyOptions.defaultptn = FALSE; //use colourings for multigraphs
-
-        int j;
-        for(j = 0; j < ppgraph->order + ppgraph->multiEdgeCount; j++){
-            nautyLabelling[j]=j;
-            nautyPtn[j]=(j!=ppgraph->order-1);
-        }
-        for(j = 0; j < ppgraph->multiEdgeCount; j++){
-            int n1 = oldMultiEdgeList[j][0];
-            int n2 = oldMultiEdgeList[j][1];
-            set *multiEdgeVertex, *v1, *v2;
-            multiEdgeVertex = GRAPHROW(ppgraph->ulgraph, ppgraph->order + j, MAXM);
-            v1 = GRAPHROW(ppgraph->ulgraph, n1, MAXM);
-            v2 = GRAPHROW(ppgraph->ulgraph, n2, MAXM);
-            EMPTYSET(multiEdgeVertex, MAXM);
-            DELELEMENT(v1, n2);
-            DELELEMENT(v2, n1);
-            ADDELEMENT(v1, ppgraph->order + j);
-            ADDELEMENT(v2, ppgraph->order + j);
-            ADDELEMENT(multiEdgeVertex, n1);
-            ADDELEMENT(multiEdgeVertex, n2);
-        }
-
-        nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order + ppgraph->multiEdgeCount, canonicalGraph);
-        nautyOptions.defaultptn = TRUE;
-
-        //restore original graph
-        for(j = 0; j < ppgraph->multiEdgeCount; j++){
-            int n1 = oldMultiEdgeList[j][0];
-            int n2 = oldMultiEdgeList[j][1];
-            set *v1, *v2;
-            v1 = GRAPHROW(ppgraph->ulgraph, n1, MAXM);
-            v2 = GRAPHROW(ppgraph->ulgraph, n2, MAXM);
-            ADDELEMENT(v1, n2);
-            ADDELEMENT(v2, n1);
-            DELELEMENT(v1, ppgraph->order + j);
-            DELELEMENT(v2, ppgraph->order + j);
-        }
-
-        DEBUGMSG("End nauty")
 
         determine_vertex_pairs_orbits(oldMultiEdgeList, *oldMultiEdgeListSize, oldMultiEdgeOrbits, oldMultiEdgeOrbitCount, currentGenerators, currentNumberOfGenerators);
         *multiEdgesDetermined = TRUE;
