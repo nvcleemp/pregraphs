@@ -196,8 +196,12 @@ int moduloMod;
 unsigned long long int splitPointCount = 0;
 int splitDepth = 0;
 
+/* Provide space for the generators at each recursion depth (maximum depth = MAXN + 1)
+ * There are at most n<=MAXN generators in a graph with n vertices and the length
+ * of each generator is n.
+ */
 permutation automorphismGroupGenerators[MAXN+1][MAXN][MAXN];
-int numberOfGenerators;
+int numberOfGenerators[MAXN+1];
 
 /* Variables for nauty */
 int nautyLabelling[MAXN], nautyPtn[MAXN];
