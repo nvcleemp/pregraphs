@@ -639,7 +639,7 @@ void determine_vertex_sets_orbits(set *vertexSetList, int vertexSetListSize, int
     set set[MAXM];
     for(i = 0; i < numberOfGenerators; i++) {
         //the generators were stored in the global variable generators by the method save_generators
-        permutation = automorphismGroupGenerators[i];
+        permutation = automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth][i];
         DEBUGARRAYDUMP(permutation, currentVertexCount, "%d")
 
         for(j = 0; j<vertexSetListSize; j++){
@@ -1116,7 +1116,7 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
     int i, j;
     for(i=0; i<numberOfGenerators; i++){
         for (j = 0; j < ppgraph->order; j++) {
-            DEBUGASSERT(currentGenerators[i][j]==automorphismGroupGenerators[i][j])
+            DEBUGASSERT(currentGenerators[i][j]==automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth][i][j])
         }
     }
     DEBUGDUMP(currentNumberOfGenerators, "%d")
@@ -1162,7 +1162,7 @@ void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph, boolean multiEdgesDeter
     int i, j;
     for(i=0; i<numberOfGenerators; i++){
         for (j = 0; j < ppgraph->order; j++) {
-            DEBUGASSERT(currentGenerators[i][j]==automorphismGroupGenerators[i][j])
+            DEBUGASSERT(currentGenerators[i][j]==automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth][i][j])
         }
     }
     DEBUG2DARRAYDUMP(currentGenerators, numberOfGenerators, ppgraph->order, "%d")
@@ -1649,7 +1649,7 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2, boolean *mul
     int *multiEdgeOrbits = globalMultiEdgeOrbits + ((degree2OperationsDepth+1)*HALFFLOOR(vertexCount));
     int *multiEdgeOrbitCount = globalMultiEdgeOrbitCount + degree2OperationsDepth + 1;
 
-    determine_vertex_pairs_orbits(multiEdgeList, *multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount, &automorphismGroupGenerators, numberOfGenerators);
+    determine_vertex_pairs_orbits(multiEdgeList, *multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount, automorphismGroupGenerators + (degree1OperationsDepth + degree2OperationsDepth + 1), numberOfGenerators);
 
     int i = 0;
     while(i<*multiEdgeListSize && !(multiEdgeList[i][0]==v1 && multiEdgeList[i][1]==v2)) i++;
@@ -1984,14 +1984,14 @@ void grow(PRIMPREGRAPH *ppgraph){
     //the generators for these start graphs need to be calculated
     permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
     int currentNumberOfGenerators = numberOfGenerators;
-    copyGenerators(&currentGenerators, ppgraph->order);
+    copyGeneratorsOfDepth(&currentGenerators, ppgraph->order, 1);
 
     #ifdef _DEBUG
     //check that the generators were copied correctly
     int i, j;
     for(i=0; i<numberOfGenerators; i++){
         for (j = 0; j < ppgraph->order; j++) {
-            DEBUGASSERT(currentGenerators[i][j]==automorphismGroupGenerators[i][j])
+            DEBUGASSERT(currentGenerators[i][j]==automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth][i][j])
         }
     }
     DEBUG2DARRAYDUMP(currentGenerators, numberOfGenerators, ppgraph->order, "%d")
@@ -2066,7 +2066,7 @@ void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph){
     //the generators for these start graphs need to be calculated
     permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
     int currentNumberOfGenerators = numberOfGenerators;
-    copyGenerators(&currentGenerators, ppgraph->order);
+    copyGeneratorsOfDepth(&currentGenerators, ppgraph->order, 1);
 
     int *multiEdgeOrbits = globalMultiEdgeOrbits;
     int *multiEdgeOrbitCount = globalMultiEdgeOrbitCount;
@@ -2077,7 +2077,7 @@ void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph){
     int i, j;
     for(i=0; i<numberOfGenerators; i++){
         for (j = 0; j < ppgraph->order; j++) {
-            DEBUGASSERT(currentGenerators[i][j]==automorphismGroupGenerators[i][j])
+            DEBUGASSERT(currentGenerators[i][j]==automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth][i][j])
         }
     }
     DEBUG2DARRAYDUMP(currentGenerators, numberOfGenerators, ppgraph->order, "%d")
@@ -2698,7 +2698,8 @@ void initNautyOptions() {
 
 void saveGenerators(int count, permutation perm[], nvector orbits[],
         int numorbits, int stabvertex, int n) {
-    memcpy(automorphismGroupGenerators + numberOfGenerators, perm, sizeof(permutation) * n);
+    //depth + 1, because we always call nauty for the new graph before the depth is increased
+    memcpy(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] + numberOfGenerators, perm, sizeof(permutation) * n);
 
     numberOfGenerators++;
 }
@@ -2706,7 +2707,14 @@ void saveGenerators(int count, permutation perm[], nvector orbits[],
 void copyGenerators(permutation (*copy)[MAXN][MAXN], int n) {
     int i;
     for(i=0; i<numberOfGenerators; i++){
-        memcpy((*copy) + i, automorphismGroupGenerators + i, sizeof(permutation) * n);
+        memcpy((*copy) + i, automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth] + i, sizeof(permutation) * n);
+    }
+}
+
+void copyGeneratorsOfDepth(permutation (*copy)[MAXN][MAXN], int n, int depth) {
+    int i;
+    for(i=0; i<numberOfGenerators; i++){
+        memcpy((*copy) + i, automorphismGroupGenerators[depth] + i, sizeof(permutation) * n);
     }
 }
 

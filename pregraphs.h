@@ -190,7 +190,7 @@ boolean operation23Disabled = FALSE;
 
 boolean noRejections = FALSE;
 
-permutation automorphismGroupGenerators[MAXN][MAXN];
+permutation automorphismGroupGenerators[MAXN+1][MAXN][MAXN];
 int numberOfGenerators;
 
 /* Variables for nauty */
@@ -260,6 +260,7 @@ void construct_K3_3(PRIMPREGRAPH *ppgraph);
 void saveGenerators(int count, permutation perm[], nvector orbits[],
         int numorbits, int stabvertex, int n);
 void copyGenerators(permutation (*copy)[MAXN][MAXN], int n);
+void copyGeneratorsOfDepth(permutation (*copy)[MAXN][MAXN], int n, int depth);
 
 void init_irreducible_graphs(int n);
 
