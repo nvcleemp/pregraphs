@@ -1925,14 +1925,16 @@ void grow(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("Start grow")
     int orbits[ppgraph->order];
     DEBUGMSG("Start nauty")
-    numberOfGenerators[1] = 0; //reset the generators
+    numberOfGenerators[0] = 0; //reset the generators
     //there are no multiedges at this point!
+    degree1OperationsDepth=-1;
     nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    degree1OperationsDepth=0;
     DEBUGMSG("End nauty")
     //the generators for these start graphs need to be calculated
     permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
-    int currentNumberOfGenerators = numberOfGenerators[1];
-    copyGeneratorsOfDepth(&currentGenerators, ppgraph->order, 1);
+    int currentNumberOfGenerators = numberOfGenerators[0];
+    copyGeneratorsOfDepth(&currentGenerators, ppgraph->order, 0);
 
     #ifdef _DEBUG
     //check that the generators were copied correctly
@@ -1978,7 +1980,7 @@ void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph){
     DEBUGASSERT(*multiEdgeListSize == ppgraph->multiEdgeCount)
 
     DEBUGMSG("Start nauty")
-    numberOfGenerators[1] = 0; //reset the generators
+    numberOfGenerators[0] = 0; //reset the generators
     nautyOptions.defaultptn = FALSE; //use colourings for multigraphs
 
     int k;
@@ -2002,7 +2004,9 @@ void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph){
         ADDELEMENT(multiEdgeVertex, n2);
     }
 
+    degree1OperationsDepth=-1;
     nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order + ppgraph->multiEdgeCount, canonicalGraph);
+    degree1OperationsDepth=0;
 
     nautyOptions.defaultptn = TRUE;
 
@@ -2022,8 +2026,8 @@ void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("End nauty")
     //the generators for these start graphs need to be calculated
     permutation currentGenerators[MAXN][MAXN]; //TODO: can't we make this smaller because we now the size at this point
-    int currentNumberOfGenerators = numberOfGenerators[1];
-    copyGeneratorsOfDepth(&currentGenerators, ppgraph->order, 1);
+    int currentNumberOfGenerators = numberOfGenerators[0];
+    copyGeneratorsOfDepth(&currentGenerators, ppgraph->order, 0);
 
     int *multiEdgeOrbits = globalMultiEdgeOrbits;
     int *multiEdgeOrbitCount = globalMultiEdgeOrbitCount;
