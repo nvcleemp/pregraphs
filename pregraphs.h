@@ -190,6 +190,12 @@ boolean operation23Disabled = FALSE;
 
 boolean noRejections = FALSE;
 
+boolean moduloEnabled = FALSE;
+int moduloRest;
+int moduloMod;
+unsigned long long int splitPointCount = 0;
+int splitDepth = 0;
+
 permutation automorphismGroupGenerators[MAXN+1][MAXN][MAXN];
 int numberOfGenerators;
 

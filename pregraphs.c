@@ -956,6 +956,14 @@ void doPrimpregraphExport(PRIMPREGRAPH *ppgraph){
  * allowed all the different ways to select these are taken and passed on to handle_pregraph_result.
  */
 void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
+    /* Handle splitting of construction */
+    if(moduloEnabled && splitDepth>(degree1OperationsDepth+degree2OperationsDepth)){
+        splitPointCount++;
+        if(splitPointCount%moduloMod != moduloRest) {
+            return;
+        }
+    }
+    /**/
     DEBUGMSG("Start handle_primpregraph_result")
     DEBUGPPGRAPHPRINT(ppgraph)
     DEBUGDUMP(ppgraph->order, "%d")
@@ -1094,6 +1102,16 @@ void determine_possible_sets_of_degree1_vertices
 void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("Start handle_deg1_operation_result")
     degree1OperationsDepth++;
+    /* Handle splitting of construction */
+    if(moduloEnabled && splitDepth==(degree1OperationsDepth)){
+        splitPointCount++;
+        if(splitPointCount%moduloMod != moduloRest) {
+            degree1OperationsDepth--;
+            return;
+        }
+    }
+    /**/
+    
     if(degree1OperationsDepth>degree1OperationsDepthMaximum) degree1OperationsDepthMaximum = degree1OperationsDepth;
     //if correct number of vertices
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
@@ -1140,6 +1158,16 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
 void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph, boolean multiEdgesDetermined){
     DEBUGMSG("Start handle_deg2_operation_result")
     degree2OperationsDepth++;
+    /* Handle splitting of construction */
+    if(moduloEnabled && splitDepth==(degree1OperationsDepth+degree2OperationsDepth)){
+        splitPointCount++;
+        if(splitPointCount%moduloMod != moduloRest) {
+            degree2OperationsDepth--;
+            return;
+        }
+    }
+    /**/
+
     if(degree2OperationsDepth>degree2OperationsDepthMaximum) degree2OperationsDepthMaximum = degree2OperationsDepth;
     //if correct number of vertices
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
@@ -1974,6 +2002,15 @@ void do_deg2_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[
 }
 
 void grow(PRIMPREGRAPH *ppgraph){
+    /* Handle splitting of construction */
+    if(splitDepth==0){
+        splitPointCount++;
+        if(moduloEnabled && (splitPointCount%moduloMod != moduloRest)) {
+            return;
+        }
+    }
+    /**/
+
     DEBUGMSG("Start grow")
     int orbits[ppgraph->order];
     DEBUGMSG("Start nauty")
@@ -2011,6 +2048,15 @@ void grow(PRIMPREGRAPH *ppgraph){
 }
 
 void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph){
+    /* Handle splitting of construction */
+    if(splitDepth==0){
+        splitPointCount++;
+        if(moduloEnabled && (splitPointCount%moduloMod != moduloRest)) {
+            return;
+        }
+    }
+    /**/
+
     DEBUGMSG("Start growWithoutDeg1Operations")
     int orbits[ppgraph->order];
 
@@ -2757,6 +2803,10 @@ void help(char *name) {
     fprintf(stderr, "                2    Disable operations for degree 2\n");
     fprintf(stderr, "  -X          : No operation will be discarded as being not-canonical. This will cause\n");
     fprintf(stderr, "                isomorphic graphs to be constructed. (This option is for debugging purposes.)\n");
+    fprintf(stderr, "  -m r:m[:d]  : Split the generation into several parts. This basically means that at\n");
+    fprintf(stderr, "                depth d a counter will be kept an the program will only continue beyond this\n");
+    fprintf(stderr, "                point if the counter mod m is equal to r. Special measures are taken if some\n");
+    fprintf(stderr, "                graphs are already outputted before depth d. The default for d is 0.\n");
 }
 
 void initInfo(){
@@ -2857,11 +2907,12 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     int c;
     char *name = argv[0];
     char *disabled;
+    char *moduloString;
     boolean fromFile = FALSE;
     char *inputFileName = NULL;
     FILE *inputFile = stdin;
 
-    while ((c = getopt(argc, argv, "LSMPXf:F:o:D:d:Ihi")) != -1) {
+    while ((c = getopt(argc, argv, "LSMPXf:F:o:D:d:Ihim:")) != -1) {
         switch (c) {
             case 'L': //(defaults to FALSE)
                 allowLoops = TRUE;
@@ -2956,6 +3007,35 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
             case 'i':
                 logStatistics = TRUE;
                 break;
+            case 'm':
+                //modulo
+                moduloEnabled = TRUE;
+                moduloString = optarg;
+                moduloRest = atoi(moduloString);
+                moduloString = strchr(moduloString, ':');
+                if(moduloString==NULL){
+                    fprintf(stderr, "Illegal format for modulo.\n");
+                    usage(name);
+                    return EXIT_FAILURE;
+                }
+                moduloMod = atoi(moduloString+1);
+                if (moduloRest >= moduloMod) {
+                    fprintf(stderr, "Illegal format for modulo: rest must be smaller than mod.\n");
+                    usage(name);
+                    return EXIT_FAILURE;
+                }
+                if (moduloRest < 0) {
+                    fprintf(stderr, "Illegal format for modulo: rest must be positive.\n");
+                    usage(name);
+                    return EXIT_FAILURE;
+                }
+                /**/
+                moduloString = strchr(moduloString+1, ':');
+                if(moduloString!=NULL){
+                    splitDepth = atoi(moduloString+1);
+                }
+                /**/
+                break;
             default:
                 fprintf(stderr, "Illegal option %c.\n", c);
                 usage(name);
@@ -3042,6 +3122,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
             vertexCount, vertexCount==1 ? (char *)"vertex" : (char *)"vertices",
             allowLoops && allowSemiEdges ? (char *)", " : (allowLoops ? (char *)" and " : (char *)""),
             allowLoops ? (char *)"loops" : (char *)"", allowSemiEdges ? (char *)" and semi-edges" : (char *)"");
+    if(moduloEnabled){
+        fprintf(stderr, "Only generating part %d of %d (Splitting at depth %d).\n", moduloRest+1, moduloMod, splitDepth);
+    }
 
     if(!allowSemiEdges && vertexCount%2==1){
         structureCount = primitivesCount = 0;
