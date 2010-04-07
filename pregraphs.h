@@ -243,13 +243,13 @@ void handle_pregraph_result(PREGRAPH *pregraph);
 void handle_primpregraph_result(PRIMPREGRAPH *ppgraph);
 void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph);
 void handle_deg2_operation_result(PRIMPREGRAPH *ppgraph, boolean multiEdgesDetermined);
-void handle_deg1_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators);
-void handle_deg1_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators);
-void handle_deg2_operation1(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators);
-void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators, boolean *multiEdgesDetermined);
-void handle_deg2_operation3(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators, boolean *multiEdgesDetermined);
-void do_deg1_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators);
-void do_deg2_operations(PRIMPREGRAPH *ppgraph, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators, boolean multiEdgesDetermined);
+void handle_deg1_operation1(PRIMPREGRAPH *ppgraph);
+void handle_deg1_operation2(PRIMPREGRAPH *ppgraph);
+void handle_deg2_operation1(PRIMPREGRAPH *ppgraph);
+void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, boolean *multiEdgesDetermined);
+void handle_deg2_operation3(PRIMPREGRAPH *ppgraph, boolean *multiEdgesDetermined);
+void do_deg1_operations(PRIMPREGRAPH *ppgraph);
+void do_deg2_operations(PRIMPREGRAPH *ppgraph, boolean multiEdgesDetermined);
 void grow(PRIMPREGRAPH *ppgraph);
 void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph);
 void handle_3_regular_result(int *adjacencyList);
@@ -269,8 +269,6 @@ void construct_K3_3(PRIMPREGRAPH *ppgraph);
 
 void saveGenerators(int count, permutation perm[], nvector orbits[],
         int numorbits, int stabvertex, int n);
-void copyGenerators(permutation (*copy)[MAXN][MAXN], int n);
-void copyGeneratorsOfDepth(permutation (*copy)[MAXN][MAXN], int n, int depth);
 
 void init_irreducible_graphs(int n);
 
