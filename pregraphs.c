@@ -576,6 +576,78 @@ void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairLis
     }
     *orbitCount=vertexPairListSize;
 
+    if(currentNumberOfGenerators==0){
+        DEBUGARRAYDUMP(vertexPairOrbits, vertexPairListSize, "%d")
+        DEBUGMSG("End determine_vertex_pairs_orbits")
+        return;
+    }
+
+    permutation *permutation;
+    VERTEXPAIR pair;
+    DEBUGDUMP(currentNumberOfGenerators, "%d")
+    for(i = 0; i < currentNumberOfGenerators; i++) {
+        permutation = (*currentGenerators)[i];
+        DEBUGARRAYDUMP(permutation, currentVertexCount, "%d")
+
+        for(j = 0; j<vertexPairListSize; j++){
+            //apply permutation to current vertex pair
+            pair[0] = permutation[vertexPairList[j][0]];
+            pair[1] = permutation[vertexPairList[j][1]];
+
+            //canonical form of vertex pair
+            if(pair[0]>pair[1]){
+                temp = pair[1];
+                pair[1] = pair[0];
+                pair[0] = temp;
+            }
+
+            //search the pair in the list
+            for(k = 0; k<vertexPairListSize; k++){
+                if(pair[0] == vertexPairList[k][0] && pair[1] == vertexPairList[k][1]){
+                    unionElements(vertexPairOrbits, orbitSize, orbitCount, j, k);
+                    break; //the list of pairs doesn't contain any duplicates so we can stop
+                }
+            }
+        }
+    }
+
+    //make sure that each element is connected to its root
+    for(i = 0; i < vertexPairListSize; i++){
+        findRootOfElement(vertexPairOrbits, i);
+    }
+
+    DEBUGARRAYDUMP(vertexPairOrbits, vertexPairListSize, "%d")
+
+    DEBUGMSG("End determine_vertex_pairs_orbits")
+}
+
+/*
+ * determines the orbits of a given list of vertices pairs. The pairs must be so that the image of a pair in the list
+ * is also in the list.
+ *
+ * In the end vertexPairOrbits[i] will contain the index of the canonical representant of the orbit to which vertexPairList[i]
+ * belongs and orbitCount will contain the number of orbits.
+ * The first two parameters are read-only, the last two are write-only.
+ */
+void determine_vertex_pairs_orbits_and_sizes(VERTEXPAIR *vertexPairList, int vertexPairListSize, int *vertexPairOrbits, int *orbitCount, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators, int *orbitSize){
+    DEBUGMSG("Start determine_vertex_pairs_orbits")
+    DEBUG2DARRAYDUMP(vertexPairList, vertexPairListSize, 2, "%d")
+
+    int i, j, k, temp;
+
+    //initialization of the variables
+    for(i=0; i<vertexPairListSize; i++){
+        vertexPairOrbits[i]=i;
+        orbitSize[i]=1;
+    }
+    *orbitCount=vertexPairListSize;
+
+    if(currentNumberOfGenerators==0){
+        DEBUGARRAYDUMP(vertexPairOrbits, vertexPairListSize, "%d")
+        DEBUGMSG("End determine_vertex_pairs_orbits")
+        return;
+    }
+
     permutation *permutation;
     VERTEXPAIR pair;
     DEBUGDUMP(currentNumberOfGenerators, "%d")
@@ -1331,20 +1403,35 @@ int colourDegree1VertexNeighbourhoodSize(PRIMPREGRAPH *ppgraph, int maxDistance,
     return minimum;
 }
 
-boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v){
+boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeCopied){
+    //groupMayBeCopied is TRUE only if the operation is 1.2 and the bridge was fixed by the automorphism group
     DEBUGASSERT(ppgraph->degree[v]==1)
     DEBUGDUMP(v,"%d")
     int i, j;
 
     if(ppgraph->degree1Count==1){
         //only one degree 1 vertex: garantueed to be canonical
-        //call nauty and return true
-        int vertexOrbits[ppgraph->order];
-        DEBUGMSG("Start nauty")
-        numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
-        nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
-        DEBUGMSG("End nauty")
-        DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
+        if(numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]==0){
+            //group was trivial and remains trivial: no need to call nauty
+            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0;
+        } else if(groupMayBeCopied){
+            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1]=numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth];
+            for(i = 0; i < numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]; i++){
+                memcpy(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] + i,
+                       automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth] + i,
+                       sizeof(permutation) * ppgraph->order);
+                automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1][i][v-1] = v-1;
+                automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1][i][v] = v;
+            }
+        } else {
+            //call nauty and return true
+            int vertexOrbits[ppgraph->order];
+            DEBUGMSG("Start nauty")
+            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
+            nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+            DEBUGMSG("End nauty")
+            DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
+        }
         return TRUE;
     }
 
@@ -1526,7 +1613,7 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
             //the only deg 1 vertex after this operation is v. This is a valid action
             //if v belongs to the first orbit of degree 1 vertices
 
-            if(isCanonicalDegree1Edge(ppgraph, deg1PairList[i][1])){
+            if(isCanonicalDegree1Edge(ppgraph, deg1PairList[i][1], FALSE)){
                 //v belongs to the orbit of degree 1 vertices with the smallest representant
                 //Therefore this graph was created from the correct parent.
                 handle_deg1_operation_result(ppgraph);
@@ -1550,9 +1637,11 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
 
     int orbitCount;
     int orbits[listSize];
-    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount, automorphismGroupGenerators+(degree1OperationsDepth + degree2OperationsDepth), numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]);
-    //TODO: the calculation above is done both for degree 1 operation 2 and degree 2 operation 1: avoid duplicating this work!!!
+    int orbitSize[listSize];
+    determine_vertex_pairs_orbits_and_sizes(edgeList, listSize, orbits, &orbitCount, automorphismGroupGenerators+(degree1OperationsDepth + degree2OperationsDepth), numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth], orbitSize);
+
     DEBUGARRAYDUMP(orbits, orbitCount, "%d")
+    DEBUGARRAYDUMP(orbitSize, orbitCount, "%d")
 
     int i;
     for (i = 0; i < listSize; i++) {
@@ -1565,7 +1654,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
                 //the new deg 1 vertex after this operation is t. This is a valid action
                 //if t belongs to the first orbit of degree 1 vertices
 
-                if(isCanonicalDegree1Edge(ppgraph, ppgraph->order-1)){
+                if(isCanonicalDegree1Edge(ppgraph, ppgraph->order-1, orbitSize[i]==1)){
                     //t belongs to the orbit of degree 1 vertices with the smallest representant
                     //Therefore this graph was created from the correct parent.
                     handle_deg1_operation_result(ppgraph);
