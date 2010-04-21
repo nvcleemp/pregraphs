@@ -15,6 +15,8 @@
 #include <signal.h>
 #include <execinfo.h>
 
+void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairListSize, int *vertexPairOrbits, int *orbitCount, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators);
+
 void show_stackframe() {
   void *trace[16];
   char **messages = (char **)NULL;
@@ -82,6 +84,136 @@ boolean isBridge(PRIMPREGRAPH *ppgraph, int u, int v){
 }
 //-----------------------------------------------------------------
 
+inline int findBridge(PRIMPREGRAPH *ppgraph, int u, int v){
+    DEBUGMSG("Start findBridge")
+    DEBUGDUMP(ppgraph->bridgeCount, "%d")
+    DEBUGDUMP(u, "%d")
+    DEBUGDUMP(v, "%d")
+    /*
+    int min = u < v ? u : v;
+    int max = u < v ? v : u;
+    int i = 0;
+    while(i < ppgraph->bridgeCount &&
+            (ppgraph->bridges[i][0]!=max || ppgraph->bridges[i][1]!=min)){
+        i++;
+    }
+    DEBUGASSERT(i < ppgraph->bridgeCount)
+    if(i >= ppgraph->bridgeCount){
+        fprintf(stderr, "ERROR\n");
+    }*/
+    int i = ppgraph->bridgePosition[u][v];
+    DEBUGDUMP(i, "%d")
+    DEBUGMSG("End findBridge")
+    return i;
+}
+
+inline void removeBridge(PRIMPREGRAPH *ppgraph, int index){
+    DEBUGMSG("Start removeBridge")
+    DEBUGDUMP(index, "%d")
+    DEBUGDUMP(ppgraph->bridgeCount, "%d")
+    ppgraph->bridgeCount--;
+    if(ppgraph->bridgeCount > 0 && index < ppgraph->bridgeCount) {
+        ppgraph->bridges[index][0] = ppgraph->bridges[ppgraph->bridgeCount][0];
+        ppgraph->bridges[index][1] = ppgraph->bridges[ppgraph->bridgeCount][1];
+        ppgraph->bridgePosition[ppgraph->bridges[index][0]][ppgraph->bridges[index][1]] = index;
+        ppgraph->bridgePosition[ppgraph->bridges[index][1]][ppgraph->bridges[index][0]] = index;
+    }
+    DEBUGDUMP(ppgraph->bridgeCount, "%d")
+    DEBUGMSG("End removeBridge")
+}
+
+inline void removeBridgesAtEnd(PRIMPREGRAPH *ppgraph, int count){
+    DEBUGMSG("Start removeBridgesAtEnd")
+    DEBUGDUMP(count, "%d")
+    DEBUGDUMP(ppgraph->bridgeCount, "%d")
+    ppgraph->bridgeCount-=count;
+    DEBUGDUMP(ppgraph->bridgeCount, "%d")
+    DEBUGMSG("End removeBridgesAtEnd")
+}
+
+//insert the bridge at position index, and move the current bridge at that
+//position to the end
+inline void insertBridge(PRIMPREGRAPH *ppgraph, int index, int v1, int v2){
+    DEBUGMSG("Start insertBridge")
+    DEBUGDUMP(v1, "%d")
+    DEBUGDUMP(v2, "%d")
+    DEBUGDUMP(index, "%d")
+    DEBUGDUMP(ppgraph->bridgeCount, "%d")
+    int min = v1 < v2 ? v1 : v2;
+    int max = v1 < v2 ? v2 : v1;
+    if(index != ppgraph->bridgeCount) {
+        ppgraph->bridges[ppgraph->bridgeCount][0] = ppgraph->bridges[index][0];
+        ppgraph->bridges[ppgraph->bridgeCount][1] = ppgraph->bridges[index][1];
+        ppgraph->bridgePosition[ppgraph->bridges[ppgraph->bridgeCount][0]][ppgraph->bridges[ppgraph->bridgeCount][1]] = ppgraph->bridgeCount;
+        ppgraph->bridgePosition[ppgraph->bridges[ppgraph->bridgeCount][1]][ppgraph->bridges[ppgraph->bridgeCount][0]] = ppgraph->bridgeCount;
+    }
+    ppgraph->bridges[index][0] = max;
+    ppgraph->bridges[index][1] = min;
+    ppgraph->bridgePosition[min][max] = index;
+    ppgraph->bridgePosition[max][min] = index;
+    ppgraph->bridgeCount++;
+    DEBUGDUMP(ppgraph->bridgeCount, "%d")
+    DEBUGMSG("End insertBridge")
+}
+
+inline void appendBridge(PRIMPREGRAPH *ppgraph, int v1, int v2){
+    DEBUGMSG("Start appendBridge")
+    DEBUGDUMP(v1, "%d")
+    DEBUGDUMP(v2, "%d")
+    DEBUGDUMP(ppgraph->bridgeCount, "%d")
+    int min = v1 < v2 ? v1 : v2;
+    int max = v1 < v2 ? v2 : v1;
+    ppgraph->bridges[ppgraph->bridgeCount][0] = max;
+    ppgraph->bridges[ppgraph->bridgeCount][1] = min;
+    ppgraph->bridgePosition[min][max] = ppgraph->bridgeCount;
+    ppgraph->bridgePosition[max][min] = ppgraph->bridgeCount;
+    ppgraph->bridgeCount++;
+    DEBUGDUMP(ppgraph->bridgeCount, "%d")
+    DEBUGMSG("End appendBridge")
+}
+
+int bridgesDFSNumber[MAXN];
+int bridgesDFSReach[MAXN];
+int bridgesDFSNextLabel;
+
+void bridgesDFS(PRIMPREGRAPH *ppgraph, int v, int parent){
+    int i, b;
+    bridgesDFSNumber[v]=bridgesDFSReach[v]=bridgesDFSNextLabel;
+    bridgesDFSNextLabel++;
+    for(i = 0; i < ppgraph->degree[v]; i++){
+        b = ppgraph->adjList[v*3 + i];
+        if(bridgesDFSNumber[b] == MAXN){
+            bridgesDFS(ppgraph, b, v);
+
+            if(bridgesDFSReach[b] < bridgesDFSReach[v]){
+                bridgesDFSReach[v] = bridgesDFSReach[b];
+            }
+            if(bridgesDFSReach[b] > bridgesDFSNumber[v]){
+                ppgraph->bridges[ppgraph->bridgeCount][0] = MAX(v, b);
+                ppgraph->bridges[ppgraph->bridgeCount][1] = MIN(v, b);
+                ppgraph->bridgePosition[b][v] = ppgraph->bridgeCount;
+                ppgraph->bridgePosition[v][b] = ppgraph->bridgeCount;
+                ppgraph->bridgeCount++;
+            }
+        } else if(b != parent && bridgesDFSNumber[b] < bridgesDFSReach[v]){
+            bridgesDFSReach[v] = bridgesDFSNumber[b];
+        }
+    }
+}
+
+inline void determineBridges(PRIMPREGRAPH *ppgraph){
+    DEBUGMSG("Start determineBridges")
+    ppgraph->bridgeCount = 0;
+
+    bridgesDFSNextLabel = 0;
+    int i;
+    for(i = 0; i < MAXN; i++) bridgesDFSNumber[i] = MAXN;
+
+    bridgesDFS(ppgraph, 0, 0);
+
+    DEBUGMSG("End determineBridges")
+}
+
 /*                         o v
  *   u     v               |
  *   o     o               o u
@@ -114,6 +246,22 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gu,t);
     DELELEMENT(gt,v);
     ADDELEMENT(gt,u);
+
+    //keep track of bridges
+    int oldBridge1 = findBridge(ppgraph, u, ppgraph->adjList[u*3]);
+
+    changedBridges[degree1OperationsDepth][0] = oldBridge1;
+    removeBridge(ppgraph, oldBridge1);
+
+    int oldBridge2 = findBridge(ppgraph, v, t);
+    changedBridges[degree1OperationsDepth][1] = oldBridge2;
+    numberOfChangedBridges[degree1OperationsDepth] = 2;
+    removeBridge(ppgraph, oldBridge2);
+    appendBridge(ppgraph, u, v);
+
+    DEBUGPPGRAPHPRINT(ppgraph)
+    DEBUGBRIDGESPRINT(ppgraph)
+
     CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End apply_deg1_operation1")
 }
@@ -142,6 +290,15 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     DELELEMENT(gu, t);
     ADDELEMENT(gt, v);
     DELELEMENT(gt, u);
+
+    //keep track of bridges
+    removeBridgesAtEnd(ppgraph, 1);
+    insertBridge(ppgraph, changedBridges[degree1OperationsDepth][1], v, t);
+    insertBridge(ppgraph, changedBridges[degree1OperationsDepth][0], u, ppgraph->adjList[u*3]);
+
+    DEBUGPPGRAPHPRINT(ppgraph)
+    DEBUGBRIDGESPRINT(ppgraph)
+
     CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End revert_deg1_operation1")
 }
@@ -160,6 +317,7 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     DEBUGDUMP(u, "%d")
     DEBUGDUMP(v, "%d")
     DEBUGASSERT(areAdjacent(ppgraph, u, v))
+    int oldBridge = findBridge(ppgraph, u, v);
     int s, t, i;
     s = ppgraph->order;
     t = s + 1;
@@ -197,6 +355,18 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gs, t);
     ADDELEMENT(gt, s);
     CHECKCONSISTENCY(ppgraph)
+
+    //keep track of bridges
+    changedBridges[degree1OperationsDepth][0] = oldBridge;
+    numberOfChangedBridges[degree1OperationsDepth] = 1;
+    removeBridge(ppgraph, oldBridge);
+    appendBridge(ppgraph, u, s);
+    appendBridge(ppgraph, v, s);
+    appendBridge(ppgraph, t, s);
+
+    DEBUGPPGRAPHPRINT(ppgraph)
+    DEBUGBRIDGESPRINT(ppgraph)
+
     DEBUGMSG("End apply_deg1_operation2")
 }
 
@@ -223,6 +393,14 @@ void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     DELELEMENT(gv, s);
     ADDELEMENT(gu, v);
     ADDELEMENT(gv, u);
+
+    //keep track of bridges
+    removeBridgesAtEnd(ppgraph, 3);
+    insertBridge(ppgraph, changedBridges[degree1OperationsDepth][0], u, v);
+
+    DEBUGPPGRAPHPRINT(ppgraph)
+    DEBUGBRIDGESPRINT(ppgraph)
+
     CHECKCONSISTENCY(ppgraph)
     DEBUGMSG("End revert_deg1_operation2")
 }
@@ -537,6 +715,16 @@ void get_single_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ve
                 (*vertexPairListSize)++;
             }
         }
+    }
+
+}
+
+void get_bridges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *vertexPairListSize){
+    int i;
+    *vertexPairListSize = ppgraph->bridgeCount;
+    for(i=0;i<ppgraph->bridgeCount;i++){
+        vertexPairList[i][0]=ppgraph->bridges[i][1];
+        vertexPairList[i][1]=ppgraph->bridges[i][0];
     }
 
 }
@@ -1183,7 +1371,7 @@ void handle_deg1_operation_result(PRIMPREGRAPH *ppgraph){
         }
     }
     /**/
-    
+
     if(degree1OperationsDepth>degree1OperationsDepthMaximum) degree1OperationsDepthMaximum = degree1OperationsDepth;
     //if correct number of vertices
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
@@ -1642,12 +1830,13 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
 
 void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
     if(operation12Disabled) return;
+    if(ppgraph->bridgeCount==0) return;
     DEBUGMSG("Start handle_deg1_operation2")
     DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth], numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth], ppgraph->order, "%d")
-    int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
-    VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all single edges
+    //int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
+    VERTEXPAIR edgeList[ppgraph->bridgeCount]; //initialize an array that is large enough to hold all single edges
     int listSize;
-    get_single_edges(ppgraph, edgeList, &listSize);
+    get_bridges(ppgraph, edgeList, &listSize);
 
     int orbitCount;
     int orbits[listSize];
@@ -1984,6 +2173,9 @@ void do_deg2_operations(PRIMPREGRAPH *ppgraph, boolean multiEdgesDetermined){
     DEBUGMSG("End do_deg2_operations")
 }
 
+/*
+ * Start the generation process with the given graph. At this points the bridges need to be calculated.
+ */
 void grow(PRIMPREGRAPH *ppgraph){
     /* Handle splitting of construction */
     if(splitDepth==0){
@@ -2010,6 +2202,7 @@ void grow(PRIMPREGRAPH *ppgraph){
 
 
     if(allowLoops || allowSemiEdges){
+        determineBridges(ppgraph);
         do_deg1_operations(ppgraph);
     }
     if(allowMultiEdges){

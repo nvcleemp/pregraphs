@@ -64,9 +64,24 @@
                                         fflush(stderr);\
                                     }
 
+#define DEBUGBRIDGESPRINT(ppgraph) {\
+                                        fprintf(stderr, "=========Bridges========\n");\
+                                        fprintf(stderr, "%s:%u %s:\n", __FILE__, __LINE__, #ppgraph);\
+                                        int debugBridgesPrintCounter;\
+                                        for(debugBridgesPrintCounter=0;debugBridgesPrintCounter<(ppgraph)->bridgeCount;debugBridgesPrintCounter++){\
+                                            fprintf(stderr, "%2d) ", debugBridgesPrintCounter);\
+                                            fprintf(stderr, "%2d ", (ppgraph)->bridges[debugBridgesPrintCounter][0]);\
+                                            fprintf(stderr, "%2d ", (ppgraph)->bridges[debugBridgesPrintCounter][1]);\
+                                            fprintf(stderr, "\n");\
+                                        }\
+                                        fprintf(stderr, "=========Bridges========\n");\
+                                   }
+
 #else
 
 #define DEBUGPPGRAPHPRINT(ppgraph)
+
+#define DEBUGBRIDGESPRINT(ppgraph)
 
 #endif
 
@@ -105,7 +120,7 @@
 struct _primpregraph {
     int order;
     int degree1Count;
-    int multiEdgeCount; //TODO: necessary?
+    int multiEdgeCount;
 
     //an adjacency list of the graph
     int adjList[3*MAXN];
@@ -119,6 +134,23 @@ struct _primpregraph {
 
     //the underlying graph in nauty format
     graph ulgraph[MAXN*MAXM];
+
+    //a list of the bridges in this graph
+    //MAXN-1 is an upperbound for the number of bridges, because a spanning
+    //tree contains all bridges and order - 1 edges. This upperbound is
+    //sharp because a tree is a possible graph we get.
+    //currently this information is only correct as long as we're working on
+    //degree 1 operations. As soon as we start with degree 2 operations this
+    //information is no longer updated.
+    //the bridges need to be stored so that the largest vertex comes first.
+    //Because operation 1.1 can remove bridges and this is currently not
+    //checked, this list only contains a possible bridges and some edges
+    //might actually not be a bridge
+    int bridges[MAXN-1][2];
+
+    int bridgeCount;
+
+    int bridgePosition[MAXN][MAXN];
 };
 
 typedef struct _primpregraph PRIMPREGRAPH;
@@ -216,6 +248,11 @@ int splitDepth = 0;
  */
 permutation automorphismGroupGenerators[MAXN+1][MAXN][MAXN];
 int numberOfGenerators[MAXN+1];
+
+/* Keep track of the bridges that are changed in each step.
+ */
+int changedBridges[MAXN+1][2];
+int numberOfChangedBridges[MAXN+1];
 
 /* Variables for nauty */
 int nautyLabelling[MAXN], nautyPtn[MAXN];
