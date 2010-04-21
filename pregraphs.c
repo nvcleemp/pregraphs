@@ -1408,13 +1408,17 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
     DEBUGASSERT(ppgraph->degree[v]==1)
     DEBUGDUMP(v,"%d")
     int i, j;
+    canonicalDegree1Calls++;
 
     if(ppgraph->degree1Count==1){
+        canonicalDegree1BecauseOnlyOneVertexOfDegree1++;
         //only one degree 1 vertex: garantueed to be canonical
         if(numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]==0){
             //group was trivial and remains trivial: no need to call nauty
             numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0;
+            canonicalDegree1TrivialRemainsTrivial++;
         } else if(groupMayBeCopied){
+            canonicalDegree1BridgeFixed++;
             numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1]=numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth];
             for(i = 0; i < numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]; i++){
                 memcpy(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] + i,
@@ -1450,7 +1454,10 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
     int minimumColour = colourDegree1VertexNeighbourhoodSize(ppgraph, 4, colours);
 
     //if v hasn't got the smallest colour, then it isn't canonical
-    if(minimumColour != colours[v]) return FALSE;
+    if(minimumColour != colours[v]) {
+        canonicalDegree1NotBecauseNotSmallestColour++;
+        return FALSE;
+    }
 
     int minimumColourCount = 0;
     for (i = 0; i < ppgraph->degree1Count; i++){
@@ -1462,6 +1469,7 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
     if(minimumColourCount==1){
         //only one degree 1 vertex with minimal colour, i.e. v is canonical
         //call nauty and return true
+        canonicalDegree1BecauseOnlyOneMinimumColour++;
         int vertexOrbits[ppgraph->order];
         DEBUGMSG("Start nauty")
         numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
@@ -1499,6 +1507,10 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
     }
     DEBUGDUMP(smallestLabelOrbitV, "%d")
     DEBUGDUMP(smallestOtherDegree1Label, "%d")
+    if(smallestLabelOrbitV < smallestOtherDegree1Label)
+        canonicalDegree1YesWithNauty++;
+    else
+        canonicalDegree1NoWithNauty++;
     if(noRejections) return TRUE;
     return (smallestLabelOrbitV < smallestOtherDegree1Label);
 }
@@ -1608,12 +1620,14 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
             DEBUGPPGRAPHPRINT(ppgraph)
+            degree1Operation1Total++;
             apply_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
 
             //the only deg 1 vertex after this operation is v. This is a valid action
             //if v belongs to the first orbit of degree 1 vertices
 
             if(isCanonicalDegree1Edge(ppgraph, deg1PairList[i][1], FALSE)){
+                degree1Operation1Canonical++;
                 //v belongs to the orbit of degree 1 vertices with the smallest representant
                 //Therefore this graph was created from the correct parent.
                 handle_deg1_operation_result(ppgraph);
@@ -1648,6 +1662,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
         if(orbits[i]==i){
             //TODO: maybe only enumerate the bridges?
             if(isBridge(ppgraph, edgeList[i][0], edgeList[i][1])){
+                degree1Operation2Total++;
                 DEBUGPPGRAPHPRINT(ppgraph)
                 apply_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
 
@@ -1655,6 +1670,7 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
                 //if t belongs to the first orbit of degree 1 vertices
 
                 if(isCanonicalDegree1Edge(ppgraph, ppgraph->order-1, orbitSize[i]==1)){
+                    degree1Operation2Canonical++;
                     //t belongs to the orbit of degree 1 vertices with the smallest representant
                     //Therefore this graph was created from the correct parent.
                     handle_deg1_operation_result(ppgraph);
@@ -2762,6 +2778,20 @@ void initInfo(){
     graphsWithOnlySemiEdgesCount = 0;
     graphsWithOnlyMultiEdgesCount = 0;
     simplegraphsCount = 0;
+
+    degree1Operation1Total = 0;
+    degree1Operation1Canonical = 0;
+    degree1Operation2Total = 0;
+    degree1Operation2Canonical = 0;
+
+    canonicalDegree1Calls = 0;
+    canonicalDegree1BecauseOnlyOneVertexOfDegree1 = 0;
+    canonicalDegree1TrivialRemainsTrivial = 0;
+    canonicalDegree1BridgeFixed = 0;
+    canonicalDegree1NotBecauseNotSmallestColour = 0;
+    canonicalDegree1BecauseOnlyOneMinimumColour = 0;
+    canonicalDegree1YesWithNauty = 0;
+    canonicalDegree1NoWithNauty = 0;
 }
 
 void logInfo(PREGRAPH *pregraph){
@@ -2827,6 +2857,40 @@ void printInfo(){
 
     fprintf(stderr, "\nDegree 1 operations maximum recursion depth: %d.\n", degree1OperationsDepthMaximum);
     fprintf(stderr, "Degree 2 operations maximum recursion depth: %d.\n", degree2OperationsDepthMaximum);
+
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Degree 1 operations\n");
+    fprintf(stderr, "===================\n");
+    fprintf(stderr, "Calls to canonicalDegree1 : %llu\n", canonicalDegree1Calls);
+    fprintf(stderr, "Found canonical because only one vertex of degree 1  : %llu\n", canonicalDegree1BecauseOnlyOneVertexOfDegree1);
+    fprintf(stderr, "   - with a trivial group : %llu\n", canonicalDegree1TrivialRemainsTrivial);
+    fprintf(stderr, "   - group may be copied  : %llu\n", canonicalDegree1BridgeFixed);
+    fprintf(stderr, "Found not canonical because not minimum colour       : %llu\n", canonicalDegree1NotBecauseNotSmallestColour);
+    fprintf(stderr, "Found canonical because only one with minimum colour : %llu\n", canonicalDegree1BecauseOnlyOneMinimumColour);
+    fprintf(stderr, "Found canonical after nauty was called               : %llu\n", canonicalDegree1YesWithNauty);
+    fprintf(stderr, "Found not canonical after nauty was called           : %llu\n", canonicalDegree1NoWithNauty);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "┌───────────────────────┬────────────┬────────────┬────────────┐\n");
+    fprintf(stderr, "│ DEGREE 1              │   Total    │  Accepted  │  Rejected  │\n");
+    fprintf(stderr, "├───────────────────────┼────────────┼────────────┼────────────┤\n");
+    fprintf(stderr, "│ Decided without nauty │ %10llu │ %10llu │ %10llu │\n",
+            canonicalDegree1BecauseOnlyOneVertexOfDegree1 + canonicalDegree1BecauseOnlyOneMinimumColour + canonicalDegree1NotBecauseNotSmallestColour,
+            canonicalDegree1BecauseOnlyOneVertexOfDegree1 + canonicalDegree1BecauseOnlyOneMinimumColour,
+            canonicalDegree1NotBecauseNotSmallestColour);
+    fprintf(stderr, "│ Decided with nauty    │ %10llu │ %10llu │ %10llu │\n",
+            canonicalDegree1YesWithNauty + canonicalDegree1NoWithNauty,
+            canonicalDegree1YesWithNauty,
+            canonicalDegree1NoWithNauty);
+    fprintf(stderr, "├───────────────────────┼────────────┼────────────┼────────────┤\n");
+    fprintf(stderr, "│ Operation 1           │ %10llu │ %10llu │ %10llu │\n",
+            degree1Operation1Total,
+            degree1Operation1Canonical,
+            degree1Operation1Total - degree1Operation1Canonical);
+    fprintf(stderr, "│ Operation 2           │ %10llu │ %10llu │ %10llu │\n",
+            degree1Operation2Total,
+            degree1Operation2Canonical,
+            degree1Operation2Total - degree1Operation2Canonical);
+    fprintf(stderr, "└───────────────────────┴────────────┴────────────┴────────────┘\n");
 }
 
 #ifdef PREGRAPH_NO_MAIN

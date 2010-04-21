@@ -162,6 +162,20 @@ unsigned long long graphsWithOnlySemiEdgesCount;
 unsigned long long graphsWithOnlyMultiEdgesCount;
 unsigned long long simplegraphsCount;
 
+unsigned long long degree1Operation1Total;
+unsigned long long degree1Operation1Canonical;
+unsigned long long degree1Operation2Total;
+unsigned long long degree1Operation2Canonical;
+
+unsigned long long canonicalDegree1Calls;
+unsigned long long canonicalDegree1BecauseOnlyOneVertexOfDegree1;
+unsigned long long canonicalDegree1TrivialRemainsTrivial;
+unsigned long long canonicalDegree1BridgeFixed;
+unsigned long long canonicalDegree1NotBecauseNotSmallestColour;
+unsigned long long canonicalDegree1BecauseOnlyOneMinimumColour;
+unsigned long long canonicalDegree1YesWithNauty;
+unsigned long long canonicalDegree1NoWithNauty;
+
 int degree1OperationsDepth = 0;
 int degree1OperationsDepthMaximum = 0;
 int degree2OperationsDepth = 0;
