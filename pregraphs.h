@@ -117,6 +117,11 @@
 
 #endif
 
+#ifdef _PROFILING
+    #define _PROFILING_DEG1
+    #define _PROFILING_DEG2
+#endif
+
 struct _primpregraph {
     int order;
     int degree1Count;
@@ -176,6 +181,9 @@ unsigned int markValue = UINT_MAX;
 #define SET_MARK(i) (marksArray[i] = markValue)
 #define RESET_MARK {if(markValue == UINT_MAX){int i;for(i=0;i<MAXN;i++){marksArray[i]=0;};markValue=1;}else{markValue++;}}
 
+//the radius of the neighbourhood that is used as colour for degree 1 vertices
+#define DEG1_DISTANCE_COLOUR_VALUE 4
+
 /******************Global Variables**********************/
 int vertexCount;
 int currentVertexCount;
@@ -194,6 +202,8 @@ unsigned long long graphsWithOnlySemiEdgesCount;
 unsigned long long graphsWithOnlyMultiEdgesCount;
 unsigned long long simplegraphsCount;
 
+#ifdef _PROFILING_DEG1
+
 unsigned long long degree1Operation1Total;
 unsigned long long degree1Operation1Canonical;
 unsigned long long degree1Operation2Total;
@@ -207,6 +217,11 @@ unsigned long long canonicalDegree1NotBecauseNotSmallestColour;
 unsigned long long canonicalDegree1BecauseOnlyOneMinimumColour;
 unsigned long long canonicalDegree1YesWithNauty;
 unsigned long long canonicalDegree1NoWithNauty;
+
+int canonicalDegree1PossibleColoursCount;
+unsigned long long *canonicalDegree1MinimumColourFrequency;
+
+#endif
 
 int degree1OperationsDepth = 0;
 int degree1OperationsDepthMaximum = 0;

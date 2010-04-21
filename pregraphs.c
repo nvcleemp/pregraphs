@@ -8,6 +8,7 @@
 //#define _TEST
 //#define _DEBUG
 //#define _CONSISTCHECK
+//#define _PROFILING
 
 #include "pregraphs.h"
 
@@ -1596,17 +1597,25 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
     DEBUGASSERT(ppgraph->degree[v]==1)
     DEBUGDUMP(v,"%d")
     int i, j;
-    canonicalDegree1Calls++;
+    #ifdef _PROFILING_DEG1
+        canonicalDegree1Calls++;
+    #endif
 
     if(ppgraph->degree1Count==1){
-        canonicalDegree1BecauseOnlyOneVertexOfDegree1++;
+        #ifdef _PROFILING_DEG1
+            canonicalDegree1BecauseOnlyOneVertexOfDegree1++;
+        #endif
         //only one degree 1 vertex: garantueed to be canonical
         if(numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]==0){
             //group was trivial and remains trivial: no need to call nauty
             numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0;
-            canonicalDegree1TrivialRemainsTrivial++;
+            #ifdef _PROFILING_DEG1
+                canonicalDegree1TrivialRemainsTrivial++;
+            #endif
         } else if(groupMayBeCopied){
-            canonicalDegree1BridgeFixed++;
+            #ifdef _PROFILING_DEG1
+                canonicalDegree1BridgeFixed++;
+            #endif
             numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1]=numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth];
             for(i = 0; i < numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]; i++){
                 memcpy(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] + i,
@@ -1639,11 +1648,13 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
     }
     DEBUGASSERT(j==ppgraph->degree1Count)
 
-    int minimumColour = colourDegree1VertexNeighbourhoodSize(ppgraph, 4, colours);
+    int minimumColour = colourDegree1VertexNeighbourhoodSize(ppgraph, DEG1_DISTANCE_COLOUR_VALUE, colours);
 
     //if v hasn't got the smallest colour, then it isn't canonical
     if(minimumColour != colours[v]) {
-        canonicalDegree1NotBecauseNotSmallestColour++;
+        #ifdef _PROFILING_DEG1
+            canonicalDegree1NotBecauseNotSmallestColour++;
+        #endif
         return FALSE;
     }
 
@@ -1657,7 +1668,9 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
     if(minimumColourCount==1){
         //only one degree 1 vertex with minimal colour, i.e. v is canonical
         //call nauty and return true
-        canonicalDegree1BecauseOnlyOneMinimumColour++;
+        #ifdef _PROFILING_DEG1
+            canonicalDegree1BecauseOnlyOneMinimumColour++;
+        #endif
         int vertexOrbits[ppgraph->order];
         DEBUGMSG("Start nauty")
         numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
@@ -1666,6 +1679,10 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
         DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
         return TRUE;
     }
+
+    #ifdef _PROFILING_DEG1
+        canonicalDegree1MinimumColourFrequency[minimumColour*MAXN + minimumColourCount]++;
+    #endif
 
     //just call nauty and we'll be sure whether it is canonical
 
@@ -1695,10 +1712,12 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
     }
     DEBUGDUMP(smallestLabelOrbitV, "%d")
     DEBUGDUMP(smallestOtherDegree1Label, "%d")
-    if(smallestLabelOrbitV < smallestOtherDegree1Label)
-        canonicalDegree1YesWithNauty++;
-    else
-        canonicalDegree1NoWithNauty++;
+    #ifdef _PROFILING_DEG1
+        if(smallestLabelOrbitV < smallestOtherDegree1Label)
+            canonicalDegree1YesWithNauty++;
+        else
+            canonicalDegree1NoWithNauty++;
+    #endif
     if(noRejections) return TRUE;
     return (smallestLabelOrbitV < smallestOtherDegree1Label);
 }
@@ -1808,14 +1827,18 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
             DEBUGPPGRAPHPRINT(ppgraph)
-            degree1Operation1Total++;
+            #ifdef _PROFILING_DEG1
+                degree1Operation1Total++;
+            #endif
             apply_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
 
             //the only deg 1 vertex after this operation is v. This is a valid action
             //if v belongs to the first orbit of degree 1 vertices
 
             if(isCanonicalDegree1Edge(ppgraph, deg1PairList[i][1], FALSE)){
-                degree1Operation1Canonical++;
+                #ifdef _PROFILING_DEG1
+                    degree1Operation1Canonical++;
+                #endif
                 //v belongs to the orbit of degree 1 vertices with the smallest representant
                 //Therefore this graph was created from the correct parent.
                 handle_deg1_operation_result(ppgraph);
@@ -1851,7 +1874,9 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
         if(orbits[i]==i){
             //TODO: maybe only enumerate the bridges?
             if(isBridge(ppgraph, edgeList[i][0], edgeList[i][1])){
-                degree1Operation2Total++;
+                #ifdef _PROFILING_DEG1
+                    degree1Operation2Total++;
+                #endif
                 DEBUGPPGRAPHPRINT(ppgraph)
                 apply_deg1_operation2(ppgraph, edgeList[i][0], edgeList[i][1]);
 
@@ -1859,7 +1884,9 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
                 //if t belongs to the first orbit of degree 1 vertices
 
                 if(isCanonicalDegree1Edge(ppgraph, ppgraph->order-1, orbitSize[i]==1)){
-                    degree1Operation2Canonical++;
+                    #ifdef _PROFILING_DEG1
+                        degree1Operation2Canonical++;
+                    #endif
                     //t belongs to the orbit of degree 1 vertices with the smallest representant
                     //Therefore this graph was created from the correct parent.
                     handle_deg1_operation_result(ppgraph);
@@ -2972,19 +2999,25 @@ void initInfo(){
     graphsWithOnlyMultiEdgesCount = 0;
     simplegraphsCount = 0;
 
-    degree1Operation1Total = 0;
-    degree1Operation1Canonical = 0;
-    degree1Operation2Total = 0;
-    degree1Operation2Canonical = 0;
+    #ifdef _PROFILING_DEG1
+        degree1Operation1Total = 0;
+        degree1Operation1Canonical = 0;
+        degree1Operation2Total = 0;
+        degree1Operation2Canonical = 0;
 
-    canonicalDegree1Calls = 0;
-    canonicalDegree1BecauseOnlyOneVertexOfDegree1 = 0;
-    canonicalDegree1TrivialRemainsTrivial = 0;
-    canonicalDegree1BridgeFixed = 0;
-    canonicalDegree1NotBecauseNotSmallestColour = 0;
-    canonicalDegree1BecauseOnlyOneMinimumColour = 0;
-    canonicalDegree1YesWithNauty = 0;
-    canonicalDegree1NoWithNauty = 0;
+        canonicalDegree1Calls = 0;
+        canonicalDegree1BecauseOnlyOneVertexOfDegree1 = 0;
+        canonicalDegree1TrivialRemainsTrivial = 0;
+        canonicalDegree1BridgeFixed = 0;
+        canonicalDegree1NotBecauseNotSmallestColour = 0;
+        canonicalDegree1BecauseOnlyOneMinimumColour = 0;
+        canonicalDegree1YesWithNauty = 0;
+        canonicalDegree1NoWithNauty = 0;
+
+        canonicalDegree1PossibleColoursCount = (1<<DEG1_DISTANCE_COLOUR_VALUE) + 1;
+        canonicalDegree1MinimumColourFrequency = (unsigned long long *)malloc(sizeof(unsigned long long)*(canonicalDegree1PossibleColoursCount * MAXN));
+        for(i = 0; i < canonicalDegree1PossibleColoursCount * MAXN; i++) canonicalDegree1MinimumColourFrequency[i]=0;
+    #endif
 }
 
 void logInfo(PREGRAPH *pregraph){
@@ -3051,6 +3084,8 @@ void printInfo(){
     fprintf(stderr, "\nDegree 1 operations maximum recursion depth: %d.\n", degree1OperationsDepthMaximum);
     fprintf(stderr, "Degree 2 operations maximum recursion depth: %d.\n", degree2OperationsDepthMaximum);
 
+    #ifdef _PROFILING_DEG1
+
     fprintf(stderr, "\n");
     fprintf(stderr, "Degree 1 operations\n");
     fprintf(stderr, "===================\n");
@@ -3084,6 +3119,67 @@ void printInfo(){
             degree1Operation2Canonical,
             degree1Operation2Total - degree1Operation2Canonical);
     fprintf(stderr, "└───────────────────────┴────────────┴────────────┴────────────┘\n");
+
+    //determine bounding box for colour frequency table
+    int i, j;
+    int minVertex, maxVertex, minColour, maxColour;
+    minVertex = MAXN;
+    maxVertex = 0;
+    minColour = canonicalDegree1PossibleColoursCount;
+    maxColour = 0;
+    for(i = 0; i < canonicalDegree1PossibleColoursCount; i++){
+        for(j = 0; j < MAXN; j++){
+            if(canonicalDegree1MinimumColourFrequency[i*MAXN+j]>0){
+                if(minColour > i){
+                    minColour = i;
+                }
+                if(maxColour < i){
+                    maxColour = i;
+                }
+                if(minVertex > j){
+                    minVertex = j;
+                }
+                if(maxVertex < j){
+                    maxVertex = j;
+                }
+            }
+        }
+    }
+
+    fprintf(stderr, "\nThe following table shows the number of times the first colour was minimal, but still nauty was needed\n");
+    fprintf(stderr, "because there were multiple vertices that shared that colour. The rows correspond to the colours and the\n");
+    fprintf(stderr, "columns correspond with the number of vertices that shared that colour.\n");
+    fprintf(stderr, "┌───────────────────┬");
+    for(j = minVertex; j < maxVertex; j++){
+        fprintf(stderr, "────────────┬");
+    }
+    fprintf(stderr, "────────────┐\n");
+    fprintf(stderr, "│ Colour \\ vertices │");
+    for(j = minVertex; j <= maxVertex; j++){
+        fprintf(stderr, " %10d │", j);
+    }
+    fprintf(stderr, "\n");
+
+    for(i = minColour; i <= maxColour; i++){
+        fprintf(stderr, "├───────────────────┼");
+        for(j = minVertex; j < maxVertex; j++){
+            fprintf(stderr, "────────────┼");
+        }
+        fprintf(stderr, "────────────┤\n");
+        fprintf(stderr, "│ %17d │", i);
+        for(j = minVertex; j <= maxVertex; j++){
+            fprintf(stderr, " %10llu │", canonicalDegree1MinimumColourFrequency[i*MAXN+j]);
+        }
+        fprintf(stderr, "\n");
+    }
+
+    fprintf(stderr, "└───────────────────┴");
+    for(j = minVertex; j < maxVertex; j++){
+        fprintf(stderr, "────────────┴");
+    }
+    fprintf(stderr, "────────────┘\n");
+    
+    #endif
 }
 
 #ifdef PREGRAPH_NO_MAIN
