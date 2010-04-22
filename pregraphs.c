@@ -1686,12 +1686,39 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
 
     //just call nauty and we'll be sure whether it is canonical
 
+    //we provide nauty with the colouring we already obtained
+    //first we set complete the partioning to 1
+    for(j = 0; j < ppgraph->order; j++){
+        nautyPtn[j]=1;
+    }
+    //next we provide a grouping of the degree 1 vertices based on their colour
+    int currentColour = minimumColour;
+    int labellingIndex = 0;
+    while(labellingIndex < ppgraph->degree1Count){
+        for(j=0; j < ppgraph->degree1Count; j++){
+            if(colours[degree1Vertices[j]] == currentColour){
+                nautyLabelling[labellingIndex++] = degree1Vertices[j];
+            }
+        }
+        nautyPtn[labellingIndex-1]=0;
+        currentColour++;
+    }
+    for(j = 0; j < ppgraph->order; j++){
+        if(ppgraph->degree[j]==3){
+            nautyLabelling[labellingIndex++] = j;
+        }
+    }
+    nautyPtn[labellingIndex-1]=0;
+    DEBUGASSERT(labellingIndex == ppgraph->order)
+
+    nautyOptions.defaultptn = FALSE;
     int vertexOrbits[ppgraph->order];
     DEBUGMSG("Start nauty")
     numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
     nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
     DEBUGMSG("End nauty")
     DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
+    nautyOptions.defaultptn = TRUE;
 
     DEBUGARRAYDUMP(nautyLabelling, ppgraph->order, "%d")
     int reverseLabelling[ppgraph->order];
