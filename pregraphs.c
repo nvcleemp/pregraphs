@@ -1597,6 +1597,11 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
     DEBUGASSERT(ppgraph->degree[v]==1)
     DEBUGDUMP(v,"%d")
     int i, j;
+
+    //set to false if we reach the end of the generation and the group doesn't need to be calculated for the next round
+    //in case we have both loops and semi-edges the group is always needed to create all sets.
+    boolean groupstillNeeded = (allowLoops && allowSemiEdges) || (ppgraph->order - ppgraph->degree1Count + 1 <= vertexCount);
+
     #ifdef _PROFILING_DEG1
         canonicalDegree1Calls++;
     #endif
@@ -1606,32 +1611,34 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
             canonicalDegree1BecauseOnlyOneVertexOfDegree1++;
         #endif
         //only one degree 1 vertex: garantueed to be canonical
-        if(numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]==0){
-            //group was trivial and remains trivial: no need to call nauty
-            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0;
-            #ifdef _PROFILING_DEG1
-                canonicalDegree1TrivialRemainsTrivial++;
-            #endif
-        } else if(groupMayBeCopied){
-            #ifdef _PROFILING_DEG1
-                canonicalDegree1BridgeFixed++;
-            #endif
-            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1]=numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth];
-            for(i = 0; i < numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]; i++){
-                memcpy(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] + i,
-                       automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth] + i,
-                       sizeof(permutation) * ppgraph->order);
-                automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1][i][v-1] = v-1;
-                automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1][i][v] = v;
+        if(groupstillNeeded){
+            if(numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]==0){
+                //group was trivial and remains trivial: no need to call nauty
+                numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0;
+                #ifdef _PROFILING_DEG1
+                    canonicalDegree1TrivialRemainsTrivial++;
+                #endif
+            } else if(groupMayBeCopied){
+                #ifdef _PROFILING_DEG1
+                    canonicalDegree1BridgeFixed++;
+                #endif
+                    numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1]=numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth];
+                    for(i = 0; i < numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]; i++){
+                        memcpy(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] + i,
+                               automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth] + i,
+                               sizeof(permutation) * ppgraph->order);
+                        automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1][i][v-1] = v-1;
+                        automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1][i][v] = v;
+                    }
+            } else {
+                //call nauty and return true
+                int vertexOrbits[ppgraph->order];
+                DEBUGMSG("Start nauty")
+                numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
+                nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+                DEBUGMSG("End nauty")
+                DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
             }
-        } else {
-            //call nauty and return true
-            int vertexOrbits[ppgraph->order];
-            DEBUGMSG("Start nauty")
-            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
-            nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
-            DEBUGMSG("End nauty")
-            DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
         }
         return TRUE;
     }
@@ -1671,12 +1678,14 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
         #ifdef _PROFILING_DEG1
             canonicalDegree1BecauseOnlyOneMinimumColour++;
         #endif
-        int vertexOrbits[ppgraph->order];
-        DEBUGMSG("Start nauty")
-        numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
-        nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
-        DEBUGMSG("End nauty")
-        DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
+        if(groupstillNeeded){
+            int vertexOrbits[ppgraph->order];
+            DEBUGMSG("Start nauty")
+            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
+            nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+            DEBUGMSG("End nauty")
+            DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
+        }
         return TRUE;
     }
 
