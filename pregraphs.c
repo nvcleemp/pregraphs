@@ -11,6 +11,7 @@
 //#define _PROFILING
 
 #include "pregraphs.h"
+//#include "nauty/nautinv.h"
 
 #include <stdio.h>
 #include <signal.h>
@@ -1703,30 +1704,126 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
     //next we provide a grouping of the degree 1 vertices based on their colour
     int currentColour = minimumColour;
     int labellingIndex = 0;
+    int partitionCount = 0;
     while(labellingIndex < ppgraph->degree1Count){
         for(j=0; j < ppgraph->degree1Count; j++){
             if(colours[degree1Vertices[j]] == currentColour){
+                if(labellingIndex == 0 || nautyPtn[labellingIndex - 1] == 0){
+                    partitionCount++;
+                }
                 nautyLabelling[labellingIndex++] = degree1Vertices[j];
             }
         }
-        nautyPtn[labellingIndex-1]=0;
+        nautyPtn[labellingIndex - 1]=0;
         currentColour++;
     }
-    for(j = 0; j < ppgraph->order; j++){
-        if(ppgraph->degree[j]==3){
-            nautyLabelling[labellingIndex++] = j;
+
+    //determine colours for degree 3 vertices
+    //given a degree 3 vertex v we have the following possibilities:
+    // - v has 0 degree 1 vertices => d3colour[v]=0
+    // - v has 1 degree 1 vertex w => d3colour[v]=d1colour[w] (>0)
+    // - v has 2 degree 1 vertices w1 and w2 with d1colour[w1]=c1 and d1colour[w2]=c2 =>
+    //      d3colour[v] = max(c1,c2) + canonicalDegree1PossibleColoursCount*min(c1,c2)
+    //   because c1,c2 < canonicalDegree1PossibleColoursCount this will be different
+    //   for each different pair c1 and c2
+    // - v has 3 degree 1 vertices => there is only one degree 3 vertex and colouring
+    //   makes no difference
+    int d3Colours[MAXN];
+    for(j=0; j < ppgraph->order; j++){
+        d3Colours[j]=0;
+    }
+    for(j=0; j < ppgraph->degree1Count; j++){
+        d3Colours[ppgraph->adjList[degree1Vertices[j]*3]] =
+            (d3Colours[ppgraph->adjList[degree1Vertices[j]*3]] ? (1<<DEG1_DISTANCE_COLOUR_VALUE) + 1 : 0)
+            + colours[degree1Vertices[j]];
+    }
+
+    int currentPartitionStart = labellingIndex;
+    int lastColour = -1;
+    int currentd3Colour = -1;
+
+    #ifdef _PROFILING_DEG1
+        int degree3PartitionCount = 0;
+    #endif
+
+    while(labellingIndex < ppgraph->order){
+        for(j = 0; j < ppgraph->order; j++){
+            if(ppgraph->degree[j]==3){
+                if(currentd3Colour == lastColour){
+                    if(d3Colours[j] > currentd3Colour){
+                        currentd3Colour = d3Colours[j];
+                        nautyLabelling[labellingIndex++] = j;
+                    }
+                } else if(d3Colours[j] < currentd3Colour && d3Colours[j] > lastColour){
+                    currentd3Colour = d3Colours[j];
+                    labellingIndex = currentPartitionStart;
+                    nautyLabelling[labellingIndex++] = j;
+                } else if(d3Colours[j] == currentd3Colour){
+                    nautyLabelling[labellingIndex++] = j;
+                }
+            }
+        }
+        nautyPtn[labellingIndex - 1]=0;
+        partitionCount++;
+        currentPartitionStart = labellingIndex;
+        lastColour = currentd3Colour;
+        #ifdef _PROFILING_DEG1
+            degree3PartitionCount++;
+        #endif
+        /*
+        fprintf(stderr, "index: %d\n", labellingIndex);
+        fprintf(stderr, "order: %d\n", ppgraph->order);
+        fprintf(stderr, "current: %d\n", lastColour);
+        fprintf(stderr, "last: %d\ncolouring :", currentd3Colour);
+        for(i = 0; i < ppgraph->order; i++) fprintf(stderr, "%3d ", d3Colours[i]);
+        fprintf(stderr, "\nlabelling :");
+        for(i = 0; i < ppgraph->order; i++) fprintf(stderr, "%3d ", nautyLabelling[i]);
+        fprintf(stderr, "\ndegree    :");
+        for(i = 0; i < ppgraph->order; i++) fprintf(stderr, "%3d ", ppgraph->degree[i]);
+        fprintf(stderr, "\n");
+        */
+    }
+
+    DEBUGASSERT(labellingIndex == ppgraph->order)
+    #ifdef _PROFILING_DEG1
+    int lastPartitionEnd = -1;
+    for (j = 0; j < ppgraph->order; j++){
+        if(nautyPtn[j]==0){
+            int size = j - lastPartitionEnd;
+            if(ppgraph->degree[j]==1){
+                int position = colours[j];
+                canonicalDegree1Degree1PartitionCount[position]++;
+                canonicalDegree1Degree1PartitionSize[position]+=size;
+            } else {
+                int position = d3Colours[j];
+                if(position==0){
+                    canonicalDegree1Degree3Neighbours0PartitionCount++;
+                    canonicalDegree1Degree3Neighbours0PartitionSize+=size;
+                } else if(position <= canonicalDegree1PossibleColoursCount){
+                    canonicalDegree1Degree3Neighbours1PartitionCount[position]++;
+                    canonicalDegree1Degree3Neighbours1PartitionSize[position]+=size;
+                } else {
+                    position-=(canonicalDegree1PossibleColoursCount+1);
+                    canonicalDegree1Degree3Neighbours2PartitionCount[position]++;
+                    canonicalDegree1Degree3Neighbours2PartitionSize[position]+=size;
+                }
+            }
+            lastPartitionEnd = j;
         }
     }
-    nautyPtn[labellingIndex-1]=0;
-    DEBUGASSERT(labellingIndex == ppgraph->order)
+        canonicalDegree1PartitionCountFrequency[partitionCount]++;
+        canonicalDegree1Degree3PartitionCount[degree3PartitionCount]++;
+    #endif
 
     nautyOptions.defaultptn = FALSE;
+//    nautyOptions.invarproc = twopaths;
     int vertexOrbits[ppgraph->order];
     DEBUGMSG("Start nauty")
     numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
     nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
     DEBUGMSG("End nauty")
     DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
+//    nautyOptions.invarproc = NULL;
     nautyOptions.defaultptn = TRUE;
 
     DEBUGARRAYDUMP(nautyLabelling, ppgraph->order, "%d")
@@ -3053,7 +3150,30 @@ void initInfo(){
         canonicalDegree1PossibleColoursCount = (1<<DEG1_DISTANCE_COLOUR_VALUE) + 1;
         canonicalDegree1MinimumColourFrequency = (unsigned long long *)malloc(sizeof(unsigned long long)*(canonicalDegree1PossibleColoursCount * MAXN));
         for(i = 0; i < canonicalDegree1PossibleColoursCount * MAXN; i++) canonicalDegree1MinimumColourFrequency[i]=0;
-    #endif
+
+        canonicalDegree1PartitionCountFrequency = (int *)malloc(sizeof(int)*(canonicalDegree1PossibleColoursCount + 2));
+        for(i = 0; i < canonicalDegree1PossibleColoursCount + 2; i++) canonicalDegree1PartitionCountFrequency[i]=0;
+
+        for(i = 0; i <= MAXN; i++) canonicalDegree1Degree3PartitionCount[i]=0;
+
+        canonicalDegree1Degree1PartitionCount = (unsigned long long *)malloc(sizeof(unsigned long long)*(canonicalDegree1PossibleColoursCount+2));
+        canonicalDegree1Degree1PartitionSize = (unsigned long long *)malloc(sizeof(unsigned long long)*(canonicalDegree1PossibleColoursCount+2));
+        canonicalDegree1Degree3Neighbours1PartitionCount = (unsigned long long *)malloc(sizeof(unsigned long long)*(canonicalDegree1PossibleColoursCount+2));
+        canonicalDegree1Degree3Neighbours1PartitionSize = (unsigned long long *)malloc(sizeof(unsigned long long)*(canonicalDegree1PossibleColoursCount+2));
+        canonicalDegree1Degree3Neighbours2PartitionCount = (unsigned long long *)malloc(sizeof(unsigned long long)*(canonicalDegree1PossibleColoursCount+2));
+        canonicalDegree1Degree3Neighbours2PartitionSize = (unsigned long long *)malloc(sizeof(unsigned long long)*(canonicalDegree1PossibleColoursCount+2));
+
+        for(i = 0; i < canonicalDegree1PossibleColoursCount + 2; i++){
+            canonicalDegree1Degree1PartitionCount[i] = 0;
+            canonicalDegree1Degree1PartitionSize[i] = 0;
+            canonicalDegree1Degree3Neighbours1PartitionCount[i] = 0;
+            canonicalDegree1Degree3Neighbours1PartitionSize[i] = 0;
+            canonicalDegree1Degree3Neighbours2PartitionCount[i] = 0;
+            canonicalDegree1Degree3Neighbours2PartitionSize[i] = 0;
+        }
+        canonicalDegree1Degree3Neighbours0PartitionCount = 0;
+        canonicalDegree1Degree3Neighbours0PartitionSize = 0;
+#endif
 }
 
 void logInfo(PREGRAPH *pregraph){
@@ -3214,7 +3334,49 @@ void printInfo(){
         fprintf(stderr, "────────────┴");
     }
     fprintf(stderr, "────────────┘\n");
-    
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Size of partitions provided to nauty\n");
+    for(j = 0; j < canonicalDegree1PossibleColoursCount + 2; j++){
+        if(canonicalDegree1PartitionCountFrequency[j])
+            fprintf(stderr, "%10d time%s a partition of size %d\n",
+                canonicalDegree1PartitionCountFrequency[j],
+                canonicalDegree1PartitionCountFrequency[j]==1 ? (char *)" " : (char *)"s",
+                j);
+    }
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Size of partitions for degree 3 vertices\n");
+    for(j = 0; j <= MAXN; j++){
+        if(canonicalDegree1Degree3PartitionCount[j])
+            fprintf(stderr, "%10llu time%s a partition of size %d\n",
+                canonicalDegree1Degree3PartitionCount[j],
+                canonicalDegree1Degree3PartitionCount[j]==1 ? (char *)" " : (char *)"s",
+                j);
+    }
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Average size of partition classes of partitions provided to nauty\n");
+    fprintf(stderr, "   - Degree 1 vertices\n");
+    for(j = 0; j < canonicalDegree1PossibleColoursCount + 2; j++){
+        if(canonicalDegree1Degree1PartitionCount[j]){
+            fprintf(stderr, "         colour %3d: %f\n", j, canonicalDegree1Degree1PartitionSize[j]*1.0/canonicalDegree1Degree1PartitionCount[j]);
+        }
+    }
+    fprintf(stderr, "   - Degree 3 vertices\n");
+    if(canonicalDegree1Degree3Neighbours0PartitionCount){
+        fprintf(stderr, "      * with 0 degree 1 neighbours\n");
+        fprintf(stderr, "         colour   0: %f\n", canonicalDegree1Degree3Neighbours0PartitionSize*1.0/canonicalDegree1Degree3Neighbours0PartitionCount);
+    }
+    fprintf(stderr, "      * with 1 degree 1 neighbour\n");
+    for(j = 0; j < canonicalDegree1PossibleColoursCount + 2; j++){
+        if(canonicalDegree1Degree3Neighbours1PartitionCount[j]){
+            fprintf(stderr, "        colour %3d: %f\n", j, canonicalDegree1Degree3Neighbours1PartitionSize[j]*1.0/canonicalDegree1Degree3Neighbours1PartitionCount[j]);
+        }
+    }
+    fprintf(stderr, "      * with 2 degree 1 neighbours\n");
+    for(j = 0; j < canonicalDegree1PossibleColoursCount + 2; j++){
+        if(canonicalDegree1Degree3Neighbours2PartitionCount[j]){
+            fprintf(stderr, "         colour %3d: %f\n", j, canonicalDegree1Degree3Neighbours2PartitionSize[j]*1.0/canonicalDegree1Degree3Neighbours2PartitionCount[j]);
+        }
+    }
     #endif
 }
 

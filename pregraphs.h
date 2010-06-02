@@ -221,6 +221,18 @@ unsigned long long canonicalDegree1NoWithNauty;
 int canonicalDegree1PossibleColoursCount;
 unsigned long long *canonicalDegree1MinimumColourFrequency;
 
+int *canonicalDegree1PartitionCountFrequency;
+
+unsigned long long canonicalDegree1Degree3PartitionCount[MAXN+1];
+
+unsigned long long *canonicalDegree1Degree1PartitionSize;
+unsigned long long *canonicalDegree1Degree1PartitionCount;
+unsigned long long canonicalDegree1Degree3Neighbours0PartitionSize;
+unsigned long long canonicalDegree1Degree3Neighbours0PartitionCount;
+unsigned long long *canonicalDegree1Degree3Neighbours1PartitionSize;
+unsigned long long *canonicalDegree1Degree3Neighbours1PartitionCount;
+unsigned long long *canonicalDegree1Degree3Neighbours2PartitionSize;
+unsigned long long *canonicalDegree1Degree3Neighbours2PartitionCount;
 #endif
 
 int degree1OperationsDepth = 0;
