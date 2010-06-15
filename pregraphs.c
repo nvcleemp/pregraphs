@@ -2847,7 +2847,7 @@ void writeFatK2(){
         fprintf(file, "|   1 ||    2 |    2 |    2 ||\n");
         fprintf(file, "|   2 ||    1 |    1 |    1 ||\n");
         fprintf(file, "==============================\n\n");
-    } else if(outputType == 'p'){
+    } else if(outputType == 'c'){
         if (structureCount == 1) { //if first graph
             fprintf(file, ">>pregraph_code %s<<", (endian == LITTLE_ENDIAN ? "le" : "be"));
         }
