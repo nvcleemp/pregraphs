@@ -2855,9 +2855,7 @@ void writeFatK2(){
         fprintf(file, "%c", 2);
         fprintf(file, "%c", 2);
         fprintf(file, "%c", 2);
-        fprintf(file, "%c", 1);
-        fprintf(file, "%c", 1);
-        fprintf(file, "%c", 1);
+        fprintf(file, "%c", 0);
         fprintf(file, "%c", 0);
     }
 
