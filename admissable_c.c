@@ -783,9 +783,10 @@ print a help message. name is the name of the current program.
  */
 void help(char *name) {
     fprintf(stderr, "The program %s .\n", name);
-    fprintf(stderr, "Usage: %s [t/m/h][X] \n\n", name);
+    fprintf(stderr, "Usage: %s [c/h] \n\n", name);
     fprintf(stderr, "Valid options:\n");
-    fprintf(stderr, "  -h          : Print this help and return.\n");
+    fprintf(stderr, "  -c   : Only count the number of graphs.\n");
+    fprintf(stderr, "  -h   : Print this help and return.\n");
 }
 
 /*
@@ -798,9 +799,13 @@ int main(int argc, char** argv) {
     int c;
     char *name = argv[0];
     int endian = defaultEndian;
+    boolean onlyCount = FALSE;
 
-    while ((c = getopt(argc, argv, "htmdX")) != -1) {
+    while ((c = getopt(argc, argv, "hc")) != -1) {
         switch (c) {
+            case 'c':
+                onlyCount = TRUE;
+                break;
             case 'h':
                 help(name);
                 return EXIT_SUCCESS;
@@ -826,16 +831,6 @@ int main(int argc, char** argv) {
         count++;
         //DEBUGDUMP(count, "%ld")
 	//determine admissable colourable
-/**
-	for(c=0; c<pregraph.order; c++){
-	    fprintf(stderr, "%d) %d, %d, %d\n", c + 1, pregraph.adjList[c][0]+1, pregraph.adjList[c][1]+1, pregraph.adjList[c][2]+1);
-	}
-	fprintf(stderr, "\n");
-	for(c=0; c<pregraph.order; c++){
-	    fprintf(stderr, "%d) %ld\n", c + 1, pregraph.adjMatrix[c]);
-	}
-	fprintf(stderr, "\n");
-/**/
         #ifdef _DEBUG
 	fprintf(stderr, "Graph %2d\n========\n", count);
         #endif
@@ -844,7 +839,8 @@ int main(int argc, char** argv) {
 	    fprintf(stderr, "Admissable\n\n");
             #endif
 	    allowsAdmissableColouring++;
-            writePregraphCode(stdout, &pregraph, LITTLE_ENDIAN, allowsAdmissableColouring);
+            if(!onlyCount)
+                writePregraphCode(stdout, &pregraph, LITTLE_ENDIAN, allowsAdmissableColouring);
 	}
     }
 
