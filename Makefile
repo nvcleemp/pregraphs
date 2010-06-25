@@ -1,4 +1,4 @@
-CFLAGS = -Wall -g -DMAXN=50
+CFLAGS = -Wall -g -DMAXN=64 -DWORDSIZE=64 -O4
 
 TARG = pregraphs$(SUFFIX)
 OBJS = pregraphs.o snarkhunter.o nauty/nauty.o nauty/nautil.o nauty/naugraph.o nauty/nausparse.o nauty/nautinv.o
