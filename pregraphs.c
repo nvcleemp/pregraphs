@@ -2523,7 +2523,7 @@ void start(){
     }
 
     if(allowMultiEdges && vertexCount == 2){
-        writeFatK2();
+        writeThetaGraph();
     }
     DEBUGMSG("End start")
 }
@@ -2831,7 +2831,7 @@ char readPregraphCode(FILE *f, PRIMPREGRAPH *ppgraph, int endian) {
  *  \__/
  *
  */
-void writeFatK2(){
+void writeThetaGraph(){
     structureCount++;
     FILE *file = stdout;
     if(outputFile != NULL){

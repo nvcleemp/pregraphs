@@ -338,7 +338,7 @@ char read_old_or_new(FILE *f, boolean bignum, int endian, unsigned short *number
 char read_2byte_number(FILE *f, unsigned short *n, int endian);
 char readPregraphCode(FILE *f, PRIMPREGRAPH *ppgraph, int endian);
 
-void writeFatK2();
+void writeThetaGraph();
 
 void construct_K2(PRIMPREGRAPH *ppgraph);
 void construct_C4(PRIMPREGRAPH *ppgraph);
