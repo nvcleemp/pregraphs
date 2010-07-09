@@ -516,7 +516,11 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, 
 	    return;
 	}
 
-	if(pregraph->adjMatrix[nextUp] & (1<<nextDown)){
+	if(nextUp==pregraph->order || nextDown==pregraph->order){
+            //exactly one semi-edge is found, so end of chain is reached
+
+            inChain = FALSE;
+        } else if(pregraph->adjMatrix[nextUp] & (1<<nextDown)){
 	    //still in the chain of square
 	    prevUp = currentUp;
 	    prevDown = currentDown;
@@ -558,7 +562,11 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, 
 	    return;
 	}
 
-	if(pregraph->adjMatrix[nextUp] & (1<<nextDown)){
+	if(nextUp==pregraph->order || nextDown==pregraph->order){
+            //exactly one semi-edge is found, so end of chain is reached
+            *admissable = nrOfSquares % 2;
+            inChain = FALSE;
+        } else if(pregraph->adjMatrix[nextUp] & (1<<nextDown)){
 	    //still in the chain of square
 	    prevUp = currentUp;
 	    prevDown = currentDown;
@@ -581,9 +589,9 @@ void removeChainsOfSquares(PREGRAPH *pregraph, boolean *removed, boolean *admiss
 	    for(j=0;j<3;j++){
 		int n1 = pregraph->adjList[i][(j+1)%3];
 		int n2 = pregraph->adjList[i][(j+2)%3];
-		if(!removed[n1] && !removed[n2]){
+		if(!removed[n1] && !removed[n2] && n1!=pregraph->order && n2!=pregraph->order){
 		    int oppositeCorner = getSquare(pregraph, i, n1, n2);
-		    if(oppositeCorner!=-1){
+		    if(oppositeCorner!=-1 && oppositeCorner != pregraph->order){
 			detectAndRemoveChain(pregraph, removed, i, n1, n2, oppositeCorner, admissable);
 			if(!(*admissable)) return;
 			j=3; //exit the for
