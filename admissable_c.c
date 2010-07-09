@@ -233,6 +233,18 @@ int writePregraphCode(FILE *f, PREGRAPH *pregraph, int endian, unsigned long str
     return 1;
 }
 
+void writePregraphTable(FILE *f, PREGRAPH *pregraph){
+    int i, j;
+    for(i=0; i<pregraph->order; i++){
+        fprintf(f, "%d) ", i+1);
+        for(j=0; j<3; j++){
+            fprintf(f, "%d ", pregraph->adjList[i][j]+1);
+        }
+        fprintf(f, "\n");
+    }
+    fprintf(f, "\n");
+}
+
 //======================================================================================================
 //======================================================================================================
 
