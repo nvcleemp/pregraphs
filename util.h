@@ -14,6 +14,8 @@
 #define MIN(a, b) (((a) <= (b)) ? (a) : (b))
 #define BIT(i) (1 << i)
 
+#define ERRORMSG(msg) { fprintf(stderr, "%s:%u %s\n", __FILE__, __LINE__, msg); fflush(stderr); exit(1); }
+
 /******************Debugging macros**********************/
 
 //#define _DEBUG
