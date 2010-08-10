@@ -803,10 +803,11 @@ print a help message. name is the name of the current program.
  */
 void help(char *name) {
     fprintf(stderr, "The program %s .\n", name);
-    fprintf(stderr, "Usage: %s [c/h] \n\n", name);
+    fprintf(stderr, "Usage: %s [options] \n\n", name);
     fprintf(stderr, "Valid options:\n");
-    fprintf(stderr, "  -c   : Only count the number of graphs.\n");
-    fprintf(stderr, "  -h   : Print this help and return.\n");
+    fprintf(stderr, "  -c      : Only count the number of graphs.\n");
+    fprintf(stderr, "  -f name : Prints statistics to file with geven name.\n");
+    fprintf(stderr, "  -h      : Print this help and return.\n");
 }
 
 /*
@@ -818,10 +819,12 @@ int main(int argc, char** argv) {
 
     int c;
     char *name = argv[0];
+    char *outputFileName = NULL;
+    FILE *outputFile;
     int endian = defaultEndian;
     boolean onlyCount = FALSE;
 
-    while ((c = getopt(argc, argv, "hc")) != -1) {
+    while ((c = getopt(argc, argv, "hcf:")) != -1) {
         switch (c) {
             case 'c':
                 onlyCount = TRUE;
@@ -829,6 +832,9 @@ int main(int argc, char** argv) {
             case 'h':
                 help(name);
                 return EXIT_SUCCESS;
+            case 'f': //(defaults to stderr)
+                outputFileName = optarg;
+                break;
             default:
                 usage(name);
                 return EXIT_FAILURE;
@@ -864,8 +870,18 @@ int main(int argc, char** argv) {
 	}
     }
 
-    fprintf(stderr, "Read %ld graphs ", count);
-    fprintf(stderr, "of which %ld graphs allow an admissable colouring.\n", allowsAdmissableColouring);
+    if(outputFileName != NULL){
+        outputFile = fopen(outputFileName, "a");
+        if(outputFile == NULL){
+            fprintf(stderr, "File %s couldn't be created: aborting!\n", outputFileName);
+            return EXIT_FAILURE;
+        }
+    } else {
+        outputFile = stderr;
+    }
+
+    fprintf(outputFile, "Read %ld graphs ", count);
+    fprintf(outputFile, "of which %ld graphs allow an admissable colouring.\n", allowsAdmissableColouring);
     return EXIT_SUCCESS;
 }
 
