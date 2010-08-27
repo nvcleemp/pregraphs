@@ -17,7 +17,9 @@
 #include <signal.h>
 #include <execinfo.h>
 
-void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairListSize, int *vertexPairOrbits, int *orbitCount, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators);
+void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairListSize,
+        int *vertexPairOrbits, int *orbitCount, permutation (*currentGenerators)[MAXN][MAXN] ,
+        int currentNumberOfGenerators);
 
 void show_stackframe() {
   void *trace[16];
@@ -31,6 +33,447 @@ void show_stackframe() {
 	fprintf(stderr, "[bt] %s\n", messages[i]);
   }
 }
+
+//------------------Start colouring methods--------------------------------
+void initIsColourable(PRIMPREGRAPH *ppgraph) {
+    RESETMARKS_EDGES;
+    int i, j;
+    for (i = 0; i < ppgraph->order; i++) {
+        coloursAroundVertex[i] = 0;
+        for(j = 0; j < ppgraph->degree[i]; j++) {
+            neighbourToIndexMapping[i][ppgraph->adjList[3*i+j]] = j;
+        }
+    }
+
+}
+
+void copyColourInformation(int order) {
+    int i, j;
+    for (i = 0; i < order; i++) {
+        coloursAroundVertexCopy[i] = coloursAroundVertex[i];
+        for(j = 0; j < order; j++) {
+            neighbourToIndexMappingCopy[i][j] = neighbourToIndexMapping[i][j];
+        }
+        for(j = 0; j < 3; j++) {
+            coloursCopy[i][j] = colours[i][j];
+        }
+    }
+}
+
+void restoreColourInformation(int order) {
+    int i, j;
+    for (i = 0; i < order; i++) {
+        coloursAroundVertex[i] = coloursAroundVertexCopy[i];
+        for(j = 0; j < order; j++) {
+            neighbourToIndexMapping[i][j] = neighbourToIndexMappingCopy[i][j];
+        }
+        for(j = 0; j < 3; j++) {
+            colours[i][j] = coloursCopy[i][j];
+        }
+    }
+}
+
+void printColouring(FILE *f, PRIMPREGRAPH *ppgraph){
+    int i, j;
+    for(i = 0; i < ppgraph->order; i++){
+        fprintf(f, "%2d) ", i+1);
+        for(j = 0; j < ppgraph->degree[i]; j++){
+            if(ISMARKED_EDGES(i, j)){
+                fprintf(f, "%d ", colours[i][j]);
+            } else {
+                fprintf(f, "0 ");
+            }
+        }
+        fprintf(f, "\n");
+    }
+    fprintf(f, "\n");
+}
+
+void printMapping(FILE *f, PRIMPREGRAPH *ppgraph){
+    int i,j;
+    fprintf(f, "    ");
+    for(i = 0; i < ppgraph->order; i++){
+        fprintf(f, "%2d ", i+1);
+    }
+    fprintf(f, "\n");
+    for(i = 0; i < ppgraph->order; i++){
+        fprintf(f, "%2d) ", i+1);
+        for(j = 0; j < ppgraph->order; j++){
+            fprintf(f, "%2d ", neighbourToIndexMapping[i][j]);
+        }
+        fprintf(f, "\n");
+    }
+    fprintf(f, "\n");
+}
+
+int isConflictingColouring(int currentVertex, int colour) {
+    int i;
+    for(i = 0; i < 3; i++) {
+        if(ISMARKED_EDGES(currentVertex, i) && colours[currentVertex][i] == colour)
+            return 1;
+    }
+    return 0;
+
+}
+
+
+inline void determineAvailableColours(int usedColour, int *availableColours) {
+    switch(usedColour) {
+        case 1:
+            availableColours[0] = 2;
+            availableColours[1] = 3;
+            break;
+        case 2:
+            availableColours[0] = 1;
+            availableColours[1] = 3;
+            break;
+        case 3:
+            availableColours[0] = 1;
+            availableColours[1] = 2;
+            break;
+        default:
+            fprintf(stdout, "Invalid previous colour");
+            exit(0);
+    }
+}
+
+inline int determineMissingColour(int sumColours){
+    switch(sumColours) {
+        case 3:
+            return 3;
+            break;
+        case 4:
+            return 2;
+            break;
+        case 5:
+            return 1;
+            break;
+        default:
+            ERRORMSG("Invalid sum of colours");
+    }
+}
+
+void determineUncolouredVertex(int vertex, int *uncolouredVertex, int *missingColour, PRIMPREGRAPH *ppgraph) {
+    DEBUGASSERT(coloursAroundVertex[vertex] == 2);
+
+    int i;
+    int sumColours = 0;
+    for(i = 0; i < ppgraph->degree[vertex]; i++) {
+        if(!ISMARKED_EDGES(vertex, i)) {
+            *uncolouredVertex = ppgraph->adjList[3*vertex+i];
+        } else {
+            sumColours += colours[vertex][i];
+        }
+    }
+
+    *missingColour = determineMissingColour(sumColours);
+    
+}
+
+void unmarkColours(int nonfree_labelled[][2], int nonfree_labelled_size) {
+    int i;
+    int vertex0, vertex1;
+    for(i = 0; i < nonfree_labelled_size; i++) {
+        vertex0 = nonfree_labelled[i][0];
+        vertex1 = nonfree_labelled[i][1];
+        UNMARK_EDGES(vertex0, neighbourToIndexMapping[vertex0][vertex1]);
+        UNMARK_EDGES(vertex1, neighbourToIndexMapping[vertex1][vertex0]);
+        coloursAroundVertex[vertex0]--;
+        coloursAroundVertex[vertex1]--;
+    }
+}
+
+/*
+ * Starts from currentvertex and sets colours that are fixed by the current colours.
+ * The edges that are coloured are stored, so this can be rolled back in case of a conflict.
+ */
+boolean propagateFixedColours(int currentVertex, int nonfree_labelled[][2], int *nonfree_labelled_size, PRIMPREGRAPH *ppgraph) {
+    int uncolouredVertex, missingColour;
+    //while the colour is fixed for currentVertex
+    while(coloursAroundVertex[currentVertex] == 2) {
+        //find the colour of the remaining edge
+        determineUncolouredVertex(currentVertex, &uncolouredVertex, &missingColour, ppgraph);
+        //check that this colour gives no conflicts
+        if(!isConflictingColouring(uncolouredVertex, missingColour)) {
+            int indexUncolouredVertex = neighbourToIndexMapping[currentVertex][uncolouredVertex];
+            int indexCurrentVertex = neighbourToIndexMapping[uncolouredVertex][currentVertex];
+            colours[currentVertex][indexUncolouredVertex] = missingColour;
+            colours[uncolouredVertex][indexCurrentVertex] = missingColour;
+
+            //DEBUGASSERT(missing_colour > 0 && missing_colour < 4);
+
+            MARK_EDGES(currentVertex, indexUncolouredVertex);
+            MARK_EDGES(uncolouredVertex, indexCurrentVertex);
+            coloursAroundVertex[currentVertex] = 3;
+            coloursAroundVertex[uncolouredVertex]++;
+
+            nonfree_labelled[*nonfree_labelled_size][0] = currentVertex;
+            nonfree_labelled[*nonfree_labelled_size][1] = uncolouredVertex;
+            (*nonfree_labelled_size)++;
+
+            currentVertex = uncolouredVertex;
+        } else {
+            //in case of conflicts: remove colours and return FALSE
+            unmarkColours(nonfree_labelled, *nonfree_labelled_size);
+            return FALSE;
+        }
+    }
+    return TRUE;
+
+}
+
+/*
+ * For this method we assume that the graph is a simple graph.
+ */
+int tryExtendingColouring(int numberOfColouredEdges, int numberOfEdges, PRIMPREGRAPH *ppgraph) {
+    if(numberOfColouredEdges != numberOfEdges) {
+        int currentVertex;
+
+        for(currentVertex = 0; currentVertex < ppgraph->order; currentVertex++) {
+            if(coloursAroundVertex[currentVertex] == 1 && ppgraph->degree[currentVertex] != 1) {
+                break;
+            }
+            DEBUGASSERT(coloursAroundVertex[currentVertex] != 2)
+        }
+        DEBUGASSERT(currentVertex < ppgraph->order);
+
+        int usedColour; //the colour already used at this vertex
+        int i;
+        for(i = 0; i < ppgraph->degree[currentVertex]; i++) {
+            if(ISMARKED_EDGES(currentVertex, i)) {
+                usedColour = colours[currentVertex][i];
+                break;
+            }
+        }
+        DEBUGASSERT(i < ppgraph->degree[currentVertex]);
+
+        int availableVertices[2];
+        int indexAvailableVertex0 = (i + 1) % 3;
+        int indexAvailableVertex1 = (i + 2) % 3;
+        availableVertices[0] = ppgraph->adjList[3*currentVertex+indexAvailableVertex0];
+        availableVertices[1] = ppgraph->adjList[3*currentVertex+indexAvailableVertex1];
+
+        int availableColours[2];
+        determineAvailableColours(usedColour, availableColours);
+
+        DEBUGASSERT((availableColours[0] > 0 && availableColours[0] < 4) && (availableColours[1] > 0 && availableColours[1] < 4));
+
+        int nonfree_labelled[numberOfEdges - numberOfColouredEdges][2];
+        int j;
+        for(i = 0; i < 2; i++) {
+            if(isConflictingColouring(availableVertices[0], availableColours[i]) ||
+                    isConflictingColouring(availableVertices[1], availableColours[(i + 1) % 2])) {
+                continue;
+            }
+
+            int indexCurrentVertex0 = neighbourToIndexMapping[availableVertices[0]][currentVertex];
+            int indexCurrentVertex1 = neighbourToIndexMapping[availableVertices[1]][currentVertex];
+
+            colours[availableVertices[0]][indexCurrentVertex0] = availableColours[i];
+            colours[availableVertices[1]][indexCurrentVertex1] = availableColours[(i + 1) % 2];
+
+            MARK_EDGES(availableVertices[0], indexCurrentVertex0);
+            MARK_EDGES(availableVertices[1], indexCurrentVertex1);
+
+            coloursAroundVertex[availableVertices[0]]++;
+            coloursAroundVertex[availableVertices[1]]++;
+
+            int nonfree_labelled_size = 0;
+            boolean abort = FALSE;
+            for(j = 0; j < 2;j++) {
+                if(!propagateFixedColours(availableVertices[j], nonfree_labelled, &nonfree_labelled_size, ppgraph)) {
+                    DEBUGASSERT(nonfree_labelled_size <= numberOfEdges - numberOfColouredEdges)
+                    abort = TRUE;
+                    break;
+                }
+                DEBUGASSERT(nonfree_labelled_size <= numberOfEdges - numberOfColouredEdges)
+            }
+
+            if(!abort) {
+                colours[currentVertex][indexAvailableVertex0] = availableColours[i];
+                colours[currentVertex][indexAvailableVertex1] = availableColours[(i + 1) % 2];
+                MARK_EDGES(currentVertex, indexAvailableVertex0);
+                MARK_EDGES(currentVertex, indexAvailableVertex1);
+                coloursAroundVertex[currentVertex] = 3;
+
+                if(tryExtendingColouring(numberOfColouredEdges + nonfree_labelled_size + 2, numberOfEdges, ppgraph)) {
+                    return 1;
+                } else {
+                    unmarkColours(nonfree_labelled, nonfree_labelled_size);
+                }
+                UNMARK_EDGES(currentVertex, indexAvailableVertex0);
+                UNMARK_EDGES(currentVertex, indexAvailableVertex1);
+                coloursAroundVertex[currentVertex] = 1;
+            }
+
+            UNMARK_EDGES(availableVertices[0], indexCurrentVertex0);
+            UNMARK_EDGES(availableVertices[1], indexCurrentVertex1);
+
+            //number_of_colours_snarks[current_vertex] = 1;
+            coloursAroundVertex[availableVertices[0]]--;
+            coloursAroundVertex[availableVertices[1]]--;
+        }
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+/*
+ * This method only works for simple graphs!
+ * Stores the colouring in the array
+ */
+boolean isColourableGraph(PRIMPREGRAPH *ppgraph) {
+    if(ppgraph->bridgeCount > 0 && ppgraph->degree1Count==0)
+        return FALSE;
+    if(ppgraph->degree1Count == 1)
+        return FALSE;
+
+    initIsColourable(ppgraph);
+
+    int currentVertex = 0;
+    int i, neighbour, currentIndex;
+    for(i = 0; i < ppgraph->degree[currentVertex]; i++) {
+        colours[currentVertex][i] = i + 1;
+        neighbour = ppgraph->adjList[3*currentVertex+i];
+        currentIndex = neighbourToIndexMapping[neighbour][currentVertex];
+        colours[neighbour][currentIndex] = i + 1;
+
+        MARK_EDGES(currentVertex, i);
+        MARK_EDGES(neighbour, currentIndex);
+        coloursAroundVertex[neighbour] = 1;
+    }
+    coloursAroundVertex[currentVertex] = ppgraph->degree[currentVertex];
+    int numberOfEdges = (3*(ppgraph->order-ppgraph->degree1Count) + ppgraph->degree1Count)/2;
+    return tryExtendingColouring(ppgraph->degree[currentVertex], numberOfEdges, ppgraph);
+}
+
+/*
+ * This method only works for simple graphs!
+ * Tries to find a colouring such that the two edges incident with the two edges of degree 1
+ * have a different colouring
+ */
+boolean canBeColouredDifferently(PRIMPREGRAPH *ppgraph, int v1, int v2) {
+    if(ppgraph->degree1Count == 2)
+        return FALSE;
+    if(ppgraph->degree[v1]!=1 || ppgraph->degree[v2]!=1){
+        ERRORMSG("Not two vertices of degree 1")
+    }
+
+    initIsColourable(ppgraph);
+
+    colours[v1][0]=1;
+    colours[v2][0]=2;
+
+    int v1Neighbour = ppgraph->adjList[3*v1+0];
+    int v2Neighbour = ppgraph->adjList[3*v2+0];
+    int v1Index = neighbourToIndexMapping[v1Neighbour][v1];
+    int v2Index = neighbourToIndexMapping[v2Neighbour][v2];
+
+    colours[v1Neighbour][v1Index] = 1;
+    colours[v2Neighbour][v2Index] = 2;
+
+    coloursAroundVertex[v1] = 1;
+    coloursAroundVertex[v2] = 1;
+    coloursAroundVertex[v1Neighbour]++;
+    coloursAroundVertex[v2Neighbour]++;
+    MARK_EDGES(v1, 0);
+    MARK_EDGES(v2, 0);
+    MARK_EDGES(v1Neighbour, v1Index);
+    MARK_EDGES(v2Neighbour, v2Index);
+
+    int numberOfEdges = (3*(ppgraph->order-ppgraph->degree1Count) + ppgraph->degree1Count)/2;
+    return tryExtendingColouring(2, numberOfEdges, ppgraph);
+}
+
+/*
+ * This method only works for simple graphs!
+ * Tries to find a colouring such that the two edges incident with the two edges of degree 1
+ * have a different colouring. Basically just calls canBeColouredDifferently, but first stores
+ * the current colouring. If the answer is false, it restores the old colouring.
+ */
+boolean tryAlternateColouring(PRIMPREGRAPH *ppgraph, int v1, int v2){
+    //copy the colours
+    int i, j;
+    for(i = 0; i < ppgraph->order; i++){
+        for(j = 0; j < ppgraph->degree[i]; j++){
+            coloursCopy[i][j]=colours[i][j];
+        }
+        coloursAroundVertexCopy[i]=coloursAroundVertex[i];
+        //TODO: do we need to guarantee that coloursAroundVertex
+        //stays up to date? It is probably only used in colouring methods
+    }
+
+    boolean alternateColouringExists = canBeColouredDifferently(ppgraph, v1, v2);
+
+    if(!alternateColouringExists){
+        for(i = 0; i < ppgraph->order; i++){
+            for(j = 0; j < ppgraph->degree[i]; j++){
+                colours[i][j]=coloursCopy[i][j];
+            }
+            coloursAroundVertex[i]=coloursAroundVertexCopy[i];
+        }
+    }
+
+    return alternateColouringExists;
+}
+
+int getNeighbourAtColour(PRIMPREGRAPH *ppgraph, int vertex, int colour){
+    int i;
+    for(i = 0; i < ppgraph->degree[vertex]; i++){
+        if(colours[vertex][i]==colour){
+            return ppgraph->adjList[3*vertex+i];
+        }
+    }
+    return -1;
+}
+
+inline void setColour(PRIMPREGRAPH *ppgraph, int v1, int v2, int colour){
+    int i=0;
+    while(i<ppgraph->degree[v1] && ppgraph->adjList[3*v1+i]!=v2) i++;
+
+    if(i<ppgraph->degree[v1]){
+        colours[v1][i]=colour;
+    } else {
+        ERRORMSG("v2 is not a neighbour of v1")
+    }
+    i=0;
+    while(i<ppgraph->degree[v2] && ppgraph->adjList[3*v2+i]!=v1) i++;
+
+    if(i<ppgraph->degree[v2]){
+        colours[v2][i]=colour;
+    } else {
+        ERRORMSG("v1 is not a neighbour of v2")
+    }
+}
+
+inline int getColour(PRIMPREGRAPH *ppgraph, int v1, int v2){
+    int i=0;
+    while(i<ppgraph->degree[v1] && ppgraph->adjList[3*v1+i]!=v2) i++;
+
+    if(i<ppgraph->degree[v1]){
+        return colours[v1][i];
+    } else {
+        ERRORMSG("v2 is not a neighbour of v1")
+    }
+}
+
+void switchColours(PRIMPREGRAPH *ppgraph, int vertex, int firstColour, int secondColour){
+    int previousVertex;
+    int currentVertex = vertex;
+    int nextVertex = getNeighbourAtColour(ppgraph, currentVertex, firstColour);
+    int currentColour = firstColour;
+
+    while(nextVertex>=0){
+        previousVertex = currentVertex;
+        currentVertex = nextVertex;
+        currentColour = currentColour == firstColour ? secondColour : firstColour;
+        nextVertex = getNeighbourAtColour(ppgraph, currentVertex, currentColour);
+        setColour(ppgraph, previousVertex, currentVertex, currentColour);
+    }
+}
+
+//-------------------End colouring methods---------------------------------
 
 inline boolean areAdjacent(PRIMPREGRAPH *ppgraph, int u, int v){
     int i;
@@ -146,8 +589,10 @@ inline void insertBridge(PRIMPREGRAPH *ppgraph, int index, int v1, int v2){
     if(index != ppgraph->bridgeCount) {
         ppgraph->bridges[ppgraph->bridgeCount][0] = ppgraph->bridges[index][0];
         ppgraph->bridges[ppgraph->bridgeCount][1] = ppgraph->bridges[index][1];
-        ppgraph->bridgePosition[ppgraph->bridges[ppgraph->bridgeCount][0]][ppgraph->bridges[ppgraph->bridgeCount][1]] = ppgraph->bridgeCount;
-        ppgraph->bridgePosition[ppgraph->bridges[ppgraph->bridgeCount][1]][ppgraph->bridges[ppgraph->bridgeCount][0]] = ppgraph->bridgeCount;
+        ppgraph->bridgePosition[ppgraph->bridges[ppgraph->bridgeCount][0]][ppgraph->bridges[ppgraph->bridgeCount][1]] =
+                ppgraph->bridgeCount;
+        ppgraph->bridgePosition[ppgraph->bridges[ppgraph->bridgeCount][1]][ppgraph->bridges[ppgraph->bridgeCount][0]] =
+                ppgraph->bridgeCount;
     }
     ppgraph->bridges[index][0] = max;
     ppgraph->bridges[index][1] = min;
@@ -228,6 +673,7 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     DEBUGDUMP(u, "%d")
     DEBUGDUMP(v, "%d")
     DEBUGASSERT(ppgraph->degree[u]==1 && ppgraph->degree[v]==1)
+    DEBUGASSERT(!onlyColourable || colours[u][0] != colours[v][0])
     int t = ppgraph->adjList[v*3]; //original neighbour of v
     ppgraph->degree[u]=3;
     ppgraph->adjList[u*3+1]=v;
@@ -248,6 +694,16 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gu,t);
     DELELEMENT(gt,v);
     ADDELEMENT(gt,u);
+
+    //adjust colouring
+    if(onlyColourable){
+        int cu = colours[u][0];
+        int cv = colours[v][0];
+        colours[u][1] = determineMissingColour(cu+cv);
+        colours[u][2] = cv;
+        colours[v][0] = determineMissingColour(cu+cv);
+        coloursAroundVertex[u]=3;
+    }
 
     //keep track of bridges
     int oldBridge1 = findBridge(ppgraph, u, ppgraph->adjList[u*3]);
@@ -293,6 +749,12 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gt, v);
     DELELEMENT(gt, u);
 
+    //restore colouring
+    if(onlyColourable){
+        colours[v][0]=colours[u][2];
+        coloursAroundVertex[u]=1;
+    }
+
     //keep track of bridges
     removeBridgesAtEnd(ppgraph, 1);
     insertBridge(ppgraph, changedBridges[degree1OperationsDepth][1], v, t);
@@ -320,6 +782,10 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     DEBUGDUMP(v, "%d")
     DEBUGASSERT(areAdjacent(ppgraph, u, v))
     int oldBridge = findBridge(ppgraph, u, v);
+    int bridgeColour;
+    if(onlyColourable){
+        bridgeColour = getColour(ppgraph, u, v);
+    }
     int s, t, i;
     s = ppgraph->order;
     t = s + 1;
@@ -358,6 +824,22 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     ADDELEMENT(gt, s);
     CHECKCONSISTENCY(ppgraph)
 
+    //update colouring
+    if(onlyColourable){
+        int switchedColour = bridgeColour%3 + 1;
+        int remainingColour = switchedColour%3 + 1;
+
+        switchColours(ppgraph, u, switchedColour, bridgeColour);
+        setColour(ppgraph, u, s, switchedColour);
+        colours[s][0]=switchedColour;
+        colours[s][1]=bridgeColour;
+        colours[s][2]=remainingColour;
+        colours[t][0]=remainingColour;
+
+        coloursAroundVertex[s]=3;
+        coloursAroundVertex[t]=1;
+    }
+
     //keep track of bridges
     changedBridges[degree1OperationsDepth][0] = oldBridge;
     numberOfChangedBridges[degree1OperationsDepth] = 1;
@@ -395,6 +877,14 @@ void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     DELELEMENT(gv, s);
     ADDELEMENT(gu, v);
     ADDELEMENT(gv, u);
+
+    //restore colouring
+    if(onlyColourable){
+        int bridgeColour = colours[s][1];
+        int switchedColour = colours[s][0];
+        switchColours(ppgraph, u, bridgeColour, switchedColour);
+        setColour(ppgraph, u, v, bridgeColour);
+    }
 
     //keep track of bridges
     removeBridgesAtEnd(ppgraph, 3);
@@ -752,7 +1242,8 @@ void get_multi_edges(PRIMPREGRAPH *ppgraph, VERTEXPAIR *vertexPairList, int *ver
  * belongs and orbitCount will contain the number of orbits.
  * The first two parameters are read-only, the last two are write-only.
  */
-void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairListSize, int *vertexPairOrbits, int *orbitCount, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators){
+void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairListSize, int *vertexPairOrbits, int *orbitCount,
+        permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators){
     DEBUGMSG("Start determine_vertex_pairs_orbits")
     DEBUG2DARRAYDUMP(vertexPairList, vertexPairListSize, 2, "%d")
 
@@ -819,7 +1310,9 @@ void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairLis
  * belongs and orbitCount will contain the number of orbits.
  * The first two parameters are read-only, the last two are write-only.
  */
-void determine_vertex_pairs_orbits_and_sizes(VERTEXPAIR *vertexPairList, int vertexPairListSize, int *vertexPairOrbits, int *orbitCount, permutation (*currentGenerators)[MAXN][MAXN] , int currentNumberOfGenerators, int *orbitSize){
+void determine_vertex_pairs_orbits_and_sizes(VERTEXPAIR *vertexPairList, int vertexPairListSize, 
+        int *vertexPairOrbits, int *orbitCount, permutation (*currentGenerators)[MAXN][MAXN] ,
+        int currentNumberOfGenerators, int *orbitSize){
     DEBUGMSG("Start determine_vertex_pairs_orbits")
     DEBUG2DARRAYDUMP(vertexPairList, vertexPairListSize, 2, "%d")
 
@@ -1277,7 +1770,8 @@ void handle_primpregraph_result(PRIMPREGRAPH *ppgraph){
             int position = 0;
             set tempSet[MAXM];
             EMPTYSET(tempSet, MAXM);
-            determine_possible_sets_of_degree1_vertices(tempSet, vertexSetList, &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph, 0);
+            determine_possible_sets_of_degree1_vertices(tempSet, vertexSetList,
+                    &position, semiEdgeCount, 0, nextDegree1Vertex(-1, ppgraph), ppgraph, 0);
             DEBUGDUMP(position, "%d")
             DEBUGDUMP(listSize, "%d")
             DEBUGASSERT(position==listSize)
@@ -1623,7 +2117,8 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
                 #ifdef _PROFILING_DEG1
                     canonicalDegree1BridgeFixed++;
                 #endif
-                    numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1]=numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth];
+                    numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1]=
+                            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth];
                     for(i = 0; i < numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]; i++){
                         memcpy(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] + i,
                                automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth] + i,
@@ -1636,7 +2131,8 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
                 int vertexOrbits[ppgraph->order];
                 DEBUGMSG("Start nauty")
                 numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
-                nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+                nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace,
+                        NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
                 DEBUGMSG("End nauty")
                 DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
             }
@@ -1683,7 +2179,8 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
             int vertexOrbits[ppgraph->order];
             DEBUGMSG("Start nauty")
             numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
-            nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+            nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions,
+                    &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
             DEBUGMSG("End nauty")
             DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
         }
@@ -1820,7 +2317,8 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
     int vertexOrbits[ppgraph->order];
     DEBUGMSG("Start nauty")
     numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1] = 0; //reset the generators
-    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions,
+            &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
     DEBUGMSG("End nauty")
     DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
 //    nautyOptions.invarproc = NULL;
@@ -1869,7 +2367,8 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v){
         int vertexOrbits[ppgraph->order];
         DEBUGMSG("Start nauty")
         numberOfGenerators = 0; //reset the generators
-        nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+        nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits,
+                 &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
         DEBUGMSG("End nauty")
         DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
         return TRUE;
@@ -1900,7 +2399,8 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v){
         int vertexOrbits[ppgraph->order];
         DEBUGMSG("Start nauty")
         numberOfGenerators = 0; //reset the generators
-        nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+        nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions,
+              &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
         DEBUGMSG("End nauty")
         DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
         return TRUE;
@@ -1911,7 +2411,8 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v){
     int vertexOrbits[ppgraph->order];
     DEBUGMSG("Start nauty")
     numberOfGenerators = 0; //reset the generators
-    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, vertexOrbits, &nautyOptions,
+            &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
     DEBUGMSG("End nauty")
     DEBUGARRAYDUMP(vertexOrbits, ppgraph->order, "%d")
 
@@ -1946,7 +2447,13 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v){
 void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
     if(operation11Disabled) return;
     DEBUGMSG("Start handle_deg1_operation1")
-    DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth], numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth], ppgraph->order, "%d")
+    DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth],
+            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth], ppgraph->order, "%d")
+    if(onlyColourable && ppgraph->degree1Count<3){
+        //garantueed to lead to a non-3-edge-colourable graph
+        DEBUGMSG("End handle_deg1_operation1")
+        return;
+    }
     int maxSize = ppgraph->degree1Count*ppgraph->degree1Count/2;
     VERTEXPAIR deg1PairList[maxSize]; //initialize an array that is large enough to hold all the degree 1 pairs
     int listSize;
@@ -1954,7 +2461,9 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
 
     int orbitCount;
     int orbits[listSize];
-    determine_vertex_pairs_orbits(deg1PairList, listSize, orbits, &orbitCount, automorphismGroupGenerators + (degree1OperationsDepth + degree2OperationsDepth), numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]);
+    determine_vertex_pairs_orbits(deg1PairList, listSize, orbits, &orbitCount,
+            automorphismGroupGenerators + (degree1OperationsDepth + degree2OperationsDepth),
+            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth]);
 
     int i;
     for (i = 0; i < listSize; i++) {
@@ -1963,6 +2472,12 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
             #ifdef _PROFILING_DEG1
                 degree1Operation1Total++;
             #endif
+            if(onlyColourable && colours[deg1PairList[i][0]][0]==colours[deg1PairList[i][1]][0]){
+                //check that this graph can be coloured so that these two vertices of degree
+                //1 are incident with two edges with a different colour
+                if(!tryAlternateColouring(ppgraph, deg1PairList[i][0], deg1PairList[i][1]))
+                    continue; //don't apply operation on these vertices
+            }
             apply_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
 
             //the only deg 1 vertex after this operation is v. This is a valid action
@@ -1988,8 +2503,10 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
     if(operation12Disabled) return;
     if(ppgraph->bridgeCount==0) return;
     DEBUGMSG("Start handle_deg1_operation2")
-    DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth], numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth], ppgraph->order, "%d")
-    //int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
+    DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth],
+            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth], ppgraph->order, "%d")
+    //int maxSize = ppgraph->order*3/2-ppgraph->degree1Count;
+            //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
     VERTEXPAIR edgeList[ppgraph->bridgeCount]; //initialize an array that is large enough to hold all single edges
     int listSize;
     get_bridges(ppgraph, edgeList, &listSize);
@@ -1997,7 +2514,9 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
     int orbitCount;
     int orbits[listSize];
     int orbitSize[listSize];
-    determine_vertex_pairs_orbits_and_sizes(edgeList, listSize, orbits, &orbitCount, automorphismGroupGenerators+(degree1OperationsDepth + degree2OperationsDepth), numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth], orbitSize);
+    determine_vertex_pairs_orbits_and_sizes(edgeList, listSize, orbits, &orbitCount,
+            automorphismGroupGenerators+(degree1OperationsDepth + degree2OperationsDepth),
+            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth], orbitSize);
 
     DEBUGARRAYDUMP(orbits, orbitCount, "%d")
     DEBUGARRAYDUMP(orbitSize, orbitCount, "%d")
@@ -2022,6 +2541,8 @@ void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
                     #endif
                     //t belongs to the orbit of degree 1 vertices with the smallest representant
                     //Therefore this graph was created from the correct parent.
+
+                    //TODO: if onlyColourable -> switch colours along a path on one side of the bridge
                     handle_deg1_operation_result(ppgraph);
                 }
 
@@ -2079,7 +2600,8 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2, boolean *mul
         ADDELEMENT(multiEdgeVertex, n2);
     }
 
-    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order + ppgraph->multiEdgeCount, canonicalGraph);
+    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions,
+            &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order + ppgraph->multiEdgeCount, canonicalGraph);
     nautyOptions.defaultptn = TRUE;
 
     //restore original graph
@@ -2100,7 +2622,9 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2, boolean *mul
     int *multiEdgeOrbits = globalMultiEdgeOrbits + ((degree2OperationsDepth+1)*HALFFLOOR(vertexCount));
     int *multiEdgeOrbitCount = globalMultiEdgeOrbitCount + degree2OperationsDepth + 1;
 
-    determine_vertex_pairs_orbits(multiEdgeList, *multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount, automorphismGroupGenerators + (degree1OperationsDepth + degree2OperationsDepth + 1), numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1]);
+    determine_vertex_pairs_orbits(multiEdgeList, *multiEdgeListSize, multiEdgeOrbits,
+            multiEdgeOrbitCount, automorphismGroupGenerators + (degree1OperationsDepth + degree2OperationsDepth + 1),
+            numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth + 1]);
 
     int i = 0;
     while(i<*multiEdgeListSize && !(multiEdgeList[i][0]==v1 && multiEdgeList[i][1]==v2)) i++;
@@ -2143,8 +2667,10 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2, boolean *mul
          */
         int neighbourV, neighbourU, t, s;
         boolean validEdge = TRUE;
-        neighbourV = (ppgraph->adjList[(multiEdgeList[i][0])*3] == multiEdgeList[i][1]) ? ppgraph->adjList[(multiEdgeList[i][0])*3 + 1] : ppgraph->adjList[(multiEdgeList[i][0])*3];
-        neighbourU = (ppgraph->adjList[(multiEdgeList[i][1])*3] == multiEdgeList[i][0]) ? ppgraph->adjList[(multiEdgeList[i][1])*3 + 1] : ppgraph->adjList[(multiEdgeList[i][1])*3];
+        neighbourV = (ppgraph->adjList[(multiEdgeList[i][0])*3] == multiEdgeList[i][1]) ?
+            ppgraph->adjList[(multiEdgeList[i][0])*3 + 1] : ppgraph->adjList[(multiEdgeList[i][0])*3];
+        neighbourU = (ppgraph->adjList[(multiEdgeList[i][1])*3] == multiEdgeList[i][0]) ?
+            ppgraph->adjList[(multiEdgeList[i][1])*3 + 1] : ppgraph->adjList[(multiEdgeList[i][1])*3];
         if(neighbourU == neighbourV){
             t = neighbourU;
             if(ppgraph->adjList[t*3]!=multiEdgeList[i][0] && ppgraph->adjList[t*3]!=multiEdgeList[i][1])
@@ -2187,7 +2713,8 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2, boolean *mul
 void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
     if(operation21Disabled) return;
     DEBUGMSG("Start handle_deg2_operation1")
-    DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth+degree2OperationsDepth], numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth], ppgraph->order, "%d")
+    DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth+degree2OperationsDepth],
+            numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth], ppgraph->order, "%d")
     int maxSize = ppgraph->order*3/2-ppgraph->degree1Count; //this upper bound is not tight (it is tight in case of no degree 2 vertices?)
     VERTEXPAIR edgeList[maxSize]; //initialize an array that is large enough to hold all single edges
     int listSize;
@@ -2195,7 +2722,9 @@ void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
 
     int orbitCount;
     int orbits[listSize];
-    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount, automorphismGroupGenerators+(degree1OperationsDepth+degree2OperationsDepth), numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth]);
+    determine_vertex_pairs_orbits(edgeList, listSize, orbits, &orbitCount, 
+            automorphismGroupGenerators+(degree1OperationsDepth+degree2OperationsDepth),
+            numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth]);
 
     int i;
     for (i = 0; i < listSize; i++) {
@@ -2217,7 +2746,8 @@ void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
 void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, boolean *multiEdgesDetermined){
     if(operation22Disabled) return;
     DEBUGMSG("Start handle_deg2_operation2")
-    DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth+degree2OperationsDepth], numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth], ppgraph->order, "%d")
+    DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth+degree2OperationsDepth],
+            numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth], ppgraph->order, "%d")
 
     VERTEXPAIR *oldMultiEdgeList = globalMultiEdgeList + (degree2OperationsDepth*HALFFLOOR(vertexCount));
     int *oldMultiEdgeListSize = globalMultiEdgeListSize + degree2OperationsDepth;
@@ -2230,7 +2760,9 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, boolean *multiEdgesDetermined
 
         DEBUGASSERT(*oldMultiEdgeListSize == ppgraph->multiEdgeCount)
 
-        determine_vertex_pairs_orbits(oldMultiEdgeList, *oldMultiEdgeListSize, oldMultiEdgeOrbits, oldMultiEdgeOrbitCount, automorphismGroupGenerators+(degree1OperationsDepth+degree2OperationsDepth), numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth]);
+        determine_vertex_pairs_orbits(oldMultiEdgeList, *oldMultiEdgeListSize, oldMultiEdgeOrbits,
+                oldMultiEdgeOrbitCount, automorphismGroupGenerators+(degree1OperationsDepth+degree2OperationsDepth),
+                numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth]);
         *multiEdgesDetermined = TRUE;
     }
     int i;
@@ -2253,7 +2785,8 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, boolean *multiEdgesDetermined
 void handle_deg2_operation3(PRIMPREGRAPH *ppgraph, boolean *multiEdgesDetermined){
     if(operation23Disabled) return;
     DEBUGMSG("Start handle_deg2_operation3")
-    DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth+degree2OperationsDepth], numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth], ppgraph->order, "%d")
+    DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth+degree2OperationsDepth],
+            numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth], ppgraph->order, "%d")
 
     VERTEXPAIR *oldMultiEdgeList = globalMultiEdgeList + (degree2OperationsDepth*HALFFLOOR(vertexCount));
     int *oldMultiEdgeListSize = globalMultiEdgeListSize + degree2OperationsDepth;
@@ -2266,7 +2799,9 @@ void handle_deg2_operation3(PRIMPREGRAPH *ppgraph, boolean *multiEdgesDetermined
 
         DEBUGASSERT(*oldMultiEdgeListSize == ppgraph->multiEdgeCount)
 
-        determine_vertex_pairs_orbits(oldMultiEdgeList, *oldMultiEdgeListSize, oldMultiEdgeOrbits, oldMultiEdgeOrbitCount, automorphismGroupGenerators+(degree1OperationsDepth+degree2OperationsDepth), numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth]);
+        determine_vertex_pairs_orbits(oldMultiEdgeList, *oldMultiEdgeListSize, oldMultiEdgeOrbits, 
+                oldMultiEdgeOrbitCount, automorphismGroupGenerators+(degree1OperationsDepth+degree2OperationsDepth),
+                numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth]);
         *multiEdgesDetermined = TRUE;
     }
     int i;
@@ -2328,7 +2863,10 @@ void do_deg2_operations(PRIMPREGRAPH *ppgraph, boolean multiEdgesDetermined){
         handle_deg2_operation1(ppgraph);
         //the orbits of the multi-edges are already determined, so we pass them on
         handle_deg2_operation2(ppgraph, &newMultiEdgesDetermined);
-        handle_deg2_operation3(ppgraph, &newMultiEdgesDetermined);
+        if(!onlyColourable){
+            //don't do operation 2.3 in case we want 3-edge-colourable pregraphs
+            handle_deg2_operation3(ppgraph, &newMultiEdgesDetermined);
+        }
     }
     DEBUGMSG("End do_deg2_operations")
 }
@@ -2352,7 +2890,8 @@ void grow(PRIMPREGRAPH *ppgraph){
     numberOfGenerators[0] = 0; //reset the generators
     //there are no multiedges at this point!
     degree1OperationsDepth=-1;
-    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
+    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions,
+            &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order, canonicalGraph);
     degree1OperationsDepth=0;
     DEBUGMSG("End nauty")
     //the generators for these start graphs need to be calculated
@@ -2416,7 +2955,8 @@ void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph){
     }
 
     degree1OperationsDepth=-1;
-    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions, &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order + ppgraph->multiEdgeCount, canonicalGraph);
+    nauty(ppgraph->ulgraph, nautyLabelling, nautyPtn, NULL, orbits, &nautyOptions,
+            &nautyStats, nautyWorkspace, NAUTY_WORKSIZE, MAXM, ppgraph->order + ppgraph->multiEdgeCount, canonicalGraph);
     degree1OperationsDepth=0;
 
     nautyOptions.defaultptn = TRUE;
@@ -2439,7 +2979,9 @@ void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph){
 
     int *multiEdgeOrbits = globalMultiEdgeOrbits;
     int *multiEdgeOrbitCount = globalMultiEdgeOrbitCount;
-    determine_vertex_pairs_orbits(multiEdgeList, *multiEdgeListSize, multiEdgeOrbits, multiEdgeOrbitCount, automorphismGroupGenerators+(degree1OperationsDepth+degree2OperationsDepth), numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth]);
+    determine_vertex_pairs_orbits(multiEdgeList, *multiEdgeListSize, multiEdgeOrbits, 
+            multiEdgeOrbitCount, automorphismGroupGenerators+(degree1OperationsDepth+degree2OperationsDepth),
+            numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth]);
 
     if(ppgraph->order >= minVertexCount && ppgraph->order<=maxVertexCount && ppgraph->order - vertexCount <= ppgraph->degree1Count)
         handle_primpregraph_result(ppgraph);
@@ -2463,6 +3005,7 @@ void handle_3_regular_result(int *adjacencyList){
     ppgraph->order = current3RegOrder;
     ppgraph->degree1Count = 0;
     ppgraph->multiEdgeCount = 0;
+    ppgraph->bridgeCount = 0; //will be set when necessary
 
     int i, j;
 
@@ -2481,6 +3024,15 @@ void handle_3_regular_result(int *adjacencyList){
 
     DEBUGPPGRAPHPRINT(ppgraph)
 
+    if(onlyColourable){
+        DEBUGMSG("Checking colourability")
+        if(!isColourableGraph(ppgraph)){
+            DEBUGMSG("Cubic graph is not 3-edge-colourable")
+            DEBUGMSG("End handle_3_regular_result")
+            return;
+        }
+    }
+    
     grow(ppgraph);
     DEBUGMSG("End handle_3_regular_result")
 }
@@ -2507,21 +3059,25 @@ void start(){
         growWithoutDeg1Operations(&ppgraph);
     }
     if((allowLoops || allowSemiEdges) && allowMultiEdges){
-        construct_K3_with_spike(&ppgraph);
-        growWithoutDeg1Operations(&ppgraph);
+        if(!onlyColourable){
+            construct_K3_with_spike(&ppgraph);
+            growWithoutDeg1Operations(&ppgraph);
+        }
     }
 
     int i;
     currentPpgraph = &ppgraph;
-    for(i = 4; i <= vertexCount; i+=2){//TODO: is this the correct upperbound for i
-        #ifdef _DEBUG
-        fprintf(stderr, "Starting snarkhunter for %d vertices\n", i);
-        #endif
-        current3RegOrder = i;
-        //TODO: call into snarkhunter
-        init_irreducible_graphs(i);
+    int cubicGeneratorStart = 4;
+    if(!onlyColourable || vertexCount%2!=1){
+        for(i = cubicGeneratorStart; i <= vertexCount; i+=2){//TODO: is this the correct upperbound for i
+            #ifdef _DEBUG
+            fprintf(stderr, "Starting snarkhunter for %d vertices\n", i);
+            #endif
+            current3RegOrder = i;
+            //TODO: call into snarkhunter
+            init_irreducible_graphs(i);
+        }
     }
-
     if(allowMultiEdges && vertexCount == 2){
         writeThetaGraph();
     }
@@ -2888,6 +3444,10 @@ void construct_K2(PRIMPREGRAPH *ppgraph){
     ppgraph->adjList[1*3] = 0;
     ppgraph->degree[0]=1;
     ppgraph->degree[1]=1;
+    if(onlyColourable){
+        colours[0][0]=1;
+        colours[1][0]=1;
+    }
 
     set *g0, *g1;
     g0 = GRAPHROW(ppgraph->ulgraph, 0, MAXM);
@@ -3229,9 +3789,12 @@ void printInfo(){
         }
 
         fprintf(stderr, "Generated %llu simple graph%s.\n", simplegraphsCount, simplegraphsCount==1 ? (char *)"" : (char *)"s");
-        fprintf(stderr, "Generated %llu graph%s with only loops (and at least one loop).\n", graphsWithOnlyLoopsCount, graphsWithOnlyLoopsCount==1 ? (char *)"" : (char *)"s");
-        fprintf(stderr, "Generated %llu graph%s with only semi-edges (and at least one semi-edge).\n", graphsWithOnlySemiEdgesCount, graphsWithOnlySemiEdgesCount==1 ? (char *)"" : (char *)"s");
-        fprintf(stderr, "Generated %llu graph%s with only multi-edges (and at least one multi-edge).\n", graphsWithOnlyMultiEdgesCount, graphsWithOnlyMultiEdgesCount==1 ? (char *)"" : (char *)"s");
+        fprintf(stderr, "Generated %llu graph%s with only loops (and at least one loop).\n",
+                graphsWithOnlyLoopsCount, graphsWithOnlyLoopsCount==1 ? (char *)"" : (char *)"s");
+        fprintf(stderr, "Generated %llu graph%s with only semi-edges (and at least one semi-edge).\n",
+                graphsWithOnlySemiEdgesCount, graphsWithOnlySemiEdgesCount==1 ? (char *)"" : (char *)"s");
+        fprintf(stderr, "Generated %llu graph%s with only multi-edges (and at least one multi-edge).\n",
+                graphsWithOnlyMultiEdgesCount, graphsWithOnlyMultiEdgesCount==1 ? (char *)"" : (char *)"s");
     }
     fprintf(stderr, "\nGenerated %llu pregraph primitive%s.\n", primitivesCount, primitivesCount==1 ? (char *)"" : (char *)"s");
 
@@ -3398,7 +3961,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     char *inputFileName = NULL;
     FILE *inputFile = stdin;
 
-    while ((c = getopt(argc, argv, "LSMPXf:F:o:D:d:Ihim:")) != -1) {
+    while ((c = getopt(argc, argv, "LSMPXCf:F:o:D:d:Ihim:")) != -1) {
         switch (c) {
             case 'L': //(defaults to FALSE)
                 allowLoops = TRUE;
@@ -3414,6 +3977,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                 break;
             case 'X': //(defaults to FALSE)
                 noRejections = TRUE;
+                break;
+            case 'C': //(defaults to FALSE)
+                onlyColourable = TRUE;
                 break;
             case 'f': //(defaults to stdout)
                 outputFile = optarg;
@@ -3604,7 +4170,10 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
 
     /*=========== generation ===========*/
 
-    fprintf(stderr, "Generating %s%s with %d %s%s%s%s.\n", onlyPrimitives ? (char *)"pregraph primitives of " : (char *)"" , allowMultiEdges ? (char *)"multigraphs" : (char *)"simple graphs",
+    fprintf(stderr, "Generating %s%s%s with %d %s%s%s%s.\n",
+            onlyPrimitives ? (char *)"pregraph primitives of " : (char *)"" ,
+            onlyColourable ? (char *)"3-edge-colourable " : (char *)"",
+            allowMultiEdges ? (char *)"multigraphs" : (char *)"simple graphs",
             vertexCount, vertexCount==1 ? (char *)"vertex" : (char *)"vertices",
             allowLoops && allowSemiEdges ? (char *)", " : (allowLoops ? (char *)" and " : (char *)""),
             allowLoops ? (char *)"loops" : (char *)"", allowSemiEdges ? (char *)" and semi-edges" : (char *)"");
@@ -3613,6 +4182,8 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     }
 
     if(!allowSemiEdges && vertexCount%2==1){
+        structureCount = primitivesCount = 0;
+    } else if(onlyColourable && allowLoops){
         structureCount = primitivesCount = 0;
     } else {
         if(fromFile){

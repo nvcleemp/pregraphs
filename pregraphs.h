@@ -254,6 +254,7 @@ boolean onlyPrimitives = FALSE;
 boolean allowLoops = FALSE; /* TRUE if loops are allowed*/
 boolean allowMultiEdges = FALSE; /* TRUE if multi-edges are allowed*/
 boolean allowSemiEdges = FALSE; /* TRUE if semi-edges are allowed*/
+boolean onlyColourable = FALSE; /* TRUE if only 3-edge-colourable pregraphs are allowed */
 
 boolean operation11Disabled = FALSE;
 boolean operation12Disabled = FALSE;
@@ -288,7 +289,34 @@ statsblk nautyStats;
 setword nautyWorkspace[50 * MAXM];
 graph canonicalGraph[MAXN * MAXM];
 
+/* Store the colouring of the current graph
+ * This goes to 4 for efficiency reason, only used until 3 at most
+ */
+int colours[MAXN][4];
+
+int coloursAroundVertex[MAXN];
+
+int neighbourToIndexMapping[MAXN][MAXN];
+
+int coloursCopy[MAXN][4];
+int coloursAroundVertexCopy[MAXN];
+int neighbourToIndexMappingCopy[MAXN][MAXN];
+
+#define MAXVAL INT_MAX - 1
+static int markvalue_edges = MAXVAL;
+unsigned int marks_edges[MAXN][4]; //goes to 4 for efficiency reason, only used until 3 at most
+#define RESETMARKS_EDGES {int mki, mkj; if ((markvalue_edges += 1) > MAXVAL) \
+      { markvalue_edges = 1; for(mki=0;mki<MAXN;++mki) for(mkj=0;mkj<3;++mkj) marks_edges[mki][mkj]=0;}}
+#define MARK_EDGES(v, w) marks_edges[v][w] = markvalue_edges
+#define UNMARK_EDGES(v, w) marks_edges[v][w] = markvalue_edges - 1
+#define ISMARKED_EDGES(v, w) (marks_edges[v][w] == markvalue_edges)
+
 /******************Methods*******************************/
+
+char writePregraphCode(FILE *f, PRIMPREGRAPH *ppgraph);
+char writePregraphTable(FILE *f, PRIMPREGRAPH *ppgraph);
+char writePrimpregraphCode(FILE *f, PRIMPREGRAPH *ppgraph);
+char writePrimpregraphTable(FILE *f, PRIMPREGRAPH *ppgraph);
 
 inline boolean areAdjacent(PRIMPREGRAPH *ppgraph, int u, int v);
 
