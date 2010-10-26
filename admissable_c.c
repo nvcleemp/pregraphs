@@ -4,9 +4,9 @@
  *
  * Created on June 9, 2010, 9:52 AM
  *
- * Checks whether the given pregraph has an admissable colouring. The only accepted pregraphs are
- * multigraphs with semi-edges. An admissable colouring corresponds to a 2-factor where each component
- * is a quotient of a 4-cycle.
+ * Checks whether the given pregraph has an admissable colouring. The only 
+ * accepted pregraphs are multigraphs with semi-edges. An admissable colouring
+ * corresponds to a 2-factor where each component is a quotient of a 4-cycle.
  */
 //#define _DEBUG
 
@@ -172,8 +172,10 @@ char readPregraphCodeNoHeader(FILE *f, PREGRAPH *pregraph, int endian) {
             } else {
                 pregraph->adjList[i][pregraph->degree[i]] = number-1;
                 pregraph->adjList[number-1][pregraph->degree[number-1]] = i;
-		pregraph->adjMatrix[i] = pregraph->adjMatrix[i] | (1<<(number-1));
-		pregraph->adjMatrix[number-1] = pregraph->adjMatrix[number-1] | (1<<i);
+		pregraph->adjMatrix[i] =
+                        pregraph->adjMatrix[i] | (1<<(number-1));
+		pregraph->adjMatrix[number-1] =
+                        pregraph->adjMatrix[number-1] | (1<<i);
 		pregraph->degree[i]++;
 		pregraph->degree[number-1]++;
             }
@@ -186,7 +188,8 @@ char readPregraphCodeNoHeader(FILE *f, PREGRAPH *pregraph, int endian) {
     return (1);
 }
 
-char readPregraphCode(FILE *f, PREGRAPH *pregraph, int *endian, unsigned long count) {
+char readPregraphCode(FILE *f, PREGRAPH *pregraph, int *endian,
+        unsigned long count) {
     if (count == 0) {
         if (read_endian(f, endian) == 2) {
             DEBUGMSG("Read error")
@@ -196,7 +199,8 @@ char readPregraphCode(FILE *f, PREGRAPH *pregraph, int *endian, unsigned long co
     return (readPregraphCodeNoHeader(f, pregraph, *endian));
 }
 
-int writePregraphCode(FILE *f, PREGRAPH *pregraph, int endian, unsigned long structureCount){
+int writePregraphCode(FILE *f, PREGRAPH *pregraph, int endian,
+        unsigned long structureCount){
     if (structureCount == 1) { //if first graph
         fprintf(f, ">>pregraph_code %s<<", (endian == LITTLE_ENDIAN ? "le" : "be"));
     }
@@ -216,7 +220,8 @@ int writePregraphCode(FILE *f, PREGRAPH *pregraph, int endian, unsigned long str
                 if (pregraph->order + 1 <= UCHAR_MAX) {
                     fprintf(f, "%c", (unsigned char) (pregraph->adjList[i][j]+1));
                 } else {
-                    if (write_2byte_number(f, (unsigned short) (pregraph->adjList[i][j]+1), endian) == 2) {
+                    if (write_2byte_number(f,
+                            (unsigned short) (pregraph->adjList[i][j]+1), endian) == 2) {
                         return (2);
                     }
                 }
@@ -245,8 +250,8 @@ void writePregraphTable(FILE *f, PREGRAPH *pregraph){
     fprintf(f, "\n");
 }
 
-//======================================================================================================
-//======================================================================================================
+//=============================================================================
+//=============================================================================
 
 int getThirdNeighbour(PREGRAPH *pregraph, int v, int n1, int n2){
     int i;
@@ -272,7 +277,9 @@ int getSquare(PREGRAPH *pregraph, int v, int n1, int n2){
 
     for(i=0; i<3; i++){
 	for(j=0; j<3; j++){
-	    if(pregraph->adjList[n1][i]==pregraph->adjList[n2][j] && pregraph->adjList[n1][i]!=v && pregraph->adjList[n1][i]!=pregraph->order){
+	    if(pregraph->adjList[n1][i]==pregraph->adjList[n2][j] && 
+                    pregraph->adjList[n1][i]!=v &&
+                    pregraph->adjList[n1][i]!=pregraph->order){
 		return pregraph->adjList[n1][i];
 	    }
 	}
@@ -288,7 +295,8 @@ int getSquare(PREGRAPH *pregraph, int v, int n1, int n2){
 //       |    |
 //       o----o--...
 //      v2    v4
-void finishChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, int v3, int v4, boolean *admissable){
+void finishChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, int v3,
+        int v4, boolean *admissable){
     int prevUp, prevDown, currentUp, currentDown, nextUp, nextDown;
 
     prevUp = v1;
@@ -342,7 +350,8 @@ void finishChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, int v3, i
 //       |    |
 //       o----o--...
 //      v2    v4
-void finishChainWithout(PREGRAPH *pregraph, boolean *removed, int v1, int v2, int v3, int v4){
+void finishChainWithout(PREGRAPH *pregraph, boolean *removed, int v1, int v2,
+        int v3, int v4){
     int prevUp, prevDown, currentUp, currentDown, nextUp, nextDown;
 
     prevUp = v1;
@@ -392,7 +401,8 @@ void finishChainWithout(PREGRAPH *pregraph, boolean *removed, int v1, int v2, in
 //       |    |
 //       o----o
 //      v3    v4
-void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, int v3, int v4, boolean *admissable){
+void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2,
+        int v3, int v4, boolean *admissable){
     int nrOfSquares = 1;
     int side1_a, side1_b, side2_a, side2_b;
     int n1, n2, n3, n4;
@@ -511,19 +521,22 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, 
 	if(nextUp==pregraph->order && nextDown==pregraph->order){
 	    //end of chain is reached because 2 semi-edges are found
 	    //finish chain in opposite direction
-	    finishChain(pregraph, removed, side1_a, side1_b, side2_a, side2_b, admissable);
+	    finishChain(pregraph, removed, side1_a, side1_b, side2_a, side2_b,
+                    admissable);
 	    return;
 	}
 	if(nextUp==currentDown){
 	    //end of chain is reached because multi-edge is found
 	    //finish chain in opposite direction
-	    finishChain(pregraph, removed, side1_a, side1_b, side2_a, side2_b, admissable);
+	    finishChain(pregraph, removed, side1_a, side1_b, side2_a, side2_b,
+                    admissable);
 	    return;
 	}
 	if(removed[nextUp] || removed[nextDown]){
 	    //end of chain is reached because next vertices are already removed
 	    //finish chain in opposite direction
-	    finishChainWithout(pregraph, removed, side1_a, side1_b, side2_a, side2_b);
+	    finishChainWithout(pregraph, removed, side1_a, side1_b, side2_a,
+                    side2_b);
 	    *admissable = nrOfSquares % 2;
 	    return;
 	}
@@ -546,7 +559,8 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, 
 
     }
 
-    //if we get here then one side of the chain is ended by an edge with an ordinary vertex
+    //if we get here then one side of the chain is ended by an edge with
+    //an ordinary vertex
     //now check the other side of the chain
     prevUp = side1_a;
     prevDown = side1_b;
@@ -593,7 +607,8 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, 
     }
 }
 
-void removeChainsOfSquares(PREGRAPH *pregraph, boolean *removed, boolean *admissable){
+void removeChainsOfSquares(PREGRAPH *pregraph, boolean *removed,
+        boolean *admissable){
     int i, j;
 
     for(i=0; i<pregraph->order; i++){
@@ -601,10 +616,12 @@ void removeChainsOfSquares(PREGRAPH *pregraph, boolean *removed, boolean *admiss
 	    for(j=0;j<3;j++){
 		int n1 = pregraph->adjList[i][(j+1)%3];
 		int n2 = pregraph->adjList[i][(j+2)%3];
-		if(!removed[n1] && !removed[n2] && n1!=pregraph->order && n2!=pregraph->order){
+		if(!removed[n1] && !removed[n2] && n1!=pregraph->order &&
+                        n2!=pregraph->order){
 		    int oppositeCorner = getSquare(pregraph, i, n1, n2);
 		    if(oppositeCorner!=-1 && oppositeCorner != pregraph->order){
-			detectAndRemoveChain(pregraph, removed, i, n1, n2, oppositeCorner, admissable);
+			detectAndRemoveChain(pregraph, removed, i, n1, n2,
+                                oppositeCorner, admissable);
 			if(!(*admissable)) return;
 			j=3; //exit the for
 		    }
@@ -617,19 +634,23 @@ void removeChainsOfSquares(PREGRAPH *pregraph, boolean *removed, boolean *admiss
 
 //checks whether vertex v is incident with a multi-edge and removes that edge if so.
 //assumes that v is not incident with two or more semi-edges
-void checkAndRemoveMultiEdge(PREGRAPH *pregraph, boolean *removed, int v, boolean *admissable){
+void checkAndRemoveMultiEdge(PREGRAPH *pregraph, boolean *removed, int v,
+        boolean *admissable){
     if(pregraph->adjList[v][0]==pregraph->adjList[v][1]){
 	removed[v]=TRUE;
 	removed[pregraph->adjList[v][0]]=TRUE;
-	*admissable = !(pregraph->adjMatrix[pregraph->adjList[v][0]] & (1<<pregraph->adjList[v][2]));
+	*admissable = !(pregraph->adjMatrix[pregraph->adjList[v][0]] &
+                (1<<pregraph->adjList[v][2]));
     } else if(pregraph->adjList[v][0]==pregraph->adjList[v][2]){
 	removed[v]=TRUE;
 	removed[pregraph->adjList[v][0]]=TRUE;
-	*admissable = !(pregraph->adjMatrix[pregraph->adjList[v][0]] & (1<<pregraph->adjList[v][1]));
+	*admissable = !(pregraph->adjMatrix[pregraph->adjList[v][0]] &
+                (1<<pregraph->adjList[v][1]));
     } else if(pregraph->adjList[v][1]==pregraph->adjList[v][2]){
 	removed[v]=TRUE;
 	removed[pregraph->adjList[v][1]]=TRUE;
-	*admissable = !(pregraph->adjMatrix[pregraph->adjList[v][1]] & (1<<pregraph->adjList[v][0]));
+	*admissable = !(pregraph->adjMatrix[pregraph->adjList[v][1]] &
+                (1<<pregraph->adjList[v][0]));
     }
 }
 
@@ -667,14 +688,17 @@ boolean checkRemainder(PREGRAPH *pregraph, boolean *removed){
     //two edges at a vertex without removing the vertex, there were
     //conflicting colours at that vertex. (TODO: verify!!!)
     //We also check the number of 'real' neighbours: this should be less than 3
-    //If a vertex has degree 2, than it should be incident with at least one semi-edge
+    //If a vertex has degree 2, than it should be incident with at least
+    //one semi-edge
     for(i=0; i<pregraph->order; i++){
         if(!removed[i]){
             degree[i] = 0;
             neighbours[i] = 0;
             for(j=0; j<3; j++){
-                if(pregraph->adjList[i][j]==pregraph->order || !removed[pregraph->adjList[i][j]]) degree[i]++;
-                if(pregraph->adjList[i][j]!=pregraph->order && !removed[pregraph->adjList[i][j]]) neighbours[i]++;
+                if(pregraph->adjList[i][j]==pregraph->order ||
+                        !removed[pregraph->adjList[i][j]]) degree[i]++;
+                if(pregraph->adjList[i][j]!=pregraph->order &&
+                        !removed[pregraph->adjList[i][j]]) neighbours[i]++;
             }
             if(degree[i]<2)
                 return FALSE;
@@ -710,7 +734,8 @@ boolean checkRemainder(PREGRAPH *pregraph, boolean *removed){
 	    while(stackSize){
 		vertex = stack[--stackSize];
                 for(j=0;j<3;j++){
-                    if(pregraph->adjList[vertex][j]!=parent[vertex] && pregraph->adjList[vertex][j]!=pregraph->order){
+                    if(pregraph->adjList[vertex][j]!=parent[vertex] &&
+                            pregraph->adjList[vertex][j]!=pregraph->order){
                         if(visited[pregraph->adjList[vertex][j]]) return FALSE;
                         if(!removed[pregraph->adjList[vertex][j]]){
                             stack[stackSize]=pregraph->adjList[vertex][j];
@@ -732,16 +757,20 @@ boolean checkRemainder(PREGRAPH *pregraph, boolean *removed){
             int vertexCount = 2;
 
             for(j=0;j<3;j++){
-                if((pregraph->adjList[i][j]==pregraph->order && removed[pregraph->adjList[i][(j+1)%3]]) ||
-                    (removed[pregraph->adjList[i][j]] && pregraph->adjList[i][(j+1)%3]==pregraph->order)){
+                if((pregraph->adjList[i][j]==pregraph->order &&
+                        removed[pregraph->adjList[i][(j+1)%3]]) ||
+                    (removed[pregraph->adjList[i][j]] &&
+                        pregraph->adjList[i][(j+1)%3]==pregraph->order)){
                     nextVertex = pregraph->adjList[i][(j+2)%3];
                 }
             }
 
-            while(!(degree[nextVertex]==2 || (neighbours[nextVertex]==1 && degree[nextVertex]==3))){
+            while(!(degree[nextVertex]==2 || (neighbours[nextVertex]==1 &&
+                    degree[nextVertex]==3))){
                  previousVertex = currentVertex;
                  currentVertex = nextVertex;
-                 nextVertex = getThirdNeighbour(pregraph, currentVertex, previousVertex, pregraph->order);
+                 nextVertex = getThirdNeighbour(pregraph, currentVertex,
+                         previousVertex, pregraph->order);
                  vertexCount++;
             }
             if(degree[nextVertex]!=3 && vertexCount%2) return FALSE;
@@ -768,11 +797,13 @@ boolean isColourable(PREGRAPH *pregraph){
     boolean removed[MAXN];
     for(i=0; i<pregraph->order; i++) removed[i] = FALSE;
 
-    //if all vertices are adjacent with at least one semi-edge, then the graph has an admissable colouring
-    //if there are an even number of vertices
+    //if all vertices are adjacent with at least one semi-edge, then the graph
+    //has an admissable colouring if there are an even number of vertices
     i=0;
-    while(i<pregraph->order && (pregraph->adjMatrix[i] & (1<<(pregraph->order)))) i++;
-    if(i==pregraph->order) return !(pregraph->order%2) || existsVertexWithMultipleSemiEdges(pregraph);
+    while(i<pregraph->order && (pregraph->adjMatrix[i] & (1<<(pregraph->order))))
+        i++;
+    if(i==pregraph->order) return !(pregraph->order%2) ||
+            existsVertexWithMultipleSemiEdges(pregraph);
 
     boolean admissable = TRUE;
 
@@ -787,8 +818,8 @@ boolean isColourable(PREGRAPH *pregraph){
     return checkRemainder(pregraph, removed);
 }
 
-//======================================================================================================
-//======================================================================================================
+//=============================================================================
+//=============================================================================
 
 /*
 print a usage message. name is the name of the current program.
@@ -866,14 +897,16 @@ int main(int argc, char** argv) {
             #endif
 	    allowsAdmissableColouring++;
             if(!onlyCount)
-                writePregraphCode(stdout, &pregraph, LITTLE_ENDIAN, allowsAdmissableColouring);
+                writePregraphCode(stdout, &pregraph, LITTLE_ENDIAN,
+                        allowsAdmissableColouring);
 	}
     }
 
     if(outputFileName != NULL){
         outputFile = fopen(outputFileName, "a");
         if(outputFile == NULL){
-            fprintf(stderr, "File %s couldn't be created: aborting!\n", outputFileName);
+            fprintf(stderr, "File %s couldn't be created: aborting!\n",
+                    outputFileName);
             return EXIT_FAILURE;
         }
     } else {
@@ -881,7 +914,8 @@ int main(int argc, char** argv) {
     }
 
     fprintf(outputFile, "Read %ld graphs ", count);
-    fprintf(outputFile, "of which %ld graphs allow an admissable colouring.\n", allowsAdmissableColouring);
+    fprintf(outputFile, "of which %ld graphs allow an admissable colouring.\n",
+            allowsAdmissableColouring);
     return EXIT_SUCCESS;
 }
 
