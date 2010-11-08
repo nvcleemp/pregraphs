@@ -1,9 +1,10 @@
-CFLAGS = -Wall -g -DMAXN=64 -DWORDSIZE=64 -O4
+CFLAGS = -Wall -g -DMAXN=64 -DWORDSIZE=32 -O4
+#-rdynamic needed to print stack traces
 
 TARG = pregraphs$(SUFFIX)
 OBJS = pregraphs.o snarkhunter.o nauty/nauty.o nauty/nautil.o nauty/naugraph.o nauty/nausparse.o nauty/nautinv.o
 
-all: $(TARG) translator multi2simple printmulticode multicode2dreadnaut admissable_c
+all: $(TARG) translator multi2simple printmulticode multicode2dreadnaut admissable_c c4cover bipartite
 
 translator: 3regpregraphtranslator.c 3regpregraphtranslator.h
 	$(CC) $(CFLAGS) -o translator 3regpregraphtranslator.c
@@ -20,8 +21,14 @@ multicode2dreadnaut: multicode2dreadnaut.c multicode2dreadnaut.h
 admissable_c: admissable_c.c
 	$(CC) $(CFLAGS) -o admissable_c admissable_c.c
 
+c4cover: c4cover.c
+	$(CC) $(CFLAGS) -o c4cover c4cover.c
+
+bipartite: bipartite.c
+	$(CC) $(CFLAGS) -o bipartite bipartite.c
+
 $(TARG): $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARG) $(OBJS)
 
 clean:
-	rm -f *.o $(TARG) translator multi2simple printmulticode multicode2dreadnaut
+	rm -f *.o $(TARG) translator multi2simple printmulticode multicode2dreadnaut c4cover
