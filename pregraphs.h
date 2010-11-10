@@ -255,6 +255,7 @@ boolean allowLoops = FALSE; /* TRUE if loops are allowed*/
 boolean allowMultiEdges = FALSE; /* TRUE if multi-edges are allowed*/
 boolean allowSemiEdges = FALSE; /* TRUE if semi-edges are allowed*/
 boolean onlyColourable = FALSE; /* TRUE if only 3-edge-colourable pregraphs are allowed */
+boolean onlyBipartite = FALSE; /* TRUE if only bipartite pregraphs are allowed */
 
 boolean operation11Disabled = FALSE;
 boolean operation12Disabled = FALSE;
@@ -294,6 +295,12 @@ graph canonicalGraph[MAXN * MAXM];
  */
 int colours[MAXN][4];
 
+/* Store the vertex colouring of the current graph
+ */
+int vertexColours[MAXN];
+#define BLACK 0;
+#define WHITE 1;
+
 int coloursAroundVertex[MAXN];
 
 int neighbourToIndexMapping[MAXN][MAXN];
@@ -313,8 +320,8 @@ unsigned int marks_edges[MAXN][4]; //goes to 4 for efficiency reason, only used 
 
 /******************Methods*******************************/
 
-char writePregraphCode(FILE *f, PRIMPREGRAPH *ppgraph);
-char writePregraphTable(FILE *f, PRIMPREGRAPH *ppgraph);
+char writePregraphCode(FILE *f, PREGRAPH *ppgraph);
+char writePregraphTable(FILE *f, PREGRAPH *ppgraph);
 char writePrimpregraphCode(FILE *f, PRIMPREGRAPH *ppgraph);
 char writePrimpregraphTable(FILE *f, PRIMPREGRAPH *ppgraph);
 

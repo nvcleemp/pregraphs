@@ -350,6 +350,54 @@ boolean isColourableGraph(PRIMPREGRAPH *ppgraph) {
 
 /*
  * This method only works for simple graphs!
+ * Does BFS to check whether graph is bipartite
+ */
+boolean isBipartiteGraph(PRIMPREGRAPH *ppgraph) {
+    int i, queueHead, queueTail;
+    int queue[MAXN];
+    boolean queued[MAXN];
+    for(i=0; i<ppgraph->order; i++) {
+        queued[i] = FALSE;
+        vertexColours[i]=-1;
+    }
+
+    queueHead = 0;
+    queueTail = 1;
+    queue[0] = 0;
+    queued[0] = TRUE;
+
+    while(queueTail > queueHead){
+        int currentVertex = queue[queueHead++];
+        int numberOfColouredNeighbours = 0, sumOfColours = 0;
+
+        //put all neighbours in queue
+        for(i=0; i<ppgraph->degree[currentVertex]; i++){
+            if(!queued[ppgraph->adjList[3*currentVertex+i]]){
+                queued[ppgraph->adjList[3*currentVertex+i]]=TRUE;
+                queue[queueTail++] = ppgraph->adjList[3*currentVertex+i];
+            } else if (vertexColours[ppgraph->adjList[3*currentVertex+i]]>-1){
+                numberOfColouredNeighbours++;
+                sumOfColours+=vertexColours[ppgraph->adjList[3*currentVertex+i]];
+            }
+        }
+
+        if(sumOfColours==0){
+            //either all coloured neighbours have colour 0 or no coloured neighbours
+            vertexColours[currentVertex] = 1;
+        } else if(sumOfColours==numberOfColouredNeighbours){
+            //all coloured neighbours have colour 1
+            vertexColours[currentVertex] = 0;
+        } else {
+            //conflicting colours
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+/*
+ * This method only works for simple graphs!
  * Tries to find a colouring such that the two edges incident with the two edges of degree 1
  * have a different colouring
  */
@@ -455,6 +503,52 @@ inline int getColour(PRIMPREGRAPH *ppgraph, int v1, int v2){
         return colours[v1][i];
     } else {
         ERRORMSG("v2 is not a neighbour of v1")
+    }
+}
+
+/*
+ * Performs BFS to switch vertex colours in the subgraph corresponding to the
+ * component containing vertex after vertexNot has been removed
+ */
+void switchVertexColours(PRIMPREGRAPH *ppgraph, int vertex, int vertexNot){
+    int i, queueHead, queueTail;
+    int queue[MAXN];
+    boolean queued[MAXN];
+    for(i=0; i<ppgraph->order; i++) {
+        queued[i] = FALSE;
+    }
+
+    queueHead = 0;
+    queueTail = 0;
+    queued[vertex] = TRUE;
+    queued[vertexNot] = TRUE;
+
+    //switch colour of vertex
+    vertexColours[vertex] = 1 - vertexColours[vertex];
+    
+    //add all neighbours of vertex except vertexNot to the queue
+    for(i=0; i<ppgraph->degree[vertex]; i++){
+        if(ppgraph->adjList[3*vertex+i]!=vertexNot){
+            queued[ppgraph->adjList[3*vertex+i]]=TRUE;
+            queue[queueTail++] = ppgraph->adjList[3*vertex+i];
+        }
+    }
+
+    while(queueTail > queueHead){
+        int currentVertex = queue[queueHead++];
+
+        //switch colour of vertex
+        vertexColours[currentVertex] = 1 - vertexColours[currentVertex];
+
+        //put all neighbours in queue
+        for(i=0; i<ppgraph->degree[currentVertex]; i++){
+            if(!queued[ppgraph->adjList[3*currentVertex+i]]){
+                queued[ppgraph->adjList[3*currentVertex+i]]=TRUE;
+                queue[queueTail++] = ppgraph->adjList[3*currentVertex+i];
+            }
+        }
+
+
     }
 }
 
@@ -674,6 +768,7 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     DEBUGDUMP(v, "%d")
     DEBUGASSERT(ppgraph->degree[u]==1 && ppgraph->degree[v]==1)
     DEBUGASSERT(!onlyColourable || colours[u][0] != colours[v][0])
+    DEBUGASSERT(!onlyBipartite || vertexColours[u][0] == vertexColours[v][0])
     int t = ppgraph->adjList[v*3]; //original neighbour of v
     ppgraph->degree[u]=3;
     ppgraph->adjList[u*3+1]=v;
@@ -703,6 +798,11 @@ void apply_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
         colours[u][2] = cv;
         colours[v][0] = determineMissingColour(cu+cv);
         coloursAroundVertex[u]=3;
+    }
+
+    //adjust vertex colouring
+    if(onlyBipartite){
+        vertexColours[v] = 1 - vertexColours[u];
     }
 
     //keep track of bridges
@@ -753,6 +853,11 @@ void revert_deg1_operation1(PRIMPREGRAPH *ppgraph, int u, int v){
     if(onlyColourable){
         colours[v][0]=colours[u][2];
         coloursAroundVertex[u]=1;
+    }
+
+    //restore vertex colouring
+    if(onlyBipartite){
+        vertexColours[v] = vertexColours[u];
     }
 
     //keep track of bridges
@@ -840,6 +945,13 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
         coloursAroundVertex[t]=1;
     }
 
+    //update vertex colouring
+    if(onlyBipartite){
+        vertexColours[s]=vertexColours[u];
+        vertexColours[t]=vertexColours[v];
+        switchVertexColours(ppgraph, u, s);
+    }
+
     //keep track of bridges
     changedBridges[degree1OperationsDepth][0] = oldBridge;
     numberOfChangedBridges[degree1OperationsDepth] = 1;
@@ -884,6 +996,11 @@ void revert_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
         int switchedColour = colours[s][0];
         switchColours(ppgraph, u, bridgeColour, switchedColour);
         setColour(ppgraph, u, v, bridgeColour);
+    }
+
+    //restore vertex colouring
+    if(onlyBipartite){
+        switchVertexColours(ppgraph, u, v);
     }
 
     //keep track of bridges
@@ -2478,6 +2595,9 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
                 if(!tryAlternateColouring(ppgraph, deg1PairList[i][0], deg1PairList[i][1]))
                     continue; //don't apply operation on these vertices
             }
+            if(onlyBipartite && vertexColours[deg1PairList[i][0]]!=vertexColours[deg1PairList[i][1]]){
+                continue; //don't apply operation on these vertices
+            }
             apply_deg1_operation1(ppgraph, deg1PairList[i][0], deg1PairList[i][1]);
 
             //the only deg 1 vertex after this operation is v. This is a valid action
@@ -2863,8 +2983,9 @@ void do_deg2_operations(PRIMPREGRAPH *ppgraph, boolean multiEdgesDetermined){
         handle_deg2_operation1(ppgraph);
         //the orbits of the multi-edges are already determined, so we pass them on
         handle_deg2_operation2(ppgraph, &newMultiEdgesDetermined);
-        if(!onlyColourable){
+        if(!onlyColourable && !onlyBipartite){
             //don't do operation 2.3 in case we want 3-edge-colourable pregraphs
+            //don't do operation 2.3 in case we want bipartite pregraphs
             handle_deg2_operation3(ppgraph, &newMultiEdgesDetermined);
         }
     }
@@ -3032,7 +3153,16 @@ void handle_3_regular_result(int *adjacencyList){
             return;
         }
     }
-    
+
+    if(onlyBipartite){
+        DEBUGMSG("Checking vertex-colourability")
+        if(!isBipartiteGraph(ppgraph)){
+            DEBUGMSG("Cubic graph is not bipartite")
+            DEBUGMSG("End handle_3_regular_result")
+            return;
+        }
+    }
+
     grow(ppgraph);
     DEBUGMSG("End handle_3_regular_result")
 }
@@ -3059,7 +3189,7 @@ void start(){
         growWithoutDeg1Operations(&ppgraph);
     }
     if((allowLoops || allowSemiEdges) && allowMultiEdges){
-        if(!onlyColourable){
+        if(!onlyColourable && !onlyBipartite){
             construct_K3_with_spike(&ppgraph);
             growWithoutDeg1Operations(&ppgraph);
         }
@@ -3079,6 +3209,8 @@ void start(){
         }
     }
     if(allowMultiEdges && vertexCount == 2){
+        //is 3-edge-colourable
+        //is bipartite
         writeThetaGraph();
     }
     DEBUGMSG("End start")
@@ -3448,7 +3580,10 @@ void construct_K2(PRIMPREGRAPH *ppgraph){
         colours[0][0]=1;
         colours[1][0]=1;
     }
-
+    if(onlyBipartite){
+        vertexColours[0]=BLACK;
+        vertexColours[1]=WHITE;
+    }
     set *g0, *g1;
     g0 = GRAPHROW(ppgraph->ulgraph, 0, MAXM);
     g1 = GRAPHROW(ppgraph->ulgraph, 1, MAXM);
@@ -3508,6 +3643,9 @@ void construct_C4(PRIMPREGRAPH *ppgraph){
  *    o
  *   / \
  *  o---o
+ *
+ * not 3-edge-colourable
+ * not bipartite
  */
 void construct_K3_with_spike(PRIMPREGRAPH *ppgraph){
     ppgraph->order = 4;
@@ -3647,6 +3785,8 @@ void help(char *name) {
     fprintf(stderr, "  -L          : Allow loops.\n");
     fprintf(stderr, "  -S          : Allow semi-edges.\n");
     fprintf(stderr, "  -M          : Allow multi-edges.\n");
+    fprintf(stderr, "  -C          : Only generate 3-edge-colourable pregraphs.\n");
+    fprintf(stderr, "  -B          : Only generate bipartite pregraphs.\n");
     fprintf(stderr, "  -P          : Only generate the corresponding pregraph primitives.\n");
     fprintf(stderr, "  -I          : Only start the generation from the files provided by the input file (see -F).\n");
     fprintf(stderr, "  -f file     : Specifies the output file. If absent, the output is written to standard out.\n");
@@ -3961,7 +4101,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     char *inputFileName = NULL;
     FILE *inputFile = stdin;
 
-    while ((c = getopt(argc, argv, "LSMPXCf:F:o:D:d:Ihim:")) != -1) {
+    while ((c = getopt(argc, argv, "LSMPXCBf:F:o:D:d:Ihim:")) != -1) {
         switch (c) {
             case 'L': //(defaults to FALSE)
                 allowLoops = TRUE;
@@ -3980,6 +4120,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                 break;
             case 'C': //(defaults to FALSE)
                 onlyColourable = TRUE;
+                break;
+            case 'B': //(defaults to FALSE)
+                onlyBipartite = TRUE;
                 break;
             case 'f': //(defaults to stdout)
                 outputFile = optarg;
@@ -4170,9 +4313,11 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
 
     /*=========== generation ===========*/
 
-    fprintf(stderr, "Generating %s%s%s with %d %s%s%s%s.\n",
+    fprintf(stderr, "Generating %s%s%s%s%s with %d %s%s%s%s.\n",
             onlyPrimitives ? (char *)"pregraph primitives of " : (char *)"" ,
             onlyColourable ? (char *)"3-edge-colourable " : (char *)"",
+            onlyColourable && onlyBipartite ? (char *)", " : (char *)"",
+            onlyBipartite ? (char *)"bipartite " : (char *)"",
             allowMultiEdges ? (char *)"multigraphs" : (char *)"simple graphs",
             vertexCount, vertexCount==1 ? (char *)"vertex" : (char *)"vertices",
             allowLoops && allowSemiEdges ? (char *)", " : (allowLoops ? (char *)" and " : (char *)""),
@@ -4184,6 +4329,8 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     if(!allowSemiEdges && vertexCount%2==1){
         structureCount = primitivesCount = 0;
     } else if(onlyColourable && allowLoops){
+        structureCount = primitivesCount = 0;
+    } else if(onlyBipartite && allowLoops){
         structureCount = primitivesCount = 0;
     } else {
         if(fromFile){
