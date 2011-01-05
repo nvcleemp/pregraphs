@@ -27,6 +27,9 @@ c4cover: c4cover.c
 bipartite: bipartite.c
 	$(CC) $(CFLAGS) -o bipartite bipartite.c
 
+pgfilter: pgfilter.c
+	$(CC) $(CFLAGS) -o pgfilter pgfilter.c
+
 $(TARG): $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARG) $(OBJS)
 
