@@ -384,7 +384,7 @@ int main(int argc, char** argv) {
             if(lower <= count && (upper==-1 || count <= upper)){
                 outputPregraph(stdout, &pregraph, LITTLE_ENDIAN, ++outputted, table);
             }
-        } else if (count <= upper){
+        } else if (upper!=-1 && count <= upper){
             outputPregraph(stdout, &pregraph, LITTLE_ENDIAN, ++outputted, table);
         }
     }
