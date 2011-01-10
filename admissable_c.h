@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <limits.h>
+#include <ctype.h>
+#include <string.h>
 
 /******************Defines*******************************/
 
