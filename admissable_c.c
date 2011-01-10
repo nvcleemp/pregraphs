@@ -129,7 +129,7 @@ char read_old_or_new(FILE *f, boolean bignum, int endian, unsigned short *number
 
 //modified version: only multi-edges and semi-edges (no loops)
 char readPregraphCodeNoHeader(FILE *f, PREGRAPH *pregraph, int endian) {
-    int i, j, n;
+    int i, n;
     unsigned short signum, number;
     if (read_old_or_new(f, FALSE, endian, &signum) == 2) {
         return (feof(f) ? 0 : 2);
