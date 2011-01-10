@@ -518,7 +518,7 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2,
 
 	nextUp = getThirdNeighbour(pregraph, currentUp, currentDown, prevUp);
 	nextDown = getThirdNeighbour(pregraph, currentDown, currentUp, prevDown);
-	if(nextUp==pregraph->order && nextDown==pregraph->order){
+	if(nextUp==semiEdge && nextDown==semiEdge){
 	    //end of chain is reached because 2 semi-edges are found
 	    //finish chain in opposite direction
 	    finishChain(pregraph, removed, side1_a, side1_b, side2_a, side2_b,
@@ -532,7 +532,7 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2,
                     admissable);
 	    return;
 	}
-	if(removed[nextUp] || removed[nextDown]){
+	if((nextUp!=semiEdge && removed[nextUp]) || (nextDown!=semiEdge && removed[nextDown])){
 	    //end of chain is reached because next vertices are already removed
 	    //finish chain in opposite direction
 	    finishChainWithout(pregraph, removed, side1_a, side1_b, side2_a,
@@ -541,7 +541,7 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2,
 	    return;
 	}
 
-	if(nextUp==pregraph->order || nextDown==pregraph->order){
+	if(nextUp==semiEdge || nextDown==semiEdge){
             //exactly one semi-edge is found, so end of chain is reached
 
             inChain = FALSE;
@@ -574,7 +574,7 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2,
 
 	nextUp = getThirdNeighbour(pregraph, currentUp, currentDown, prevUp);
 	nextDown = getThirdNeighbour(pregraph, currentDown, currentUp, prevDown);
-	if(nextUp==pregraph->order && nextDown==pregraph->order){
+	if(nextUp==semiEdge && nextDown==semiEdge){
 	    //end of chain is reached because 2 semi-edges are found
 	    return;
 	}
@@ -582,13 +582,13 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2,
 	    //end of chain is reached because multi-edge is found
 	    return;
 	}
-	if(removed[nextUp] || removed[nextDown]){
+	if((nextUp!=semiEdge && removed[nextUp]) || (nextDown!=semiEdge && removed[nextDown])){
 	    //end of chain is reached because next vertices are already removed
 	    *admissable = nrOfSquares % 2;
 	    return;
 	}
 
-	if(nextUp==pregraph->order || nextDown==pregraph->order){
+	if(nextUp==semiEdge || nextDown==semiEdge){
             //exactly one semi-edge is found, so end of chain is reached
             *admissable = nrOfSquares % 2;
             inChain = FALSE;
@@ -811,7 +811,7 @@ boolean isColourable(PREGRAPH *pregraph){
 
     if(!admissable) return FALSE;
 
-    removeMultiEdges(pregraph, removed, &admissable);
+   removeMultiEdges(pregraph, removed, &admissable);
 
     if(!admissable) return FALSE;
 
@@ -899,7 +899,7 @@ int main(int argc, char** argv) {
             if(!onlyCount)
                 writePregraphCode(stdout, &pregraph, LITTLE_ENDIAN,
                         allowsAdmissableColouring);
-	}
+        }
     }
 
     if(outputFileName != NULL){
