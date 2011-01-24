@@ -717,11 +717,15 @@ int main(int argc, char** argv) {
     FILE *outputFile;
     int endian = defaultEndian;
     boolean onlyCount = FALSE;
+    boolean negate = FALSE;
 
-    while ((c = getopt(argc, argv, "hcf:")) != -1) {
+    while ((c = getopt(argc, argv, "hcf:n")) != -1) {
         switch (c) {
             case 'c':
                 onlyCount = TRUE;
+                break;
+            case 'n':
+                negate = TRUE;
                 break;
             case 'h':
                 help(name);
@@ -746,6 +750,7 @@ int main(int argc, char** argv) {
 
     unsigned long count = 0;
     unsigned long allows3EdgeColouring = 0;
+    unsigned long doesntAllow3EdgeColouring = 0;
 
     while(readPregraphCode(stdin, &pregraph, &endian, count)==(char)1){
         count++;
@@ -755,14 +760,25 @@ int main(int argc, char** argv) {
         #endif
         /**/
 
-        if(isColourable(&pregraph)){
-            #ifdef _DEBUG
-	    fprintf(stderr, "3-edge-colourable\n\n");
-            #endif
-	    allows3EdgeColouring++;
-            if(!onlyCount)
-                writePregraphCode(stdout, &pregraph, LITTLE_ENDIAN, allows3EdgeColouring);
-	}
+        if(negate){
+            if(!isColourable(&pregraph)){
+                #ifdef _DEBUG
+                fprintf(stderr, "non-3-edge-colourable\n\n");
+                #endif
+                doesntAllow3EdgeColouring++;
+                if(!onlyCount)
+                    writePregraphCode(stdout, &pregraph, LITTLE_ENDIAN, doesntAllow3EdgeColouring);
+            }
+        } else {
+            if(isColourable(&pregraph)){
+                #ifdef _DEBUG
+                fprintf(stderr, "3-edge-colourable\n\n");
+                #endif
+                allows3EdgeColouring++;
+                if(!onlyCount)
+                    writePregraphCode(stdout, &pregraph, LITTLE_ENDIAN, allows3EdgeColouring);
+            }
+        }
         /* */
     }
 
@@ -777,7 +793,10 @@ int main(int argc, char** argv) {
     }
 
     fprintf(outputFile, "Read %ld graphs ", count);
-    fprintf(outputFile, "of which %ld graphs are 3-edge-colourable.\n", allows3EdgeColouring);
+    if(negate)
+        fprintf(outputFile, "of which %ld graphs are non-3-edge-colourable.\n", doesntAllow3EdgeColouring);
+    else
+        fprintf(outputFile, "of which %ld graphs are 3-edge-colourable.\n", allows3EdgeColouring);
     return EXIT_SUCCESS;
 }
 
