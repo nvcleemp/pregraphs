@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <execinfo.h>
+#include <sys/times.h>
 
 void determine_vertex_pairs_orbits(VERTEXPAIR *vertexPairList, int vertexPairListSize,
         int *vertexPairOrbits, int *orbitCount, permutation (*currentGenerators)[MAXN][MAXN] ,
@@ -4325,6 +4326,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     if(moduloEnabled){
         fprintf(stderr, "Only generating part %d of %d (Splitting at depth %d).\n", moduloRest+1, moduloMod, splitDepth);
     }
+    
+    struct tms TMS;
+    unsigned int oldtime = 0;
 
     if(!allowSemiEdges && vertexCount%2==1){
         structureCount = primitivesCount = 0;
@@ -4345,6 +4349,10 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                                                             vertexCount, vertexCount==1 ? (char *)"vertex" : (char *)"vertices");
 
     if(logStatistics || onlyPrimitives ) printInfo();
+
+    times(&TMS);
+    unsigned int savetime = oldtime + (unsigned int) TMS.tms_utime;
+    fprintf(stderr, "CPU time: %.1f seconds.\n", (double) savetime / time_factor);
 
     return EXIT_SUCCESS;
 }

@@ -122,6 +122,9 @@
     #define _PROFILING_DEG2
 #endif
 
+//For the timing
+#define time_factor sysconf(_SC_CLK_TCK)
+
 struct _primpregraph {
     int order;
     int degree1Count;
