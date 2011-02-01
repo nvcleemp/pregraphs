@@ -11,10 +11,7 @@
 //#define _PROFILING
 
 #include "pregraphs.h"
-//#include "nauty/nautinv.h"
 
-#include <stdio.h>
-#include <signal.h>
 #include <execinfo.h>
 #include <sys/times.h>
 
