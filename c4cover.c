@@ -475,6 +475,10 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, 
     removed[prevDown]=TRUE;
     //fprintf(stdout, "next side: %d %d %d %d\n", prevUp, prevDown, currentUp, currentDown);
 
+    int firstUp, firstDown;
+    firstUp = prevUp;
+    firstDown = prevDown;
+
     inChain = TRUE;
     while(inChain){
 	removed[currentUp]=TRUE;
@@ -487,9 +491,14 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, 
 	} else if(nextUp==currentDown){
 	    inChain = FALSE;
 	} else if(removed[nextUp] || removed[nextDown]){
+            if(nextUp == firstUp || nextUp == firstDown || nextDown == firstUp || nextDown == firstDown){
+                //no need to finish chain
+                *illegalConfiguration = !(nrOfSquares % 2);
+                return;
+            } else {
+                inChain = FALSE;
+            }
 	    //end of chain is reached because next vertices are already removed
-	    *illegalConfiguration = !(nrOfSquares % 2);
-	    return;
 	} else if(pregraph->adjMatrix[nextUp] & (1<<nextDown)){
 	    //still in the chain of square
 	    prevUp = currentUp;

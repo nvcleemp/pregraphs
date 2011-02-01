@@ -250,6 +250,20 @@ void writePregraphTable(FILE *f, PREGRAPH *pregraph){
     fprintf(f, "\n");
 }
 
+void writePregraphTableDebug(FILE *f, PREGRAPH *pregraph, boolean *removed){
+    int i, j;
+    for(i=0; i<pregraph->order; i++){
+        if(!removed[i]){
+            fprintf(f, "%d) ", i+1);
+            for(j=0; j<3; j++){
+                fprintf(f, "%d ", pregraph->adjList[i][j]+1);
+            }
+            fprintf(f, "\n");
+        }
+    }
+    fprintf(f, "\n");
+}
+
 //=============================================================================
 //=============================================================================
 
@@ -511,6 +525,10 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2,
     removed[prevUp]=TRUE;
     removed[prevDown]=TRUE;
 
+    int firstUp, firstDown;
+    firstUp = prevUp;
+    firstDown = prevDown;
+
     boolean inChain = TRUE;
     while(inChain){
 	removed[currentUp]=TRUE;
@@ -535,10 +553,21 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2,
 	if((nextUp!=semiEdge && removed[nextUp]) || (nextDown!=semiEdge && removed[nextDown])){
 	    //end of chain is reached because next vertices are already removed
 	    //finish chain in opposite direction
+            if(nextUp == firstUp || nextUp == firstDown || nextDown == firstUp || nextDown == firstDown){
+                //no need to finish chain
+                *admissable = nrOfSquares % 2;
+                return;
+            } else {
+                inChain = FALSE;
+            }
+            /*
 	    finishChainWithout(pregraph, removed, side1_a, side1_b, side2_a,
                     side2_b);
+            fprintf(stdout, "Squares: %d\n", nrOfSquares);
 	    *admissable = nrOfSquares % 2;
 	    return;
+            */
+            //inChain = FALSE;
 	}
 
 	if(nextUp==semiEdge || nextDown==semiEdge){
@@ -620,9 +649,11 @@ void removeChainsOfSquares(PREGRAPH *pregraph, boolean *removed,
                         n2!=pregraph->order){
 		    int oppositeCorner = getSquare(pregraph, i, n1, n2);
 		    if(oppositeCorner!=-1 && oppositeCorner != pregraph->order){
+//                        fprintf(stdout, "%d, %d, %d, %d\n\n", i+1, n1+1, n2+1, oppositeCorner+1);
 			detectAndRemoveChain(pregraph, removed, i, n1, n2,
                                 oppositeCorner, admissable);
 			if(!(*admissable)) return;
+//                        writePregraphTableDebug(stdout, pregraph, removed);
 			j=3; //exit the for
 		    }
 		}
@@ -811,7 +842,7 @@ boolean isColourable(PREGRAPH *pregraph){
 
     if(!admissable) return FALSE;
 
-   removeMultiEdges(pregraph, removed, &admissable);
+    removeMultiEdges(pregraph, removed, &admissable);
 
     if(!admissable) return FALSE;
 
