@@ -3196,6 +3196,9 @@ void start(){
     int i;
     currentPpgraph = &ppgraph;
     int cubicGeneratorStart = 4;
+    if(!allowLoops && !allowSemiEdges && !allowMultiEdges){
+        cubicGeneratorStart = vertexCount;
+    }
     if(!onlyColourable || vertexCount%2!=1){
         for(i = cubicGeneratorStart; i <= vertexCount; i+=2){//TODO: is this the correct upperbound for i
             #ifdef _DEBUG
