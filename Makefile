@@ -1,10 +1,26 @@
-CFLAGS = -Wall -g -DMAXN=64 -DWORDSIZE=32 -O4
-#-rdynamic needed to print stack traces
+#
+# Makefile for pregraphs
+#
 
-TARG = pregraphs$(SUFFIX)
-OBJS = pregraphs.o snarkhunter.o nauty/nauty.o nauty/nautil.o nauty/naugraph.o nauty/nausparse.o nauty/nautinv.o
+SHELL = /bin/sh
 
-all: $(TARG) translator multi2simple printmulticode multicode2dreadnaut admissable_c c4cover bipartite
+# Compiling executing program with DWORDSIZE=32 is slightly faster, 
+# but limits the order of the graphs to 32.
+CC32 = gcc -DWORDSIZE=32 -DMAXN=WORDSIZE -DSNARKHUNTERMAIN=sh_nomain
+CC64 = gcc -DWORDSIZE=64 -DMAXN=WORDSIZE -DSNARKHUNTERMAIN=sh_nomain
+CFLAGS = -O4 -Wall
+
+all :
+	${CC32} $(CFLAGS) pregraphs.c snarkhunter.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c -o pregraphs
+
+64bit :
+	${CC64} $(CFLAGS) pregraphs.c snarkhunter.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c -o pregraphs-64
+
+profile :
+	${CC32} -Wall -pg -g pregraphs.c snarkhunter.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c -o pregraphs-profile
+
+debug :
+	${CC32} -Wall -rdynamic -g pregraphs.c snarkhunter.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c -o pregraphs-debug
 
 translator: 3regpregraphtranslator.c 3regpregraphtranslator.h
 	$(CC) $(CFLAGS) -o translator 3regpregraphtranslator.c
@@ -30,8 +46,3 @@ bipartite: bipartite.c
 pgfilter: pgfilter.c
 	$(CC) $(CFLAGS) -o pgfilter pgfilter.c
 
-$(TARG): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARG) $(OBJS)
-
-clean:
-	rm -f *.o $(TARG) translator multi2simple printmulticode multicode2dreadnaut c4cover

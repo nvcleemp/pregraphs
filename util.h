@@ -12,7 +12,12 @@
 #define HALFFLOOR(n) ((n)%2==0 ? (n)/2 : ((n)-1)/2)
 #define MAX(a, b) (((a) >= (b)) ? (a) : (b))
 #define MIN(a, b) (((a) <= (b)) ? (a) : (b))
-#define BIT(i) (1 << i)
+
+#if WORDSIZE == 64
+#define BIT(i) (1ULL << (i))
+#else //i.e. WORDSIZE == 32
+#define BIT(i) (1U << (i))
+#endif
 
 #define ERRORMSG(msg) { fprintf(stderr, "%s:%u %s\n", __FILE__, __LINE__, msg); fflush(stderr); exit(1); }
 

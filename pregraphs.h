@@ -122,6 +122,8 @@
     #define _PROFILING_DEG2
 #endif
 
+#define REG 3
+
 //For the timing
 #define time_factor sysconf(_SC_CLK_TCK)
 
@@ -368,7 +370,7 @@ void do_deg1_operations(PRIMPREGRAPH *ppgraph);
 void do_deg2_operations(PRIMPREGRAPH *ppgraph, boolean multiEdgesDetermined);
 void grow(PRIMPREGRAPH *ppgraph);
 void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph);
-void handle_3_regular_result(int *adjacencyList);
+void handle_snarkhunter_result(unsigned char snarkhunter_graph[MAXN][REG + 1], int order);
 void start();
 void startFromFile(FILE *inputFile);
 
@@ -386,7 +388,7 @@ void construct_K3_3(PRIMPREGRAPH *ppgraph);
 void saveGenerators(int count, permutation perm[], nvector orbits[],
         int numorbits, int stabvertex, int n);
 
-void init_irreducible_graphs(int n);
+void call_snarkhunter(int n, int g, void (*userproc) (unsigned char (*)[REG + 1], int));
 
 void initInfo();
 void logInfo(PREGRAPH *pregraph);

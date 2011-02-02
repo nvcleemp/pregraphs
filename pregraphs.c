@@ -3111,24 +3111,23 @@ void growWithoutDeg1Operations(PRIMPREGRAPH *ppgraph){
     DEBUGMSG("End growWithoutDeg1Operations")
 }
 
-static int current3RegOrder;
 static PRIMPREGRAPH *currentPpgraph;
 
 /*
  * Handles the input from the external graph by translating the graph into a pregraph primitive
  * and feeding it to the grow method.
  */
-void handle_3_regular_result(int *adjacencyList){
-    DEBUGMSG("Start handle_3_regular_result")
+ void handle_snarkhunter_result(unsigned char snarkhunter_graph[MAXN][REG + 1], int order){
+    DEBUGMSG("Start handle_snarkhunter_result")
     PRIMPREGRAPH *ppgraph = currentPpgraph;
-    ppgraph->order = current3RegOrder;
+    ppgraph->order = order;
     ppgraph->degree1Count = 0;
     ppgraph->multiEdgeCount = 0;
-    ppgraph->bridgeCount = 0; //will be set when necessary
-
+    ppgraph->bridgeCount = 0; //will be set when necessary	
+	
     int i, j;
 
-    for(i=0; i<current3RegOrder; i++){
+    for(i=0; i<order; i++){
         ppgraph->degree[i]=3;
 
         set *v;
@@ -3136,8 +3135,8 @@ void handle_3_regular_result(int *adjacencyList){
         EMPTYSET(v, MAXM);
         j=0;
         for(j=0; j<3; j++){
-            ppgraph->adjList[i*3+j] = adjacencyList[i*3+j];
-            ADDELEMENT(v, adjacencyList[i*3+j]);
+            ppgraph->adjList[i*3+j] = snarkhunter_graph[i][j];
+            ADDELEMENT(v, snarkhunter_graph[i][j]);
         }
     }
 
@@ -3147,7 +3146,7 @@ void handle_3_regular_result(int *adjacencyList){
         DEBUGMSG("Checking colourability")
         if(!isColourableGraph(ppgraph)){
             DEBUGMSG("Cubic graph is not 3-edge-colourable")
-            DEBUGMSG("End handle_3_regular_result")
+            DEBUGMSG("End handle_snarkhunter_result")
             return;
         }
     }
@@ -3156,13 +3155,14 @@ void handle_3_regular_result(int *adjacencyList){
         DEBUGMSG("Checking vertex-colourability")
         if(!isBipartiteGraph(ppgraph)){
             DEBUGMSG("Cubic graph is not bipartite")
-            DEBUGMSG("End handle_3_regular_result")
+            DEBUGMSG("End handle_snarkhunter_result")
             return;
         }
     }
 
     grow(ppgraph);
-    DEBUGMSG("End handle_3_regular_result")
+    DEBUGMSG("End handle_snarkhunter_result")
+
 }
 
 void start(){
@@ -3204,9 +3204,7 @@ void start(){
             #ifdef _DEBUG
             fprintf(stderr, "Starting snarkhunter for %d vertices\n", i);
             #endif
-            current3RegOrder = i;
-            //TODO: call into snarkhunter
-            init_irreducible_graphs(i);
+			call_snarkhunter(i, 3, *handle_snarkhunter_result);
         }
     }
     if(allowMultiEdges && vertexCount == 2){
