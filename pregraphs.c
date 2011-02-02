@@ -4334,6 +4334,8 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
         structureCount = primitivesCount = 0;
     } else if(onlyBipartite && allowLoops){
         structureCount = primitivesCount = 0;
+    } else if(!allowLoops && !allowSemiEdges && !allowMultiEdges && vertexCount < 4){
+        structureCount = primitivesCount = 0;
     } else {
         if(fromFile){
             startFromFile(inputFile);
