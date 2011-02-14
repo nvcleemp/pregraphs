@@ -3160,7 +3160,11 @@ static PRIMPREGRAPH *currentPpgraph;
         }
     }
 
-    grow(ppgraph);
+    if(ppgraph->order == vertexCount)
+        handle_primpregraph_result(ppgraph);
+	else
+		grow(ppgraph);
+
     DEBUGMSG("End handle_snarkhunter_result")
 
 }
