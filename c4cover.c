@@ -626,7 +626,7 @@ void usage(char *name) {
 print a help message. name is the name of the current program.
  */
 void help(char *name) {
-    fprintf(stderr, "The program %s .\n", name);
+    fprintf(stderr, "The program %s filters pregraphs that can be covered with 4 cycles.\n", name);
     fprintf(stderr, "Usage: %s [options] \n\n", name);
     fprintf(stderr, "Valid options:\n");
     fprintf(stderr, "  -c      : Only count the number of graphs.\n");
