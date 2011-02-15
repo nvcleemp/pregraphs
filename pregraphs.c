@@ -1569,8 +1569,8 @@ int findRootOfElement(int *forest, int element) {
 
 char writePregraphTable(FILE *f, PREGRAPH *pregraph) {
     fprintf(f, "==============================\n");
-    fprintf(f, "|  Graph number: %20llu  |\n", structureCount);
-    fprintf(f, "|  Number of vertices: %14d  |\n", pregraph->order);
+    fprintf(f, "|  Graph number: %10llu  |\n", structureCount);
+    fprintf(f, "|  Number of vertices: %4d  |\n", pregraph->order);
     fprintf(f, "==============================\n");
 
     unsigned short i, j;
