@@ -704,8 +704,12 @@ int main(int argc, char** argv) {
         outputFile = stderr;
     }
 
-    fprintf(outputFile, "Read %ld graphs ", count);
-    fprintf(outputFile, "of which %ld graphs have a C4 cover.\n", allowedGraphs);
+    fprintf(outputFile, "Read %ld graph%s ", count,
+            count==1 ? (char *)"" : (char *)"s");
+    fprintf(outputFile, "of which %ld graph%s %s a C4 cover.\n",
+            allowedGraphs,
+            allowedGraphs==1 ? (char *)"" : (char *)"s",
+            allowedGraphs!=1 ? (char *)"have" : (char *)"has");
     return EXIT_SUCCESS;
 }
 
