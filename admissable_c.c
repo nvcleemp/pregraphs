@@ -867,8 +867,8 @@ void help(char *name) {
     fprintf(stderr, "The program %s filters pregraphs that have an admissable colouring.\n", name);
     fprintf(stderr, "Usage: %s [options] \n\n", name);
     fprintf(stderr, "Valid options:\n");
-    fprintf(stderr, "  -c      : Only count the number of graphs.\n");
-    fprintf(stderr, "  -f name : Prints statistics to file with geven name.\n");
+    fprintf(stderr, "  -c      : Only count the number of pregraphs.\n");
+    fprintf(stderr, "  -f name : Prints statistics to file with given name.\n");
     fprintf(stderr, "  -h      : Print this help and return.\n");
 }
 
