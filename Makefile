@@ -9,11 +9,11 @@ SHELL = /bin/sh
 CC32 = gcc -DWORDSIZE=32 -DMAXN=WORDSIZE -DSNARKHUNTERMAIN=sh_nomain
 CC64 = gcc -DWORDSIZE=64 -DMAXN=WORDSIZE -DSNARKHUNTERMAIN=sh_nomain
 CFLAGS = -O4 -Wall
-COMPLETE = bipartite has3edgecolouring pgfilter
+COMPLETE = pregraphs pregraphs-64 pregraphs-profile pregraphs-debug admissable_c c4cover bipartite has3edgecolouring pgfilter
 
 all : 32bit admissable_c c4cover
 
-complete: all $(COMPLETE)
+complete: $(COMPLETE)
 
 32bit: pregraphs
 
@@ -51,4 +51,4 @@ pgfilter: pgfilter.c
 	$(CC) $(CFLAGS) -o pgfilter pgfilter.c
 
 clean:
-	rm -f pregraphs pregraphs-* admissable_c c4cover $(COMPLETE)
+	rm -f $(COMPLETE)
