@@ -10,6 +10,9 @@ CC32 = gcc -DWORDSIZE=32 -DMAXN=WORDSIZE -DSNARKHUNTERMAIN=sh_nomain
 CC64 = gcc -DWORDSIZE=64 -DMAXN=WORDSIZE -DSNARKHUNTERMAIN=sh_nomain
 CFLAGS = -O4 -Wall
 COMPLETE = pregraphs pregraphs-64 pregraphs-profile pregraphs-debug admissable_c c4cover bipartite has3edgecolouring pgfilter
+SOURCES = pregraphs.c pregraphs.h util.h snarkhunter.c snarkhunter.h admissable_c.c
+          admissable_c.h c4cover.c c4cover.h bipartite.c bipartite.h has3edgecolouring.c
+          has3edgecolouring.h pgfilter.c pgfilter.h Makefile
 
 all : 32bit admissable_c c4cover
 
@@ -49,6 +52,9 @@ has3edgecolouring: has3edgecolouring.c
 
 pgfilter: pgfilter.c
 	$(CC) $(CFLAGS) -o pgfilter pgfilter.c
+
+sources: $(SOURCES)
+	zip pregraphs-sources $(SOURCES)
 
 clean:
 	rm -f $(COMPLETE)
