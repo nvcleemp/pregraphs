@@ -418,8 +418,8 @@ int main(int argc, char** argv) {
         }
     }
 
-    fprintf(stderr, "Read %ld graphs\n", count);
-    fprintf(stderr, "Written %ld graphs\n", outputted);
+    fprintf(stderr, "Read %ld graph%s\n", count, count==1 ? (char *)"" : (char *)"s");
+    fprintf(stderr, "Written %ld graph%s\n", outputted, outputted==1 ? (char *)"" : (char *)"s");
     return EXIT_SUCCESS;
 }
 
