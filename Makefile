@@ -35,18 +35,6 @@ pregraphs-profile: pregraphs.c snarkhunter.c  nauty/nautil.c nauty/nausparse.c n
 pregraphs-debug: pregraphs.c snarkhunter.c  nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c
 	${CC32} -Wall -rdynamic -g pregraphs.c snarkhunter.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c -o pregraphs-debug
 
-translator: 3regpregraphtranslator.c 3regpregraphtranslator.h
-	$(CC) $(CFLAGS) -o translator 3regpregraphtranslator.c
-
-multi2simple: multi2simple.c multi2simple.h
-	$(CC) $(CFLAGS) -o multi2simple multi2simple.c
-
-printmulticode: printmulticode.c printmulticode.h
-	$(CC) $(CFLAGS) -o printmulticode printmulticode.c
-
-multicode2dreadnaut: multicode2dreadnaut.c multicode2dreadnaut.h
-	$(CC) $(CFLAGS) -o multicode2dreadnaut multicode2dreadnaut.c
-
 admissable_c: admissable_c.c
 	$(CC) $(CFLAGS) -o admissable_c admissable_c.c
 
