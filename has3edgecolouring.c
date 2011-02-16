@@ -822,14 +822,14 @@ int main(int argc, char** argv) {
         outputFile = stderr;
     }
 
-    fprintf(outputFile, "Read %ld graph%s ", count, count==1 ? (char *)"" : (char *)"s");
+    fprintf(outputFile, "Read %ld pregraph%s ", count, count==1 ? (char *)"" : (char *)"s");
     if(negate)
-        fprintf(outputFile, "of which %ld graph%s %s non-3-edge-colourable.\n",
+        fprintf(outputFile, "of which %ld pregraph%s %s non-3-edge-colourable.\n",
                 doesntAllow3EdgeColouring,
                 doesntAllow3EdgeColouring==1 ? (char *)"" : (char *)"s",
                 doesntAllow3EdgeColouring==1 ? (char *)"is" : (char *)"are");
     else
-        fprintf(outputFile, "of which %ld graph%s %s 3-edge-colourable.\n",
+        fprintf(outputFile, "of which %ld pregraph%s %s 3-edge-colourable.\n",
                 allows3EdgeColouring,
                 allows3EdgeColouring==1 ? (char *)"" : (char *)"s",
                 allows3EdgeColouring==1 ? (char *)"is" : (char *)"are");

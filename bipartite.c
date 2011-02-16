@@ -443,14 +443,14 @@ int main(int argc, char** argv) {
         outputFile = stderr;
     }
 
-    fprintf(outputFile, "Read %ld graphs ", count, count==1 ? (char *)"" : (char *)"s");
+    fprintf(outputFile, "Read %ld pregraph%s ", count, count==1 ? (char *)"" : (char *)"s");
     if(negate){
-        fprintf(outputFile, "of which %ld graph%s %s bipartite.\n",
+        fprintf(outputFile, "of which %ld pregraph%s %s bipartite.\n",
                 notBipartiteGraphs,
                 notBipartiteGraphs==1 ? (char *)"" : (char *)"s",
                 notBipartiteGraphs==1 ? (char *)"isn't" : (char *)"aren't");
     } else {
-        fprintf(outputFile, "of which %ld graph%s %s bipartite.\n",
+        fprintf(outputFile, "of which %ld pregraph%s %s bipartite.\n",
                 bipartiteGraphs,
                 bipartiteGraphs==1 ? (char *)"" : (char *)"s",
                 bipartiteGraphs==1 ? (char *)"is" : (char *)"are");
