@@ -446,9 +446,9 @@ int main(int argc, char** argv) {
     fprintf(outputFile, "Read %ld graphs ", count, count==1 ? (char *)"" : (char *)"s");
     if(negate){
         fprintf(outputFile, "of which %ld graph%s %s bipartite.\n",
-                bipartiteGraphs,
-                bipartiteGraphs==1 ? (char *)"" : (char *)"s",
-                bipartiteGraphs==1 ? (char *)"isn't" : (char *)"aren't");
+                notBipartiteGraphs,
+                notBipartiteGraphs==1 ? (char *)"" : (char *)"s",
+                notBipartiteGraphs==1 ? (char *)"isn't" : (char *)"aren't");
     } else {
         fprintf(outputFile, "of which %ld graph%s %s bipartite.\n",
                 bipartiteGraphs,
