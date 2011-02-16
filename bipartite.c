@@ -336,7 +336,7 @@ boolean isBipartite(PREGRAPH *pregraph){
 print a usage message. name is the name of the current program.
  */
 void usage(char *name) {
-    fprintf(stderr, "Usage: %s\n", name);
+    fprintf(stderr, "Usage: %s [options] \n", name);
     fprintf(stderr, "For more information type: %s -h \n\n", name);
 }
 
@@ -344,10 +344,11 @@ void usage(char *name) {
 print a help message. name is the name of the current program.
  */
 void help(char *name) {
-    fprintf(stderr, "The program %s .\n", name);
+    fprintf(stderr, "The program %s filters out bipartite pregraphs.\n", name);
     fprintf(stderr, "Usage: %s [options] \n\n", name);
     fprintf(stderr, "Valid options:\n");
     fprintf(stderr, "  -c      : Only count the number of graphs.\n");
+    fprintf(stderr, "  -n      : Filter out pregraphs that are not bipartite.\n");
     fprintf(stderr, "  -f name : Prints statistics to file with geven name.\n");
     fprintf(stderr, "  -h      : Print this help and return.\n");
 }
@@ -365,11 +366,15 @@ int main(int argc, char** argv) {
     FILE *outputFile;
     int endian = defaultEndian;
     boolean onlyCount = FALSE;
+    boolean negate = FALSE;
 
-    while ((c = getopt(argc, argv, "hcf:")) != -1) {
+    while ((c = getopt(argc, argv, "hcf:n")) != -1) {
         switch (c) {
             case 'c':
                 onlyCount = TRUE;
+                break;
+            case 'n':
+                negate = TRUE;
                 break;
             case 'h':
                 help(name);
@@ -393,7 +398,8 @@ int main(int argc, char** argv) {
     PREGRAPH pregraph;
 
     unsigned long count = 0;
-    unsigned long bipartiteGraps = 0;
+    unsigned long bipartiteGraphs = 0;
+    unsigned long notBipartiteGraphs = 0;
 
     while(readPregraphCode(stdin, &pregraph, &endian, count)==(char)1){
         count++;
@@ -402,14 +408,29 @@ int main(int argc, char** argv) {
 	fprintf(stderr, "Graph %2d\n========\n", count);
         printPregraph(stderr, pregraph);
         #endif
-	if(isBipartite(&pregraph)){
-            #ifdef _DEBUG
-	    fprintf(stderr, "Bipartite\n\n");
-            #endif
-	    bipartiteGraps++;
-            if(!onlyCount)
-                writePregraphCode(stdout, &pregraph, LITTLE_ENDIAN, bipartiteGraps);
-	}
+        if(negate){
+            if(!isBipartite(&pregraph)){
+                #ifdef _DEBUG
+                fprintf(stderr, "Not bipartite\n\n");
+                #endif
+                notBipartiteGraphs++;
+                if(!onlyCount)
+                    writePregraphCode(stdout, &pregraph, LITTLE_ENDIAN, notBipartiteGraphs);
+            } else {
+                bipartiteGraphs++;
+            }
+        } else {
+            if(isBipartite(&pregraph)){
+                #ifdef _DEBUG
+                fprintf(stderr, "Bipartite\n\n");
+                #endif
+                bipartiteGraphs++;
+                if(!onlyCount)
+                    writePregraphCode(stdout, &pregraph, LITTLE_ENDIAN, bipartiteGraphs);
+            } else {
+                notBipartiteGraphs++;
+            }
+        }
     }
 
     if(outputFileName != NULL){
@@ -422,8 +443,18 @@ int main(int argc, char** argv) {
         outputFile = stderr;
     }
 
-    fprintf(outputFile, "Read %ld graphs ", count);
-    fprintf(outputFile, "of which %ld graphs are bipartite.\n", bipartiteGraps);
+    fprintf(outputFile, "Read %ld graphs ", count, count==1 ? (char *)"" : (char *)"s");
+    if(negate){
+        fprintf(outputFile, "of which %ld graph%s %s bipartite.\n",
+                bipartiteGraphs,
+                bipartiteGraphs==1 ? (char *)"" : (char *)"s",
+                bipartiteGraphs==1 ? (char *)"isn't" : (char *)"aren't");
+    } else {
+        fprintf(outputFile, "of which %ld graph%s %s bipartite.\n",
+                bipartiteGraphs,
+                bipartiteGraphs==1 ? (char *)"" : (char *)"s",
+                bipartiteGraphs==1 ? (char *)"is" : (char *)"are");
+    }
     return EXIT_SUCCESS;
 }
 

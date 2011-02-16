@@ -717,7 +717,7 @@ boolean isColourable(PREGRAPH *pregraph){
 print a usage message. name is the name of the current program.
  */
 void usage(char *name) {
-    fprintf(stderr, "Usage: %s\n", name);
+    fprintf(stderr, "Usage: %s [options]\n", name);
     fprintf(stderr, "For more information type: %s -h \n\n", name);
 }
 
@@ -725,10 +725,11 @@ void usage(char *name) {
 print a help message. name is the name of the current program.
  */
 void help(char *name) {
-    fprintf(stderr, "The program %s .\n", name);
+    fprintf(stderr, "The program %s filters out (non-)3-edge-colourable pregraphs.\n", name);
     fprintf(stderr, "Usage: %s [options] \n\n", name);
     fprintf(stderr, "Valid options:\n");
     fprintf(stderr, "  -c      : Only count the number of graphs.\n");
+    fprintf(stderr, "  -n      : Filter out pregraphs that are non-3-edge-colourable.\n");
     fprintf(stderr, "  -f name : Prints statistics to file with geven name.\n");
     fprintf(stderr, "  -h      : Print this help and return.\n");
 }
@@ -821,11 +822,17 @@ int main(int argc, char** argv) {
         outputFile = stderr;
     }
 
-    fprintf(outputFile, "Read %ld graphs ", count);
+    fprintf(outputFile, "Read %ld graph%s ", count, count==1 ? (char *)"" : (char *)"s");
     if(negate)
-        fprintf(outputFile, "of which %ld graphs are non-3-edge-colourable.\n", doesntAllow3EdgeColouring);
+        fprintf(outputFile, "of which %ld graph%s %s non-3-edge-colourable.\n",
+                doesntAllow3EdgeColouring,
+                doesntAllow3EdgeColouring==1 ? (char *)"" : (char *)"s",
+                doesntAllow3EdgeColouring==1 ? (char *)"is" : (char *)"are");
     else
-        fprintf(outputFile, "of which %ld graphs are 3-edge-colourable.\n", allows3EdgeColouring);
+        fprintf(outputFile, "of which %ld graph%s %s 3-edge-colourable.\n",
+                allows3EdgeColouring,
+                allows3EdgeColouring==1 ? (char *)"" : (char *)"s",
+                allows3EdgeColouring==1 ? (char *)"is" : (char *)"are");
     return EXIT_SUCCESS;
 }
 
