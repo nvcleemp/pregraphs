@@ -973,9 +973,9 @@ int main(int argc, char** argv) {
         outputFile = stderr;
     }
 
-    fprintf(outputFile, "Read %ld graph%s ", count,
+    fprintf(outputFile, "Read %ld pregraph%s ", count,
             count==1 ? (char *)"" : (char *)"s");
-    fprintf(outputFile, "of which %ld graph%s allow%s an admissable colouring.\n",
+    fprintf(outputFile, "of which %ld pregraph%s allow%s an admissable colouring.\n",
             allowsAdmissableColouring,
             allowsAdmissableColouring==1 ? (char *)"" : (char *)"s",
             allowsAdmissableColouring!=1 ? (char *)"" : (char *)"s");

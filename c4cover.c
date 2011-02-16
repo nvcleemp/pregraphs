@@ -733,9 +733,9 @@ int main(int argc, char** argv) {
         outputFile = stderr;
     }
 
-    fprintf(outputFile, "Read %ld graph%s ", count,
+    fprintf(outputFile, "Read %ld pregraph%s ", count,
             count==1 ? (char *)"" : (char *)"s");
-    fprintf(outputFile, "of which %ld graph%s %s a C4 cover.\n",
+    fprintf(outputFile, "of which %ld pregraph%s %s a C4 cover.\n",
             allowedGraphs,
             allowedGraphs==1 ? (char *)"" : (char *)"s",
             allowedGraphs!=1 ? (char *)"have" : (char *)"has");
