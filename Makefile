@@ -9,7 +9,7 @@ SHELL = /bin/sh
 CC32 = gcc -DWORDSIZE=32 -DMAXN=WORDSIZE -DSNARKHUNTERMAIN=sh_nomain
 CC64 = gcc -DWORDSIZE=64 -DMAXN=WORDSIZE -DSNARKHUNTERMAIN=sh_nomain
 CFLAGS = -O4 -Wall
-COMPLETE = translator multi2simple printmulticode multicode2dreadnaut bipartite has3edgecolouring pgfilter
+COMPLETE = bipartite has3edgecolouring pgfilter
 
 all : 32bit admissable_c c4cover
 
