@@ -53,7 +53,9 @@ has3edgecolouring: has3edgecolouring.c
 pgfilter: pgfilter.c
 	$(CC) $(CFLAGS) -o pgfilter pgfilter.c
 
-sources: $(SOURCES)
+sources: pregraphs-sources.zip
+
+pregraphs-sources.zip: $(SOURCES)
 	zip pregraphs-sources $(SOURCES)
 
 clean:
