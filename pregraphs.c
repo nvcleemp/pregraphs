@@ -5613,7 +5613,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
         fprintf(stderr, "Only generating part %d of %d (Splitting at depth %d).\n", moduloRest+1, moduloMod, splitDepth);
     }
 
-    if(onlyAdmissable || onlyC4Coverable) onlyColourable=TRUE;
+    if(onlyAdmissable || onlyC4Coverable){
+        onlyColourable=allowMultiEdges;
+    }
     boolean onlySimpleGraphs = !allowSemiEdges && !allowLoops && !allowMultiEdges;
     
     struct tms TMS;
