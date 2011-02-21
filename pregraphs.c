@@ -4891,7 +4891,8 @@ void help(char *name) {
     fprintf(stderr, "Usage: %s [options] n \n\n", name);
     fprintf(stderr, "Valid options:\n");
     fprintf(stderr, "  -h          : Print this help and return.\n");
-    fprintf(stderr, "  -i          : Causes %s to print extra info about the generated structures.\n", name);
+    fprintf(stderr, "  -i          : Causes %s to print extra info about the generated\n", name);
+    fprintf(stderr, "                structures.\n");
     fprintf(stderr, "  -L          : Allow loops.\n");
     fprintf(stderr, "  -S          : Allow semi-edges.\n");
     fprintf(stderr, "  -M          : Allow multi-edges.\n");
@@ -4902,9 +4903,12 @@ void help(char *name) {
     fprintf(stderr, "  -4          : Only generate pregraphs that have a 2-factor where each\n");
     fprintf(stderr, "                component is a 4-cycle.\n");
     fprintf(stderr, "  -P          : Only generate the corresponding pregraph primitives.\n");
-    fprintf(stderr, "  -I          : Only start the generation from the files provided by the input file (see -F).\n");
-    fprintf(stderr, "  -f file     : Specifies the output file. If absent, the output is written to standard out.\n");
-    fprintf(stderr, "  -F file     : Specifies the input file. If absent, the input is taken from standard in.\n");
+    fprintf(stderr, "  -I          : Only start the generation from the files provided by the input\n");
+    fprintf(stderr, "                file (see -F).\n");
+    fprintf(stderr, "  -f file     : Specifies the output file. If absent, the output is written to\n");
+    fprintf(stderr, "                standard out.\n");
+    fprintf(stderr, "  -F file     : Specifies the input file. If absent, the input is taken from\n");
+    fprintf(stderr, "                standard in.\n");
     fprintf(stderr, "                This option is only used if -I is used.\n");
     fprintf(stderr, "  -o c        : Specifies the export format where c is one of\n");
     fprintf(stderr, "                c    pregraph code (or multicode if -P is used)\n");
@@ -4919,12 +4923,14 @@ void help(char *name) {
     fprintf(stderr, "  -d #        : Disable some operations:\n");
     fprintf(stderr, "                1    Disable operations for degree 1\n");
     fprintf(stderr, "                2    Disable operations for degree 2\n");
-    fprintf(stderr, "  -X          : No operation will be discarded as being not-canonical. This will cause\n");
-    fprintf(stderr, "                isomorphic graphs to be constructed. (This option is for debugging purposes.)\n");
-    fprintf(stderr, "  -m r:m[:d]  : Split the generation into several parts. This basically means that at\n");
-    fprintf(stderr, "                depth d a counter will be kept and the program will only continue beyond this\n");
-    fprintf(stderr, "                point if the counter mod m is equal to r. Special measures are taken if some\n");
-    fprintf(stderr, "                graphs are already outputted before depth d. The default for d is 0.\n");
+    fprintf(stderr, "  -X          : No operation will be discarded as being not-canonical. This will\n");
+    fprintf(stderr, "                cause isomorphic graphs to be constructed. (This option is for\n");
+    fprintf(stderr, "                debugging purposes.)\n");
+    fprintf(stderr, "  -m r:m[:d]  : Split the generation into several parts. This basically means\n");
+    fprintf(stderr, "                that at depth d a counter will be kept and the program will\n");
+    fprintf(stderr, "                only continue beyond this point if the counter mod m is equal\n");
+    fprintf(stderr, "                to r. Special measures are taken if some graphs are already\n");
+    fprintf(stderr, "                outputted before depth d. The default for d is 0.\n");
 }
 
 void initInfo(){
