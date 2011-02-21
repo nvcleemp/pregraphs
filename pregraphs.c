@@ -1685,7 +1685,7 @@ int getSquare(FILTERPREGRAPH *pregraph, int v, int n1, int n2){
 //       o----o--...
 //      v2    v4
 void finishChain(FILTERPREGRAPH *pregraph, boolean *removed, int v1, int v2, int v3,
-        int v4, boolean *admissable, unsigned long *adjMatrix){
+        int v4, boolean *admissable, unsigned long long *adjMatrix){
     int prevUp, prevDown, currentUp, currentDown, nextUp, nextDown;
 
     prevUp = v1;
@@ -1740,7 +1740,7 @@ void finishChain(FILTERPREGRAPH *pregraph, boolean *removed, int v1, int v2, int
 //       o----o--...
 //      v2    v4
 void finishChainWithout(FILTERPREGRAPH *pregraph, boolean *removed, int v1, int v2,
-        int v3, int v4, unsigned long *adjMatrix){
+        int v3, int v4, unsigned long long *adjMatrix){
     int prevUp, prevDown, currentUp, currentDown, nextUp, nextDown;
 
     prevUp = v1;
@@ -1791,7 +1791,7 @@ void finishChainWithout(FILTERPREGRAPH *pregraph, boolean *removed, int v1, int 
 //       o----o
 //      v3    v4
 void detectAndRemoveChain(FILTERPREGRAPH *pregraph, boolean *removed, int v1, int v2,
-        int v3, int v4, boolean *admissable, unsigned long *adjMatrix){
+        int v3, int v4, boolean *admissable, unsigned long long *adjMatrix){
     int nrOfSquares = 1;
     int side1_a, side1_b, side2_a, side2_b;
     int n1, n2, n3, n4;
@@ -1843,51 +1843,103 @@ void detectAndRemoveChain(FILTERPREGRAPH *pregraph, boolean *removed, int v1, in
 	return;
     }
 
-    //determine sides of chains
-    if(adjMatrix[n1] & (1<<n2)){
-	//    v1   v3
-	//   -o----o-
-	//    |    |
-	//    |    |
-	//   -o----o-
-	//    v2   v4
-	side1_a = v1;
-	side1_b = v2;
-	side2_a = v3;
-	side2_b = v4;
-    } else if(adjMatrix[n1] & (1<<n3)){
-	//    v1   v2
-	//   -o----o-
-	//    |    |
-	//    |    |
-	//   -o----o-
-	//    v3   v4
-	side1_a = v1;
-	side1_b = v3;
-	side2_a = v2;
-	side2_b = v4;
-    } else if(adjMatrix[n4] & (1<<n2)){
-	//    v1   v2
-	//   -o----o-
-	//    |    |
-	//    |    |
-	//   -o----o-
-	//    v3   v4
-	side1_a = v1;
-	side1_b = v3;
-	side2_a = v2;
-	side2_b = v4;
+    if(n1==semiEdge){
+        //in this case we know that n2,n3 and n4 are't semi-edge vertices
+        if(adjMatrix[n4] & (1<<n2)){
+            //    v1   v2
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v3   v4
+            side1_a = v1;
+            side1_b = v3;
+            side2_a = v2;
+            side2_b = v4;
+        } else {
+            //    v1   v3
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v2   v4
+            side1_a = v1;
+            side1_b = v2;
+            side2_a = v3;
+            side2_b = v4;
+        }
+    } else if(n4==semiEdge){
+        //in this case we know that n2,n3 and n1 are't semi-edge vertices
+        if(adjMatrix[n1] & (1<<n2)){
+            //    v1   v3
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v2   v4
+            side1_a = v3;
+            side1_b = v4;
+            side2_a = v1;
+            side2_b = v2;
+        } else {
+            //    v1   v2
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v3   v4
+            side1_a = v2;
+            side1_b = v4;
+            side2_a = v1;
+            side2_b = v3;
+        }
     } else {
-	//    v1   v3
-	//   -o----o-
-	//    |    |
-	//    |    |
-	//   -o----o-
-	//    v2   v4
-	side1_a = v1;
-	side1_b = v2;
-	side2_a = v3;
-	side2_b = v4;
+        //determine sides of chains
+        if(adjMatrix[n1] & (1<<n2)){
+            //    v1   v3
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v2   v4
+            side1_a = v1;
+            side1_b = v2;
+            side2_a = v3;
+            side2_b = v4;
+        } else if(adjMatrix[n1] & (1<<n3)){
+            //    v1   v2
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v3   v4
+            side1_a = v1;
+            side1_b = v3;
+            side2_a = v2;
+            side2_b = v4;
+        } else if(adjMatrix[n4] & (1<<n2)){
+            //    v1   v2
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v3   v4
+            side1_a = v1;
+            side1_b = v3;
+            side2_a = v2;
+            side2_b = v4;
+        } else {
+            //    v1   v3
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v2   v4
+            side1_a = v1;
+            side1_b = v2;
+            side2_a = v3;
+            side2_b = v4;
+        }
     }
 
     //propagate chain of squares firts to side1 then to side2
@@ -2012,7 +2064,7 @@ void detectAndRemoveChain(FILTERPREGRAPH *pregraph, boolean *removed, int v1, in
 }
 
 void removeChainsOfSquares(FILTERPREGRAPH *pregraph, boolean *removed,
-        boolean *admissable, unsigned long *adjMatrix){
+        boolean *admissable, unsigned long long *adjMatrix){
     int i, j;
 
     for(i=0; i<pregraph->order; i++){
@@ -2041,7 +2093,7 @@ void removeChainsOfSquares(FILTERPREGRAPH *pregraph, boolean *removed,
 //checks whether vertex v is incident with a multi-edge and removes that edge if so.
 //assumes that v is not incident with two or more semi-edges
 void checkAndRemoveMultiEdge(FILTERPREGRAPH *pregraph, boolean *removed, int v,
-        boolean *admissable, unsigned long *adjMatrix){
+        boolean *admissable, unsigned long long *adjMatrix){
     if(pregraph->adjList[3*v+0]==pregraph->adjList[3*v+1]){
 	removed[v]=TRUE;
 	removed[pregraph->adjList[v][0]]=TRUE;
@@ -2061,7 +2113,7 @@ void checkAndRemoveMultiEdge(FILTERPREGRAPH *pregraph, boolean *removed, int v,
 }
 
 void removeMultiEdges(FILTERPREGRAPH *pregraph, boolean *removed, boolean *admissable,
-                       unsigned long *adjMatrix){
+                       unsigned long long *adjMatrix){
     int i,j,semiEdgeCount;
     for(i=0;i<pregraph->order;i++){
 	if(!removed[i]){
@@ -2208,6 +2260,11 @@ boolean isAdmissablePregraph(PRIMPREGRAPH *ppgraph){
     boolean removed[MAXN];
     int old2new[MAXN];
     int new2old[MAXN];
+    for(j=0; j<MAXN; j++){
+        removed[j]=FALSE;
+        old2new[j]=1111111111;
+        new2old[j]=1111111111;
+    }
 
     for(i=0,j=0; i<ppgraph->order; i++){
         if(ppgraph->degree[i]!=1){
@@ -2220,7 +2277,7 @@ boolean isAdmissablePregraph(PRIMPREGRAPH *ppgraph){
         }
     }
 
-    unsigned long adjMatrix[MAXN];
+    unsigned long long adjMatrix[MAXN];
     FILTERPREGRAPH fpregraph;
     fpregraph.order=ppgraph->order - ppgraph->degree1Count;
 
@@ -2409,51 +2466,103 @@ void detectAndRemoveChainForC4(FILTERPREGRAPH *pregraph, boolean *removed,
 
     //both ends are open
     {
-    //determine sides of chains
-    if(adjMatrix[n1] & (1<<n2)){
-	//    v1   v3
-	//   -o----o-
-	//    |    |
-	//    |    |
-	//   -o----o-
-	//    v2   v4
-	side1_a = v1;
-	side1_b = v2;
-	side2_a = v3;
-	side2_b = v4;
-    } else if(adjMatrix[n1] & (1<<n3)){
-	//    v1   v2
-	//   -o----o-
-	//    |    |
-	//    |    |
-	//   -o----o-
-	//    v3   v4
-	side1_a = v1;
-	side1_b = v3;
-	side2_a = v2;
-	side2_b = v4;
-    } else if(adjMatrix[n4] & (1<<n2)){
-	//    v1   v2
-	//   -o----o-
-	//    |    |
-	//    |    |
-	//   -o----o-
-	//    v3   v4
-	side1_a = v1;
-	side1_b = v3;
-	side2_a = v2;
-	side2_b = v4;
+    if(n1==semiEdge){
+        //in this case we know that n2,n3 and n4 are't semi-edge vertices
+        if(adjMatrix[n4] & (1<<n2)){
+            //    v1   v2
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v3   v4
+            side1_a = v1;
+            side1_b = v3;
+            side2_a = v2;
+            side2_b = v4;
+        } else {
+            //    v1   v3
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v2   v4
+            side1_a = v1;
+            side1_b = v2;
+            side2_a = v3;
+            side2_b = v4;
+        }
+    } else if(n4==semiEdge){
+        //in this case we know that n2,n3 and n1 are't semi-edge vertices
+        if(adjMatrix[n1] & (1<<n2)){
+            //    v1   v3
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v2   v4
+            side1_a = v3;
+            side1_b = v4;
+            side2_a = v1;
+            side2_b = v2;
+        } else {
+            //    v1   v2
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v3   v4
+            side1_a = v2;
+            side1_b = v4;
+            side2_a = v1;
+            side2_b = v3;
+        }
     } else {
-	//    v1   v3
-	//   -o----o-
-	//    |    |
-	//    |    |
-	//   -o----o-
-	//    v2   v4
-	side1_a = v1;
-	side1_b = v2;
-	side2_a = v3;
-	side2_b = v4;
+        //determine sides of chains
+        if(adjMatrix[n1] & (1<<n2)){
+            //    v1   v3
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v2   v4
+            side1_a = v1;
+            side1_b = v2;
+            side2_a = v3;
+            side2_b = v4;
+        } else if(adjMatrix[n1] & (1<<n3)){
+            //    v1   v2
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v3   v4
+            side1_a = v1;
+            side1_b = v3;
+            side2_a = v2;
+            side2_b = v4;
+        } else if(adjMatrix[n4] & (1<<n2)){
+            //    v1   v2
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v3   v4
+            side1_a = v1;
+            side1_b = v3;
+            side2_a = v2;
+            side2_b = v4;
+        } else {
+            //    v1   v3
+            //   -o----o-
+            //    |    |
+            //    |    |
+            //   -o----o-
+            //    v2   v4
+            side1_a = v1;
+            side1_b = v2;
+            side2_a = v3;
+            side2_b = v4;
+        }
     }
 
     prevUp = side2_a;
@@ -2495,12 +2604,12 @@ void detectAndRemoveChainForC4(FILTERPREGRAPH *pregraph, boolean *removed,
 	    currentUp = nextUp;
 	    currentDown = nextDown;
 	    nrOfSquares++;
-	    } else {
+	} else {
 	        //end of chain reached because nextUp and nextDown aren't adjacent
                 inChain = FALSE;
-            }
-
         }
+
+    }
     }
     //first end is finished
 
