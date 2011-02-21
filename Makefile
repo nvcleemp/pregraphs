@@ -14,7 +14,7 @@ SOURCES = pregraphs.c pregraphs.h util.h snarkhunter.c snarkhunter.h admissable_
           admissable_c.h c4cover.c c4cover.h bipartite.c bipartite.h has3edgecolouring.c\
           has3edgecolouring.h pgfilter.c pgfilter.h Makefile COPYRIGHT.txt LICENSE.txt
 
-all : 32bit admissable_c c4cover
+all : 32bit
 
 complete: $(COMPLETE)
 
