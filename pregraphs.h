@@ -205,6 +205,14 @@ struct _pregraph {
 
 typedef struct _pregraph PREGRAPH;
 
+struct _pregraph_filter {
+    int order;
+
+    int adjList[MAXN][3];
+};
+
+typedef struct _pregraph_filter FILTERPREGRAPH;
+
 typedef int VERTEXPAIR[2];
 
 #define NAUTY_WORKSIZE 50 * MAXM
@@ -302,6 +310,8 @@ boolean allowMultiEdges = FALSE; /* TRUE if multi-edges are allowed*/
 boolean allowSemiEdges = FALSE; /* TRUE if semi-edges are allowed*/
 boolean onlyColourable = FALSE; /* TRUE if only 3-edge-colourable pregraphs are allowed */
 boolean onlyBipartite = FALSE; /* TRUE if only bipartite pregraphs are allowed */
+boolean onlyAdmissable = FALSE; /* TRUE if only pregraphs with an admissable colouring are allowed */
+boolean onlyC4Coverable = FALSE; /* TRUE if only pregraphs with a C4 cover are allowed */
 
 boolean operation11Disabled = FALSE;
 boolean operation12Disabled = FALSE;

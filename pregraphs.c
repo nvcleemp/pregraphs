@@ -1640,6 +1640,999 @@ int findRootOfElement(int *forest, int element) {
     return forest[element];
 }
 
+//--------------------FILTERS-----------------------------------
+
+int getThirdNeighbour(FILTERPREGRAPH *pregraph, int v, int n1, int n2){
+    int i;
+    for(i=0;i<3;i++){
+	if((pregraph->adjList[v][i]==n1 && pregraph->adjList[v][(i+1)%3]==n2) ||
+	    (pregraph->adjList[v][i]==n2 && pregraph->adjList[v][(i+1)%3]==n1)){
+	    return pregraph->adjList[v][(i+2)%3];
+	}
+    }
+    fprintf(stderr, "Error in 3rd neighbour: %d, %d, %d\n", v, n1, n2);
+    exit(1);
+}
+
+//returns -1 if v, n1 and n2 are not in a square
+int getSquare(FILTERPREGRAPH *pregraph, int v, int n1, int n2){
+    int i,j;
+
+    //first check for semi-edges
+    if(n1 == pregraph->order || n2 == pregraph->order) return -1;
+
+    //then check for multi-edges
+    if(n1 == n2) return -1;
+
+    for(i=0; i<3; i++){
+	for(j=0; j<3; j++){
+	    if(pregraph->adjList[n1][i]==pregraph->adjList[n2][j] &&
+                    pregraph->adjList[n1][i]!=v &&
+                    pregraph->adjList[n1][i]!=pregraph->order){
+		return pregraph->adjList[n1][i];
+	    }
+	}
+    }
+
+    return -1;
+}
+
+//needs the square in the form
+//      v1     v3
+//       o----o--...
+//       |    |
+//       |    |
+//       o----o--...
+//      v2    v4
+void finishChain(FILTERPREGRAPH *pregraph, boolean *removed, int v1, int v2, int v3,
+        int v4, boolean *admissable, unsigned long *adjMatrix){
+    int prevUp, prevDown, currentUp, currentDown, nextUp, nextDown;
+
+    prevUp = v1;
+    prevDown = v2;
+    currentUp = v3;
+    currentDown = v4;
+    removed[prevUp]=TRUE;
+    removed[prevDown]=TRUE;
+
+    while(TRUE){
+	removed[currentUp]=TRUE;
+	removed[currentDown]=TRUE;
+
+	nextUp = getThirdNeighbour(pregraph, currentUp, currentDown, prevUp);
+	nextDown = getThirdNeighbour(pregraph, currentDown, currentUp, prevDown);
+        if(nextUp==nextDown && nextUp!=pregraph->order){
+            *admissable=FALSE;
+            return;
+        }
+	if(nextUp==pregraph->order || nextDown==pregraph->order){
+	    //end of chain is reached because semi-edge is found
+	    return;
+	}
+	if(nextUp==currentDown){
+	    //end of chain is reached because multi-edge is found
+	    return;
+	}
+	if(removed[nextUp] || removed[nextDown]){
+	    //end of chain is reached because next vertices are already removed
+	    return;
+	}
+
+	if(adjMatrix[nextUp] & (1<<nextDown)){
+	    //still in the chain of square
+	    prevUp = currentUp;
+	    prevDown = currentDown;
+	    currentUp = nextUp;
+	    currentDown = nextDown;
+	} else {
+	    //end of chain reached because nextUp and nextDown aren't adjacent
+	    return;
+	}
+
+    }
+}
+
+//needs the square in the form
+//      v1     v3
+//       o----o--...
+//       |    |
+//       |    |
+//       o----o--...
+//      v2    v4
+void finishChainWithout(FILTERPREGRAPH *pregraph, boolean *removed, int v1, int v2,
+        int v3, int v4, unsigned long *adjMatrix){
+    int prevUp, prevDown, currentUp, currentDown, nextUp, nextDown;
+
+    prevUp = v1;
+    prevDown = v2;
+    currentUp = v3;
+    currentDown = v4;
+    removed[prevUp]=TRUE;
+    removed[prevDown]=TRUE;
+
+    while(TRUE){
+	removed[currentUp]=TRUE;
+	removed[currentDown]=TRUE;
+
+	nextUp = getThirdNeighbour(pregraph, currentUp, currentDown, prevUp);
+	nextDown = getThirdNeighbour(pregraph, currentDown, currentUp, prevDown);
+	if(nextUp==pregraph->order || nextDown==pregraph->order){
+	    //end of chain is reached because semi-edge is found
+	    return;
+	}
+	if(nextUp==currentDown){
+	    //end of chain is reached because multi-edge is found
+	    return;
+	}
+	if(removed[nextUp] || removed[nextDown]){
+	    //end of chain is reached because next vertices are already removed
+	    return;
+	}
+
+	if(adjMatrix[nextUp] & (1<<nextDown)){
+	    //still in the chain of square
+	    prevUp = currentUp;
+	    prevDown = currentDown;
+	    currentUp = nextUp;
+	    currentDown = nextDown;
+	} else {
+	    //end of chain reached because nextUp and nextDown aren't adjacent
+	    return;
+	}
+
+    }
+}
+
+//needs the square in the form
+//      v1     v2
+//       o----o
+//       |    |
+//       |    |
+//       o----o
+//      v3    v4
+void detectAndRemoveChain(FILTERPREGRAPH *pregraph, boolean *removed, int v1, int v2,
+        int v3, int v4, boolean *admissable, unsigned long *adjMatrix){
+    int nrOfSquares = 1;
+    int side1_a, side1_b, side2_a, side2_b;
+    int n1, n2, n3, n4;
+    int semiEdge = pregraph->order;
+
+    //determine third neighbours for corner vertices
+    n1 = getThirdNeighbour(pregraph, v1, v2, v3);
+    n2 = getThirdNeighbour(pregraph, v2, v1, v4);
+    n3 = getThirdNeighbour(pregraph, v3, v1, v4);
+    n4 = getThirdNeighbour(pregraph, v4, v2, v3);
+
+    //check for multi-edge
+    if(n1==v2){
+        finishChain(pregraph, removed, v1, v2, v3, v4, admissable, adjMatrix);
+	return;
+    } else if (n1==v3){
+	finishChain(pregraph, removed, v1, v3, v2, v4, admissable, adjMatrix);
+	return;
+    } else if(n4==v2){
+        finishChain(pregraph, removed, v4, v2, v3, v1, admissable, adjMatrix);
+	return;
+    } else if (n4==v3){
+        finishChain(pregraph, removed, v4, v3, v2, v1, admissable, adjMatrix);
+	return;
+    }
+
+    //check for semi-edges
+    if(n1 == semiEdge && n2==semiEdge){
+        finishChain(pregraph, removed, v1, v2, v3, v4, admissable, adjMatrix);
+	return;
+    } else if (n1==semiEdge && n3==semiEdge){
+	finishChain(pregraph, removed, v1, v3, v2, v4, admissable, adjMatrix);
+	return;
+    } else if(n4== semiEdge && n2==semiEdge){
+        finishChain(pregraph, removed, v4, v2, v3, v1, admissable, adjMatrix);
+	return;
+    } else if (n4==semiEdge && n3==semiEdge){
+        finishChain(pregraph, removed, v4, v3, v2, v1, admissable, adjMatrix);
+	return;
+    }
+
+    //check for semi-edges at opposite vertices
+    //we know that there aren't any at neighbouring sites
+    if((n1==semiEdge && n4==semiEdge) || (n2==semiEdge && n3==semiEdge)){
+        removed[v1]=TRUE;
+        removed[v2]=TRUE;
+        removed[v3]=TRUE;
+        removed[v4]=TRUE;
+	return;
+    }
+
+    //determine sides of chains
+    if(adjMatrix[n1] & (1<<n2)){
+	//    v1   v3
+	//   -o----o-
+	//    |    |
+	//    |    |
+	//   -o----o-
+	//    v2   v4
+	side1_a = v1;
+	side1_b = v2;
+	side2_a = v3;
+	side2_b = v4;
+    } else if(adjMatrix[n1] & (1<<n3)){
+	//    v1   v2
+	//   -o----o-
+	//    |    |
+	//    |    |
+	//   -o----o-
+	//    v3   v4
+	side1_a = v1;
+	side1_b = v3;
+	side2_a = v2;
+	side2_b = v4;
+    } else if(adjMatrix[n4] & (1<<n2)){
+	//    v1   v2
+	//   -o----o-
+	//    |    |
+	//    |    |
+	//   -o----o-
+	//    v3   v4
+	side1_a = v1;
+	side1_b = v3;
+	side2_a = v2;
+	side2_b = v4;
+    } else {
+	//    v1   v3
+	//   -o----o-
+	//    |    |
+	//    |    |
+	//   -o----o-
+	//    v2   v4
+	side1_a = v1;
+	side1_b = v2;
+	side2_a = v3;
+	side2_b = v4;
+    }
+
+    //propagate chain of squares firts to side1 then to side2
+    int prevUp, prevDown, currentUp, currentDown, nextUp, nextDown;
+
+    prevUp = side2_a;
+    prevDown = side2_b;
+    currentUp = side1_a;
+    currentDown = side1_b;
+    removed[prevUp]=TRUE;
+    removed[prevDown]=TRUE;
+
+    int firstUp, firstDown;
+    firstUp = prevUp;
+    firstDown = prevDown;
+
+    boolean inChain = TRUE;
+    while(inChain){
+	removed[currentUp]=TRUE;
+	removed[currentDown]=TRUE;
+
+	nextUp = getThirdNeighbour(pregraph, currentUp, currentDown, prevUp);
+	nextDown = getThirdNeighbour(pregraph, currentDown, currentUp, prevDown);
+	if(nextUp==semiEdge && nextDown==semiEdge){
+	    //end of chain is reached because 2 semi-edges are found
+	    //finish chain in opposite direction
+	    finishChain(pregraph, removed, side1_a, side1_b, side2_a, side2_b,
+                    admissable, adjMatrix);
+	    return;
+	}
+	if(nextUp==currentDown){
+	    //end of chain is reached because multi-edge is found
+	    //finish chain in opposite direction
+	    finishChain(pregraph, removed, side1_a, side1_b, side2_a, side2_b,
+                    admissable, adjMatrix);
+	    return;
+	}
+	if((nextUp!=semiEdge && removed[nextUp]) || (nextDown!=semiEdge && removed[nextDown])){
+	    //end of chain is reached because next vertices are already removed
+	    //finish chain in opposite direction
+            if(nextUp == firstUp || nextUp == firstDown || nextDown == firstUp || nextDown == firstDown){
+                //no need to finish chain
+                *admissable = nrOfSquares % 2;
+                return;
+            } else {
+                inChain = FALSE;
+            }
+            /*
+	    finishChainWithout(pregraph, removed, side1_a, side1_b, side2_a,
+                    side2_b);
+            fprintf(stdout, "Squares: %d\n", nrOfSquares);
+	    *admissable = nrOfSquares % 2;
+	    return;
+            */
+            //inChain = FALSE;
+	}
+
+	if(nextUp==semiEdge || nextDown==semiEdge){
+            //exactly one semi-edge is found, so end of chain is reached
+
+            inChain = FALSE;
+        } else if(adjMatrix[nextUp] & (1<<nextDown)){
+	    //still in the chain of square
+	    prevUp = currentUp;
+	    prevDown = currentDown;
+	    currentUp = nextUp;
+	    currentDown = nextDown;
+	    nrOfSquares++;
+	} else {
+	    //end of chain reached because nextUp and nextDown aren't adjacent
+	    inChain = FALSE;
+	}
+
+    }
+
+    //if we get here then one side of the chain is ended by an edge with
+    //an ordinary vertex
+    //now check the other side of the chain
+    prevUp = side1_a;
+    prevDown = side1_b;
+    currentUp = side2_a;
+    currentDown = side2_b;
+
+    inChain = TRUE;
+    while(inChain){
+	removed[currentUp]=TRUE;
+	removed[currentDown]=TRUE;
+
+	nextUp = getThirdNeighbour(pregraph, currentUp, currentDown, prevUp);
+	nextDown = getThirdNeighbour(pregraph, currentDown, currentUp, prevDown);
+	if(nextUp==semiEdge && nextDown==semiEdge){
+	    //end of chain is reached because 2 semi-edges are found
+	    return;
+	}
+	if(nextUp==currentDown){
+	    //end of chain is reached because multi-edge is found
+	    return;
+	}
+	if((nextUp!=semiEdge && removed[nextUp]) || (nextDown!=semiEdge && removed[nextDown])){
+	    //end of chain is reached because next vertices are already removed
+	    *admissable = nrOfSquares % 2;
+	    return;
+	}
+
+	if(nextUp==semiEdge || nextDown==semiEdge){
+            //exactly one semi-edge is found, so end of chain is reached
+            *admissable = nrOfSquares % 2;
+            inChain = FALSE;
+        } else if(adjMatrix[nextUp] & (1<<nextDown)){
+	    //still in the chain of square
+	    prevUp = currentUp;
+	    prevDown = currentDown;
+	    currentUp = nextUp;
+	    currentDown = nextDown;
+	    nrOfSquares++;
+	} else {
+	    //end of chain reached because nextUp and nextDown aren't adjacent
+	    *admissable = nrOfSquares % 2;
+	    inChain = FALSE;
+	}
+    }
+}
+
+void removeChainsOfSquares(FILTERPREGRAPH *pregraph, boolean *removed,
+        boolean *admissable, unsigned long *adjMatrix){
+    int i, j;
+
+    for(i=0; i<pregraph->order; i++){
+	if(!removed[i]){
+	    for(j=0;j<3;j++){
+		int n1 = pregraph->adjList[i][(j+1)%3];
+		int n2 = pregraph->adjList[i][(j+2)%3];
+		if(!removed[n1] && !removed[n2] && n1!=pregraph->order &&
+                        n2!=pregraph->order){
+		    int oppositeCorner = getSquare(pregraph, i, n1, n2);
+		    if(oppositeCorner!=-1 && oppositeCorner != pregraph->order){
+//                        fprintf(stdout, "%d, %d, %d, %d\n\n", i+1, n1+1, n2+1, oppositeCorner+1);
+			detectAndRemoveChain(pregraph, removed, i, n1, n2,
+                                oppositeCorner, admissable, adjMatrix);
+			if(!(*admissable)) return;
+//                        writePregraphTableDebug(stdout, pregraph, removed);
+			j=3; //exit the for
+		    }
+		}
+	    }
+	}
+    }
+
+}
+
+//checks whether vertex v is incident with a multi-edge and removes that edge if so.
+//assumes that v is not incident with two or more semi-edges
+void checkAndRemoveMultiEdge(FILTERPREGRAPH *pregraph, boolean *removed, int v,
+        boolean *admissable, unsigned long *adjMatrix){
+    if(pregraph->adjList[3*v+0]==pregraph->adjList[3*v+1]){
+	removed[v]=TRUE;
+	removed[pregraph->adjList[v][0]]=TRUE;
+	*admissable = !(adjMatrix[pregraph->adjList[v][0]] &
+                (1<<pregraph->adjList[v][2]));
+    } else if(pregraph->adjList[v][0]==pregraph->adjList[v][2]){
+	removed[v]=TRUE;
+	removed[pregraph->adjList[v][0]]=TRUE;
+	*admissable = !(adjMatrix[pregraph->adjList[v][0]] &
+                (1<<pregraph->adjList[v][1]));
+    } else if(pregraph->adjList[v][1]==pregraph->adjList[v][2]){
+	removed[v]=TRUE;
+	removed[pregraph->adjList[v][1]]=TRUE;
+	*admissable = !(adjMatrix[pregraph->adjList[v][1]] &
+                (1<<pregraph->adjList[v][0]));
+    }
+}
+
+void removeMultiEdges(FILTERPREGRAPH *pregraph, boolean *removed, boolean *admissable,
+                       unsigned long *adjMatrix){
+    int i,j,semiEdgeCount;
+    for(i=0;i<pregraph->order;i++){
+	if(!removed[i]){
+	    semiEdgeCount=0;
+	    for(j=0;j<3;j++){
+		if(pregraph->adjList[i][j]==pregraph->order){
+		    semiEdgeCount++;
+		}
+	    }
+	    if(semiEdgeCount<2){
+		checkAndRemoveMultiEdge(pregraph, removed, i, admissable, adjMatrix);
+		if(!(*admissable)) return;
+	    }
+	}
+    }
+}
+
+//assumes that no multi-edges are left
+boolean checkRemainder(FILTERPREGRAPH *pregraph, boolean *removed){
+    int i, j, vertex, degree[MAXN], neighbours[MAXN];
+    #ifdef _DEBUG
+    for(i=0; i<pregraph->order; i++){
+        fprintf(stderr, "%d) %d, %d, %d   %s\n", i+1, pregraph->adjList[i][0] + 1,
+                pregraph->adjList[i][1] + 1, pregraph->adjList[i][2] + 1,
+                removed[i] ? "X" : "");
+    }
+    #endif
+
+    //first check to see if there are no vertices of degree 1
+    //We only cut at edges which have to have colour 1. If we removed
+    //two edges at a vertex without removing the vertex, there were
+    //conflicting colours at that vertex. (TODO: verify!!!)
+    //We also check the number of 'real' neighbours: this should be less than 3
+    //If a vertex has degree 2, than it should be incident with at least
+    //one semi-edge
+    for(i=0; i<pregraph->order; i++){
+        if(!removed[i]){
+            degree[i] = 0;
+            neighbours[i] = 0;
+            for(j=0; j<3; j++){
+                if(pregraph->adjList[i][j]==pregraph->order ||
+                        !removed[pregraph->adjList[i][j]]) degree[i]++;
+                if(pregraph->adjList[i][j]!=pregraph->order &&
+                        !removed[pregraph->adjList[i][j]]) neighbours[i]++;
+            }
+            if(degree[i]<2)
+                return FALSE;
+            if(neighbours[i]==3)
+                return FALSE;
+            if(degree[i]==2 && neighbours[i]==2)
+                return FALSE;
+        }
+    }
+
+    #ifdef _DEBUG
+    fprintf(stderr, "    d  n\n");
+    for(i=0; i<pregraph->order; i++){
+        fprintf(stderr, "%d)  %d  %d\n", i, degree[i], neighbours[i]);
+    }
+    fprintf(stderr, "\n");
+    #endif
+
+
+
+    boolean visited[MAXN];
+    int stack[3*MAXN], parent[MAXN];
+    int stackSize = 0;
+
+    for(i=0; i<pregraph->order; i++) visited[i] = FALSE;
+
+    for(i=0; i<pregraph->order; i++){
+	if(!(removed[i] || visited[i])){
+	    stack[0]=i;
+	    stackSize = 1;
+	    parent[i]=-1;
+            visited[i]=TRUE;
+	    while(stackSize){
+		vertex = stack[--stackSize];
+                for(j=0;j<3;j++){
+                    if(pregraph->adjList[vertex][j]!=parent[vertex] &&
+                            pregraph->adjList[vertex][j]!=pregraph->order){
+                        if(visited[pregraph->adjList[vertex][j]]) return FALSE;
+                        if(!removed[pregraph->adjList[vertex][j]]){
+                            stack[stackSize]=pregraph->adjList[vertex][j];
+                            stackSize++;
+                            parent[pregraph->adjList[vertex][j]]=vertex;
+                            visited[pregraph->adjList[vertex][j]]=TRUE;
+                        }
+                    }
+		}
+	    }
+	}
+    }
+
+    for(i=0; i<pregraph->order; i++){
+        if(!removed[i] && degree[i]==2 && neighbours[i]==1){
+            int currentVertex = i;
+            int nextVertex;
+            int previousVertex;
+            int vertexCount = 2;
+
+            for(j=0;j<3;j++){
+                if((pregraph->adjList[i][j]==pregraph->order &&
+                        removed[pregraph->adjList[i][(j+1)%3]]) ||
+                    (removed[pregraph->adjList[i][j]] &&
+                        pregraph->adjList[i][(j+1)%3]==pregraph->order)){
+                    nextVertex = pregraph->adjList[i][(j+2)%3];
+                }
+            }
+
+            while(!(degree[nextVertex]==2 || (neighbours[nextVertex]==1 &&
+                    degree[nextVertex]==3))){
+                 previousVertex = currentVertex;
+                 currentVertex = nextVertex;
+                 nextVertex = getThirdNeighbour(pregraph, currentVertex,
+                         previousVertex, pregraph->order);
+                 vertexCount++;
+            }
+            if(degree[nextVertex]!=3 && vertexCount%2) return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+boolean existsVertexWithMultipleSemiEdges(FILTERPREGRAPH *pregraph){
+    int i, j, semiEdgeCount;
+    for(i=0; i<pregraph->order; i++){
+	semiEdgeCount=0;
+	for(j=0; j<3; j++){
+	    if(pregraph->adjList[i][j]==pregraph->order) semiEdgeCount++;
+	}
+	if(semiEdgeCount>1) return TRUE;
+    }
+    return FALSE;
+}
+
+/**
+ * Checks to see whether this pregraph has a 2-factor where each component is
+ * the quotient of a 4-cycle.
+ */
+boolean isAdmissablePregraph(PRIMPREGRAPH *ppgraph){
+    int i, j;
+    boolean removed[MAXN];
+    int old2new[MAXN];
+    int new2old[MAXN];
+
+    for(i=0,j=0; i<ppgraph->order; i++){
+        if(ppgraph->degree[i]!=1){
+            old2new[i]=j;
+            new2old[j]=i;
+            removed[j] = FALSE;
+            j++;
+        } else {
+            old2new[i] = ppgraph->order - ppgraph->degree1Count;
+        }
+    }
+
+    unsigned long adjMatrix[MAXN];
+    FILTERPREGRAPH fpregraph;
+    fpregraph.order=ppgraph->order - ppgraph->degree1Count;
+
+    for(i = 0; i < fpregraph.order; i++){
+        adjMatrix[i]=0;
+        if(ppgraph->degree[new2old[i]]==3){
+            for(j=0; j<3; j++){
+                fpregraph.adjList[i][j]=old2new[ppgraph->adjList[(new2old[i])*3+j]];
+                adjMatrix[i]=adjMatrix[i] | (1<<fpregraph.adjList[i][j]);
+            }
+        } else {
+            for(j=0; j<2; j++){
+                fpregraph.adjList[i][j]=old2new[ppgraph->adjList[(new2old[i])*3+j]];
+                adjMatrix[i]=adjMatrix[i] | (1<<fpregraph.adjList[i][j]);
+            }
+            fpregraph.adjList[i][2]=old2new[ppgraph->multiedge[new2old[i]]];
+        }
+    }
+
+    //if all vertices are adjacent with at least one semi-edge, then the graph
+    //has an admissable colouring if there are an even number of vertices
+    i=0;
+    while(i<fpregraph.order && (adjMatrix[i] & (1<<(fpregraph.order))))
+        i++;
+    if(i==fpregraph.order) return !(fpregraph.order%2) ||
+            existsVertexWithMultipleSemiEdges(&fpregraph);
+
+    boolean admissable = TRUE;
+
+    removeChainsOfSquares(&fpregraph, removed, &admissable, adjMatrix);
+
+    if(!admissable) return FALSE;
+
+    removeMultiEdges(&fpregraph, removed, &admissable, adjMatrix);
+
+    if(!admissable) return FALSE;
+
+    return checkRemainder(&fpregraph, removed);
+}
+
+//needs the square in the form
+//      v1     v2
+//       o----o
+//       |    |
+//       |    |
+//       o----o
+//      v3    v4
+void detectAndRemoveChainForC4(FILTERPREGRAPH *pregraph, boolean *removed, 
+        int v1, int v2, int v3, int v4, boolean *illegalConfiguration,
+        unsigned long *adjMatrix){
+    int nrOfSquares = 1;
+    int side1_a, side1_b, side2_a, side2_b;
+    int n1, n2, n3, n4;
+    int semiEdge = pregraph->order;
+    //propagate chain of squares first to side1 then to side2
+    int prevUp, prevDown, currentUp, currentDown, nextUp, nextDown;
+    boolean inChain;
+
+    //determine third neighbours for corner vertices
+    n1 = getThirdNeighbour(pregraph, v1, v2, v3);
+    n2 = getThirdNeighbour(pregraph, v2, v1, v4);
+    n3 = getThirdNeighbour(pregraph, v3, v1, v4);
+    n4 = getThirdNeighbour(pregraph, v4, v2, v3);
+    //fprintf(stdout, "%d %d %d %d\n",n1,n2,n3,n4);
+
+    //check for semi-edges at opposite vertices
+    if((n1==semiEdge && n4==semiEdge) || (n2==semiEdge && n3==semiEdge)){
+        removed[v1]=TRUE;
+        removed[v2]=TRUE;
+        removed[v3]=TRUE;
+        removed[v4]=TRUE;
+	return;
+    }
+
+    //now check if one side is already closed
+
+    //check for multi-edge
+    if(n1==v2){
+	//    v1   v3
+	//    o----o-
+	//   /|    |
+	//   \|    |
+	//    o----o-
+	//    v2   v4
+	side1_a = v1;
+	side1_b = v2;
+	side2_a = v3;
+	side2_b = v4;
+        removed[v1]=TRUE;
+        removed[v2]=TRUE;
+    } else if (n1==v3){
+	//    v1   v2
+	//    o----o-
+	//   /|    |
+	//   \|    |
+	//    o----o-
+	//    v3   v4
+	side1_a = v1;
+	side1_b = v3;
+	side2_a = v2;
+	side2_b = v4;
+        removed[v1]=TRUE;
+        removed[v3]=TRUE;
+    } else if(n4==v2){
+	//    v4   v3
+	//    o----o-
+	//   /|    |
+	//   \|    |
+	//    o----o-
+	//    v2   v1
+	side1_a = v4;
+	side1_b = v2;
+	side2_a = v3;
+	side2_b = v1;
+        removed[v4]=TRUE;
+        removed[v2]=TRUE;
+    } else if (n4==v3){
+	//    v4   v2
+	//    o----o-
+	//   /|    |
+	//   \|    |
+	//    o----o-
+	//    v3   v1
+	side1_a = v4;
+	side1_b = v3;
+	side2_a = v2;
+	side2_b = v1;
+        removed[v4]=TRUE;
+        removed[v3]=TRUE;
+    } else
+
+    //check for semi-edges
+    if(n1 == semiEdge && n2==semiEdge){
+	//    v1   v3
+	//   _o----o-
+	//    |    |
+	//   _|    |
+	//    o----o-
+	//    v2   v4
+	side1_a = v1;
+	side1_b = v2;
+	side2_a = v3;
+	side2_b = v4;
+        removed[v1]=TRUE;
+        removed[v2]=TRUE;
+    } else if (n1==semiEdge && n3==semiEdge){
+	//    v1   v2
+	//   _o----o-
+	//    |    |
+	//   _|    |
+	//    o----o-
+	//    v3   v4
+	side1_a = v1;
+	side1_b = v3;
+	side2_a = v2;
+	side2_b = v4;
+        removed[v1]=TRUE;
+        removed[v3]=TRUE;
+    } else if(n4== semiEdge && n2==semiEdge){
+	//    v4   v3
+	//   _o----o-
+	//    |    |
+	//   _|    |
+	//    o----o-
+	//    v2   v1
+	side1_a = v4;
+	side1_b = v2;
+	side2_a = v3;
+	side2_b = v1;
+        removed[v4]=TRUE;
+        removed[v2]=TRUE;
+    } else if (n4==semiEdge && n3==semiEdge){
+	//    v4   v2
+	//   _o----o-
+	//    |    |
+	//   _|    |
+	//    o----o-
+	//    v3   v1
+	side1_a = v4;
+	side1_b = v3;
+	side2_a = v2;
+	side2_b = v1;
+        removed[v4]=TRUE;
+        removed[v3]=TRUE;
+    } else
+
+    //both ends are open
+    {
+    //determine sides of chains
+    if(adjMatrix[n1] & (1<<n2)){
+	//    v1   v3
+	//   -o----o-
+	//    |    |
+	//    |    |
+	//   -o----o-
+	//    v2   v4
+	side1_a = v1;
+	side1_b = v2;
+	side2_a = v3;
+	side2_b = v4;
+    } else if(adjMatrix[n1] & (1<<n3)){
+	//    v1   v2
+	//   -o----o-
+	//    |    |
+	//    |    |
+	//   -o----o-
+	//    v3   v4
+	side1_a = v1;
+	side1_b = v3;
+	side2_a = v2;
+	side2_b = v4;
+    } else if(adjMatrix[n4] & (1<<n2)){
+	//    v1   v2
+	//   -o----o-
+	//    |    |
+	//    |    |
+	//   -o----o-
+	//    v3   v4
+	side1_a = v1;
+	side1_b = v3;
+	side2_a = v2;
+	side2_b = v4;
+    } else {
+	//    v1   v3
+	//   -o----o-
+	//    |    |
+	//    |    |
+	//   -o----o-
+	//    v2   v4
+	side1_a = v1;
+	side1_b = v2;
+	side2_a = v3;
+	side2_b = v4;
+    }
+
+    prevUp = side2_a;
+    prevDown = side2_b;
+    currentUp = side1_a;
+    currentDown = side1_b;
+    removed[prevUp]=TRUE;
+    removed[prevDown]=TRUE;
+    //fprintf(stdout, "next side: %d %d %d %d\n", prevUp, prevDown, currentUp, currentDown);
+
+    int firstUp, firstDown;
+    firstUp = prevUp;
+    firstDown = prevDown;
+
+    inChain = TRUE;
+    while(inChain){
+	removed[currentUp]=TRUE;
+	removed[currentDown]=TRUE;
+
+	nextUp = getThirdNeighbour(pregraph, currentUp, currentDown, prevUp);
+	nextDown = getThirdNeighbour(pregraph, currentDown, currentUp, prevDown);
+	if(nextUp==pregraph->order || nextDown==pregraph->order){
+	    inChain = FALSE;
+	} else if(nextUp==currentDown){
+	    inChain = FALSE;
+	} else if(removed[nextUp] || removed[nextDown]){
+            if(nextUp == firstUp || nextUp == firstDown || nextDown == firstUp || nextDown == firstDown){
+                //no need to finish chain
+                *illegalConfiguration = !(nrOfSquares % 2);
+                return;
+            } else {
+                inChain = FALSE;
+            }
+	    //end of chain is reached because next vertices are already removed
+	} else if(adjMatrix[nextUp] & (1<<nextDown)){
+	    //still in the chain of square
+	    prevUp = currentUp;
+	    prevDown = currentDown;
+	    currentUp = nextUp;
+	    currentDown = nextDown;
+	    nrOfSquares++;
+	    } else {
+	        //end of chain reached because nextUp and nextDown aren't adjacent
+                inChain = FALSE;
+            }
+
+        }
+    }
+    //first end is finished
+
+    //now check the other side of the chain
+    prevUp = side1_a;
+    prevDown = side1_b;
+    currentUp = side2_a;
+    currentDown = side2_b;
+    //fprintf(stdout, "next side: %d %d %d %d\n", prevUp, prevDown, currentUp, currentDown);
+
+    inChain = TRUE;
+    while(inChain){
+	removed[currentUp]=TRUE;
+	removed[currentDown]=TRUE;
+
+	nextUp = getThirdNeighbour(pregraph, currentUp, currentDown, prevUp);
+	nextDown = getThirdNeighbour(pregraph, currentDown, currentUp, prevDown);
+        //fprintf(stdout, "%d %d\n", nextUp, nextDown);
+	if(nextUp==pregraph->order || nextDown==pregraph->order){
+	    //end of chain is reached because at least 1 semi-edge is found
+	    *illegalConfiguration = !(nrOfSquares % 2);
+	    return;
+	}
+	if(nextUp==currentDown){
+	    //end of chain is reached because multi-edge is found
+	    *illegalConfiguration = !(nrOfSquares % 2);
+	    return;
+	}
+	if(removed[nextUp] || removed[nextDown]){
+	    //end of chain is reached because next vertices are already removed
+	    *illegalConfiguration = !(nrOfSquares % 2);
+	    return;
+	}
+
+	if(adjMatrix[nextUp] & (1<<nextDown)){
+	    //still in the chain of square
+	    prevUp = currentUp;
+	    prevDown = currentDown;
+	    currentUp = nextUp;
+	    currentDown = nextDown;
+	    nrOfSquares++;
+	} else {
+	    //end of chain reached because nextUp and nextDown aren't adjacent
+	    *illegalConfiguration = !(nrOfSquares % 2);
+	    inChain = FALSE;
+	}
+    }
+}
+
+void removeChainsOfSquaresForC4(FILTERPREGRAPH *pregraph, boolean *removed, 
+                      boolean *illegalConfiguration, unsigned long *adjMatrix){
+    int i, j;
+
+    for(i=0; i<pregraph->order; i++){
+	if(!removed[i]){
+	    for(j=0;j<3;j++){
+		int n1 = pregraph->adjList[i][(j+1)%3];
+		int n2 = pregraph->adjList[i][(j+2)%3];
+		if(!removed[n1] && !removed[n2]){
+		    int oppositeCorner = getSquare(pregraph, i, n1, n2);
+		    //fprintf(stdout, "get square: %d %d ==> %d\n", i, j, oppositeCorner);
+		    if(oppositeCorner!=-1){
+			detectAndRemoveChainForC4(pregraph, removed, i, n1, n2, oppositeCorner, illegalConfiguration, adjMatrix);
+			if((*illegalConfiguration)) return;
+			j=3; //exit the for
+		    }
+		}
+	    }
+	    if(!removed[i]){
+		//vertex i is not removed so it wasn contained in a square
+		*illegalConfiguration= TRUE;
+		return;
+	    }
+	}
+    }
+
+}
+
+/**
+ * Checks to see whether this pregraph has a 2-factor where each component is
+ * a 4-cycle.
+ */
+boolean hasC4Cover(PRIMPREGRAPH *ppgraph){
+    int i, j;
+    boolean removed[MAXN];
+    int old2new[MAXN];
+    int new2old[MAXN];
+
+    for(i=0,j=0; i<ppgraph->order; i++){
+        if(ppgraph->degree[i]!=1){
+            old2new[i]=j;
+            new2old[j]=i;
+            removed[j] = FALSE;
+            j++;
+        } else {
+            old2new[i] = ppgraph->order - ppgraph->degree1Count;
+        }
+    }
+
+    unsigned long adjMatrix[MAXN];
+    FILTERPREGRAPH fpregraph;
+    fpregraph.order=ppgraph->order - ppgraph->degree1Count;
+
+    for(i = 0; i < fpregraph.order; i++){
+        adjMatrix[i]=0;
+        if(ppgraph->degree[new2old[i]]==3){
+            for(j=0; j<3; j++){
+                fpregraph.adjList[i][j]=old2new[ppgraph->adjList[(new2old[i])*3+j]];
+                adjMatrix[i]=adjMatrix[i] | (1<<fpregraph.adjList[i][j]);
+            }
+        } else {
+            for(j=0; j<2; j++){
+                fpregraph.adjList[i][j]=old2new[ppgraph->adjList[(new2old[i])*3+j]];
+                adjMatrix[i]=adjMatrix[i] | (1<<fpregraph.adjList[i][j]);
+            }
+            fpregraph.adjList[i][2]=old2new[ppgraph->multiedge[new2old[i]]];
+        }
+    }
+
+    boolean illegalConfiguration = FALSE;
+
+    removeChainsOfSquaresForC4(&fpregraph, removed, &illegalConfiguration, adjMatrix);
+
+    if(illegalConfiguration) return FALSE;
+
+    for(i=0; i<fpregraph.order; i++)
+	if(!removed[i])
+	    return FALSE;
+
+    return TRUE;
+}
+
 //--------------------OUTPUT------------------------------------
 
 char writePregraphTable(FILE *f, PREGRAPH *pregraph) {
@@ -1839,6 +2832,22 @@ void write_pregraph(PREGRAPH *pregraph, FILE *file){
 
 void handle_pregraph_result(PREGRAPH *pregraph){
     DEBUGMSG("Start handle_pregraph_result")
+    DEBUGMSG("Checking for filters and applying")
+    if(onlyAdmissable){
+        if(!isAdmissablePregraph(pregraph->ppgraph)){
+            DEBUGMSG("Pregraph refused by filter")
+            return;
+        }
+        DEBUGMSG("Pregraph accepted by filter")
+    } else if(onlyC4Coverable){
+        if(!hasC4Cover(pregraph->ppgraph)){
+            DEBUGMSG("Pregraph refused by filter")
+            return;
+        }
+        DEBUGMSG("Pregraph accepted by filter")
+    } else {
+        DEBUGMSG("No filter set")
+    }
     structureCount++;
     DEBUGDUMP(structureCount, "%ld")
     if(outputType != 'n'){
@@ -3888,6 +4897,10 @@ void help(char *name) {
     fprintf(stderr, "  -M          : Allow multi-edges.\n");
     fprintf(stderr, "  -C          : Only generate 3-edge-colourable pregraphs.\n");
     fprintf(stderr, "  -B          : Only generate bipartite pregraphs.\n");
+    fprintf(stderr, "  -q          : Only generate pregraphs that have a 2-factor where each\n");
+    fprintf(stderr, "                component is the quotient of a 4-cycle.\n");
+    fprintf(stderr, "  -4          : Only generate pregraphs that have a 2-factor where each\n");
+    fprintf(stderr, "                component is a 4-cycle.\n");
     fprintf(stderr, "  -P          : Only generate the corresponding pregraph primitives.\n");
     fprintf(stderr, "  -I          : Only start the generation from the files provided by the input file (see -F).\n");
     fprintf(stderr, "  -f file     : Specifies the output file. If absent, the output is written to standard out.\n");
@@ -4228,7 +5241,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     char *inputFileName = NULL;
     FILE *inputFile = stdin;
 
-    while ((c = getopt(argc, argv, "LSMPXCBf:F:o:D:d:Ihim:")) != -1) {
+    while ((c = getopt(argc, argv, "LSMPXCBf:F:o:D:d:Ihim:4q")) != -1) {
         switch (c) {
             case 'L': //(defaults to FALSE)
                 allowLoops = TRUE;
@@ -4250,6 +5263,12 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                 break;
             case 'B': //(defaults to FALSE)
                 onlyBipartite = TRUE;
+                break;
+            case '4': //(defaults to FALSE)
+                onlyC4Coverable = TRUE;
+                break;
+            case 'q': //(defaults to FALSE)
+                onlyAdmissable = TRUE;
                 break;
             case 'f': //(defaults to stdout)
                 outputFile = optarg;
@@ -4365,6 +5384,8 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
         }
     }
 
+    if(onlyC4Coverable) onlyAdmissable = FALSE;
+
     // check the non-option arguments
     if (argc - optind != 1) {
         usage(name);
@@ -4440,7 +5461,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
 
     /*=========== generation ===========*/
 
-    fprintf(stderr, "Generating %s%s%s%s%s with %d %s%s%s%s.\n",
+    fprintf(stderr, "Generating %s%s%s%s%s with %d %s%s%s%s%s%s.\n",
             onlyPrimitives ? (char *)"pregraph primitives of " : (char *)"" ,
             onlyColourable ? (char *)"3-edge-colourable " : (char *)"",
             onlyColourable && onlyBipartite ? (char *)", " : (char *)"",
@@ -4448,10 +5469,15 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
             allowMultiEdges ? (char *)"multigraphs" : (char *)"simple graphs",
             vertexCount, vertexCount==1 ? (char *)"vertex" : (char *)"vertices",
             allowLoops && allowSemiEdges ? (char *)", " : (allowLoops ? (char *)" and " : (char *)""),
-            allowLoops ? (char *)"loops" : (char *)"", allowSemiEdges ? (char *)" and semi-edges" : (char *)"");
+            allowLoops ? (char *)"loops" : (char *)"", allowSemiEdges ? (char *)" and semi-edges" : (char *)"",
+            onlyAdmissable ? (char *)" and filtering graphs that have a 2-factor where each component is a quotient of a 4-cycle" : (char *)"",
+            onlyC4Coverable ? (char *)" and filtering graphs that have a 2-factor where each component is a 4-cycle" : (char *)"");
     if(moduloEnabled){
         fprintf(stderr, "Only generating part %d of %d (Splitting at depth %d).\n", moduloRest+1, moduloMod, splitDepth);
     }
+
+    if(onlyAdmissable || onlyC4Coverable) onlyColourable=TRUE;
+    boolean onlySimpleGraphs = !allowSemiEdges && !allowLoops && !allowMultiEdges;
     
     struct tms TMS;
     unsigned int oldtime = 0;
@@ -4461,6 +5487,14 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     } else if(onlyColourable && allowLoops){
         structureCount = primitivesCount = 0;
     } else if(onlyBipartite && allowLoops){
+        structureCount = primitivesCount = 0;
+    } else if(onlyAdmissable && allowLoops){
+        structureCount = primitivesCount = 0;
+    } else if(onlyC4Coverable && allowLoops){
+        structureCount = primitivesCount = 0;
+    } else if(onlyC4Coverable && vertexCount%4!=0){
+        structureCount = primitivesCount = 0;
+    } else if(onlySimpleGraphs && vertexCount%4!=0){
         structureCount = primitivesCount = 0;
     } else if(!allowLoops && !allowSemiEdges && !allowMultiEdges && vertexCount < 4){
         structureCount = primitivesCount = 0;
