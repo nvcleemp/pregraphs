@@ -148,6 +148,7 @@
 
 #ifdef _PROFILING
     #define _PROFILING_DEG1
+    #define _PROFILING_OPERATION1_SAME_COLOUR
     #define _PROFILING_DEG2
 #endif
 
@@ -267,6 +268,17 @@ unsigned long long *canonicalDegree1Degree3Neighbours1PartitionSize;
 unsigned long long *canonicalDegree1Degree3Neighbours1PartitionCount;
 unsigned long long *canonicalDegree1Degree3Neighbours2PartitionSize;
 unsigned long long *canonicalDegree1Degree3Neighbours2PartitionCount;
+#endif
+
+#ifdef _PROFILING_OPERATION1_SAME_COLOUR
+unsigned long long degree1Operation1TooFewVertices = 0;
+unsigned long long degree1Operation1OperationTried = 0;
+unsigned long long degree1Operation1HaveSameColour = 0;
+unsigned long long degree1Operation1HaveDifferentColour = 0;
+unsigned long long degree1Operation1SameColourSolved = 0;
+unsigned long long degree1Operation1SolvedWithPaths = 0;
+unsigned long long degree1Operation1NotSolvedWithPaths = 0;
+unsigned long long degree1Operation1Degree1Counts[MAXN];
 #endif
 
 int degree1OperationsDepth = 0;

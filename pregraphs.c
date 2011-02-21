@@ -423,6 +423,50 @@ boolean isBipartiteGraph(PRIMPREGRAPH *ppgraph) {
     return TRUE;
 }
 
+int getNeighbourAtColour(PRIMPREGRAPH *ppgraph, int vertex, int colour){
+    int i;
+    for(i = 0; i < ppgraph->degree[vertex]; i++){
+        if(colours[vertex][i]==colour){
+            return ppgraph->adjList[3*vertex+i];
+        }
+    }
+    return -1;
+}
+
+inline void setColour(PRIMPREGRAPH *ppgraph, int v1, int v2, int colour){
+    int i=0;
+    while(i<ppgraph->degree[v1] && ppgraph->adjList[3*v1+i]!=v2) i++;
+
+    if(i<ppgraph->degree[v1]){
+        colours[v1][i]=colour;
+    } else {
+        ERRORMSG("v2 is not a neighbour of v1")
+    }
+    i=0;
+    while(i<ppgraph->degree[v2] && ppgraph->adjList[3*v2+i]!=v1) i++;
+
+    if(i<ppgraph->degree[v2]){
+        colours[v2][i]=colour;
+    } else {
+        ERRORMSG("v1 is not a neighbour of v2")
+    }
+}
+
+void switchColours(PRIMPREGRAPH *ppgraph, int vertex, int firstColour, int secondColour){
+    int previousVertex;
+    int currentVertex = vertex;
+    int nextVertex = getNeighbourAtColour(ppgraph, currentVertex, firstColour);
+    int currentColour = firstColour;
+
+    while(nextVertex>=0){
+        previousVertex = currentVertex;
+        currentVertex = nextVertex;
+        currentColour = currentColour == firstColour ? secondColour : firstColour;
+        nextVertex = getNeighbourAtColour(ppgraph, currentVertex, currentColour);
+        setColour(ppgraph, previousVertex, currentVertex, currentColour);
+    }
+}
+
 /*
  * This method only works for simple graphs!
  * Tries to find a colouring such that the two edges incident with the two edges of degree 1
@@ -462,12 +506,54 @@ boolean canBeColouredDifferently(PRIMPREGRAPH *ppgraph, int v1, int v2) {
 }
 
 /*
+ * Tries to switch the colours colour1 and colour2 along a Kempe path starting in start without
+ * changing the colour of the edge incident with illegalEnd. Returns TRUE when succesfull
+ * and FALSE when not. Only in the case of TRUE the colouring will have changed.
+ */
+boolean trySwitchingColours(PRIMPREGRAPH *ppgraph, int start, int illegalEnd, int colour1, int colour2){
+    int current = start;
+    int next = ppgraph->adjList[3*current+0];
+    int currentColour = colour1;
+    int nextColour = colour2;
+    while(ppgraph->degree[next]!=1){
+	    int temp = currentColour;
+        currentColour = nextColour;
+        nextColour = temp;
+	    current = next;
+		next = getNeighbourAtColour(ppgraph, current, currentColour);
+    }
+
+    if(next==illegalEnd){
+        return FALSE;
+    } else {
+        //switch the colours
+        switchColours(ppgraph, start, colour1, colour2);
+        return TRUE;
+    }
+}
+
+/*
  * This method only works for simple graphs!
  * Tries to find a colouring such that the two edges incident with the two edges of degree 1
- * have a different colouring. Basically just calls canBeColouredDifferently, but first stores
+ * have a different colouring. First tries to switch the colours along the two Kempe paths.
+ * If this is unsuccesful just calls canBeColouredDifferently, but first stores
  * the current colouring. If the answer is false, it restores the old colouring.
  */
 boolean tryAlternateColouring(PRIMPREGRAPH *ppgraph, int v1, int v2){
+    //find path starting from v1
+    if(trySwitchingColours(ppgraph, v1, v2, colours[v1][0], colours[v1][0]%3 + 1)){
+        #ifdef _PROFILING_OPERATION1_SAME_COLOUR
+        degree1Operation1SolvedWithPaths++;
+        #endif
+        return TRUE;
+    }
+    if(trySwitchingColours(ppgraph, v1, v2, colours[v1][0], (colours[v1][0]%3 + 1)%3 + 1)){
+        #ifdef _PROFILING_OPERATION1_SAME_COLOUR
+        degree1Operation1SolvedWithPaths++;
+        #endif
+        return TRUE;
+    }
+
     //copy the colours
     int i, j;
     for(i = 0; i < ppgraph->order; i++){
@@ -488,38 +574,13 @@ boolean tryAlternateColouring(PRIMPREGRAPH *ppgraph, int v1, int v2){
             }
             coloursAroundVertex[i]=coloursAroundVertexCopy[i];
         }
+    } else {
+        #ifdef _PROFILING_OPERATION1_SAME_COLOUR
+        degree1Operation1NotSolvedWithPaths++;
+        #endif
     }
 
     return alternateColouringExists;
-}
-
-int getNeighbourAtColour(PRIMPREGRAPH *ppgraph, int vertex, int colour){
-    int i;
-    for(i = 0; i < ppgraph->degree[vertex]; i++){
-        if(colours[vertex][i]==colour){
-            return ppgraph->adjList[3*vertex+i];
-        }
-    }
-    return -1;
-}
-
-inline void setColour(PRIMPREGRAPH *ppgraph, int v1, int v2, int colour){
-    int i=0;
-    while(i<ppgraph->degree[v1] && ppgraph->adjList[3*v1+i]!=v2) i++;
-
-    if(i<ppgraph->degree[v1]){
-        colours[v1][i]=colour;
-    } else {
-        ERRORMSG("v2 is not a neighbour of v1")
-    }
-    i=0;
-    while(i<ppgraph->degree[v2] && ppgraph->adjList[3*v2+i]!=v1) i++;
-
-    if(i<ppgraph->degree[v2]){
-        colours[v2][i]=colour;
-    } else {
-        ERRORMSG("v1 is not a neighbour of v2")
-    }
 }
 
 inline int getColour(PRIMPREGRAPH *ppgraph, int v1, int v2){
@@ -576,21 +637,6 @@ void switchVertexColours(PRIMPREGRAPH *ppgraph, int vertex, int vertexNot){
         }
 
 
-    }
-}
-
-void switchColours(PRIMPREGRAPH *ppgraph, int vertex, int firstColour, int secondColour){
-    int previousVertex;
-    int currentVertex = vertex;
-    int nextVertex = getNeighbourAtColour(ppgraph, currentVertex, firstColour);
-    int currentColour = firstColour;
-
-    while(nextVertex>=0){
-        previousVertex = currentVertex;
-        currentVertex = nextVertex;
-        currentColour = currentColour == firstColour ? secondColour : firstColour;
-        nextVertex = getNeighbourAtColour(ppgraph, currentVertex, currentColour);
-        setColour(ppgraph, previousVertex, currentVertex, currentColour);
     }
 }
 
@@ -2589,11 +2635,17 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v){
  * apply the operation for each pair, handle the result and then revert the operation.
  */
 void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
+    #ifdef _PROFILING_OPERATION1_SAME_COLOUR
+    degree1Operation1Degree1Counts[ppgraph->degree1Count]++;
+    #endif
     if(operation11Disabled) return;
     DEBUGMSG("Start handle_deg1_operation1")
     DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth],
             numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth], ppgraph->order, "%d")
     if(onlyColourable && ppgraph->degree1Count<3){
+        #ifdef _PROFILING_OPERATION1_SAME_COLOUR
+        degree1Operation1TooFewVertices++;
+        #endif
         //garantueed to lead to a non-3-edge-colourable graph
         DEBUGMSG("End handle_deg1_operation1")
         return;
@@ -2612,16 +2664,33 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
     int i;
     for (i = 0; i < listSize; i++) {
         if(orbits[i]==i){
+            #ifdef _PROFILING_OPERATION1_SAME_COLOUR
+                degree1Operation1OperationTried++;
+            #endif
             DEBUGPPGRAPHPRINT(ppgraph)
             #ifdef _PROFILING_DEG1
                 degree1Operation1Total++;
             #endif
             if(onlyColourable && colours[deg1PairList[i][0]][0]==colours[deg1PairList[i][1]][0]){
+                #ifdef _PROFILING_OPERATION1_SAME_COLOUR
+                    degree1Operation1HaveSameColour++;
+                #endif
                 //check that this graph can be coloured so that these two vertices of degree
                 //1 are incident with two edges with a different colour
-                if(!tryAlternateColouring(ppgraph, deg1PairList[i][0], deg1PairList[i][1]))
+                if(!tryAlternateColouring(ppgraph, deg1PairList[i][0], deg1PairList[i][1])){
                     continue; //don't apply operation on these vertices
+                }
+                #ifdef _PROFILING_OPERATION1_SAME_COLOUR
+                else {
+                    degree1Operation1SameColourSolved++;
+                }
+                #endif
             }
+            #ifdef _PROFILING_OPERATION1_SAME_COLOUR
+            else {
+                degree1Operation1HaveDifferentColour++;
+            }
+            #endif
             if(onlyBipartite && vertexColours[deg1PairList[i][0]]!=vertexColours[deg1PairList[i][1]]){
                 continue; //don't apply operation on these vertices
             }
@@ -3903,7 +3972,14 @@ void initInfo(){
         }
         canonicalDegree1Degree3Neighbours0PartitionCount = 0;
         canonicalDegree1Degree3Neighbours0PartitionSize = 0;
-#endif
+    #endif
+
+    #ifdef _PROFILING_OPERATION1_SAME_COLOUR
+    for(i=0;i<MAXN;i++){
+        degree1Operation1Degree1Counts[i]=0;
+    }
+    #endif
+
 }
 
 void logInfo(PREGRAPH *pregraph){
@@ -4111,6 +4187,25 @@ void printInfo(){
         }
     }
     #endif
+
+    #ifdef _PROFILING_OPERATION1_SAME_COLOUR
+    fprintf(stderr, "\n\nStatistics about the first degree 1 operation.\n");
+    fprintf(stderr, "Too few vertices to apply operation        : %llu\n\n", degree1Operation1TooFewVertices);
+    fprintf(stderr, "Number of times the operation was tried    : %llu\n", degree1Operation1OperationTried);
+    fprintf(stderr, "             - with different colour       : %llu\n", degree1Operation1HaveDifferentColour);
+    fprintf(stderr, "             - with same colour            : %llu   (%.2f)\n\n", degree1Operation1HaveSameColour, (double)degree1Operation1HaveSameColour/degree1Operation1OperationTried);
+    fprintf(stderr, "Number of times the colours weren't solved : %llu\n", degree1Operation1HaveSameColour - degree1Operation1SameColourSolved);
+    fprintf(stderr, "Number of times the colours were solved    : %llu\n", degree1Operation1SameColourSolved);
+    fprintf(stderr, "             - with paths                  : %llu   (%.2f)\n", degree1Operation1SolvedWithPaths, (double)degree1Operation1SolvedWithPaths/degree1Operation1SameColourSolved);
+    fprintf(stderr, "             - without paths               : %llu\n\n", degree1Operation1NotSolvedWithPaths);
+
+    fprintf(stderr, "Overview of the number of vertices of degree 1 that a graph had when this operation was called.\n");
+    int k;
+    for(k=2;k<vertexCount;k++){
+        fprintf(stderr, "%10llu time%s called with %d vertices of degree 1\n", degree1Operation1Degree1Counts[k], degree1Operation1Degree1Counts[k]==1 ? (char *)"" : (char *)"s", k);
+    }
+    #endif
+
 }
 
 #ifdef PREGRAPH_NO_MAIN
