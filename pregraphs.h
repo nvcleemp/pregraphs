@@ -59,6 +59,8 @@
 
 #ifdef _DEBUG
 
+#define _DEBUG_MODIFY_GENERATION
+
 #define DEBUGPPGRAPHPRINT(ppgraph) {\
                                         fprintf(stderr, "==========================\n");\
                                         fprintf(stderr, "%s:%u %s:\n", __FILE__, __LINE__, #ppgraph);\
@@ -313,6 +315,7 @@ boolean onlyBipartite = FALSE; /* TRUE if only bipartite pregraphs are allowed *
 boolean onlyAdmissable = FALSE; /* TRUE if only pregraphs with an admissable colouring are allowed */
 boolean onlyC4Coverable = FALSE; /* TRUE if only pregraphs with a C4 cover are allowed */
 
+#ifdef _DEBUG_MODIFY_GENERATION
 boolean operation11Disabled = FALSE;
 boolean operation12Disabled = FALSE;
 boolean operation21Disabled = FALSE;
@@ -320,6 +323,7 @@ boolean operation22Disabled = FALSE;
 boolean operation23Disabled = FALSE;
 
 boolean noRejections = FALSE;
+#endif
 
 boolean moduloEnabled = FALSE;
 int moduloRest;

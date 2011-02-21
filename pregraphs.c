@@ -3548,7 +3548,9 @@ boolean isCanonicalDegree1Edge(PRIMPREGRAPH *ppgraph, int v, boolean groupMayBeC
         else
             canonicalDegree1NoWithNauty++;
     #endif
+    #ifdef _DEBUG_MODIFY_GENERATION
     if(noRejections) return TRUE;
+    #endif
     return (smallestLabelOrbitV < smallestOtherDegree1Label);
 }
 
@@ -3647,7 +3649,9 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
     #ifdef _PROFILING_OPERATION1_SAME_COLOUR
     degree1Operation1Degree1Counts[ppgraph->degree1Count]++;
     #endif
+    #ifdef _DEBUG_MODIFY_GENERATION
     if(operation11Disabled) return;
+    #endif
     DEBUGMSG("Start handle_deg1_operation1")
     DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth],
             numberOfGenerators[degree1OperationsDepth + degree2OperationsDepth], ppgraph->order, "%d")
@@ -3725,7 +3729,9 @@ void handle_deg1_operation1(PRIMPREGRAPH *ppgraph){
 }
 
 void handle_deg1_operation2(PRIMPREGRAPH *ppgraph){
+    #ifdef _DEBUG_MODIFY_GENERATION
     if(operation12Disabled) return;
+    #endif
     if(ppgraph->bridgeCount==0) return;
     DEBUGMSG("Start handle_deg1_operation2")
     DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth + degree2OperationsDepth],
@@ -3930,13 +3936,17 @@ boolean isCanonicalMultiEdge(PRIMPREGRAPH *ppgraph, int v1, int v2, boolean *mul
 
     DEBUGMSG("End isCanonicalMultiEdge")
     *multiEdgesDetermined = TRUE;
+    #ifdef _DEBUG_MODIFY_GENERATION
     if(noRejections) return TRUE;
+    #endif
     return smallestRepresentantNewEdge[0] < smallestOtherMultiEdge[0] ||
             (smallestRepresentantNewEdge[0] == smallestOtherMultiEdge[0] && smallestRepresentantNewEdge[1] < smallestOtherMultiEdge[1]);
 }
 
 void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
+    #ifdef _DEBUG_MODIFY_GENERATION
     if(operation21Disabled) return;
+    #endif
     DEBUGMSG("Start handle_deg2_operation1")
     DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth+degree2OperationsDepth],
             numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth], ppgraph->order, "%d")
@@ -3969,7 +3979,9 @@ void handle_deg2_operation1(PRIMPREGRAPH *ppgraph){
 }
 
 void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, boolean *multiEdgesDetermined){
+    #ifdef _DEBUG_MODIFY_GENERATION
     if(operation22Disabled) return;
+    #endif
     DEBUGMSG("Start handle_deg2_operation2")
     DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth+degree2OperationsDepth],
             numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth], ppgraph->order, "%d")
@@ -4008,7 +4020,9 @@ void handle_deg2_operation2(PRIMPREGRAPH *ppgraph, boolean *multiEdgesDetermined
 }
 
 void handle_deg2_operation3(PRIMPREGRAPH *ppgraph, boolean *multiEdgesDetermined){
+    #ifdef _DEBUG_MODIFY_GENERATION
     if(operation23Disabled) return;
+    #endif
     DEBUGMSG("Start handle_deg2_operation3")
     DEBUG2DARRAYDUMP(automorphismGroupGenerators[degree1OperationsDepth+degree2OperationsDepth],
             numberOfGenerators[degree1OperationsDepth+degree2OperationsDepth], ppgraph->order, "%d")
@@ -4914,6 +4928,7 @@ void help(char *name) {
     fprintf(stderr, "                c    pregraph code (or multicode if -P is used)\n");
     fprintf(stderr, "                h    human-readable output in tabular format\n");
     fprintf(stderr, "                n    no output: only count (default)\n");
+#ifdef _DEBUG_MODIFY_GENERATION
     fprintf(stderr, "  -D #        : Disable some operations:\n");
     fprintf(stderr, "                1    Disable operation 1.1\n");
     fprintf(stderr, "                2    Disable operation 1.2\n");
@@ -4926,6 +4941,7 @@ void help(char *name) {
     fprintf(stderr, "  -X          : No operation will be discarded as being not-canonical. This will\n");
     fprintf(stderr, "                cause isomorphic graphs to be constructed. (This option is for\n");
     fprintf(stderr, "                debugging purposes.)\n");
+#endif
     fprintf(stderr, "  -m r:m[:d]  : Split the generation into several parts. This basically means\n");
     fprintf(stderr, "                that at depth d a counter will be kept and the program will\n");
     fprintf(stderr, "                only continue beyond this point if the counter mod m is equal\n");
@@ -5241,7 +5257,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
 
     int c;
     char *name = argv[0];
+    #ifdef _DEBUG_MODIFY_GENERATION
     char *disabled;
+    #endif
     char *moduloString;
     boolean fromFile = FALSE;
     char *inputFileName = NULL;
@@ -5261,9 +5279,11 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
             case 'P': //(defaults to FALSE)
                 onlyPrimitives = TRUE;
                 break;
+#ifdef _DEBUG_MODIFY_GENERATION
             case 'X': //(defaults to FALSE)
                 noRejections = TRUE;
                 break;
+#endif
             case 'C': //(defaults to FALSE)
                 onlyColourable = TRUE;
                 break;
@@ -5295,6 +5315,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                         return 1;
                 }
                 break;
+#ifdef _DEBUG_MODIFY_GENERATION
             case 'D':
                 //disable certain operations
                 disabled = optarg;
@@ -5345,6 +5366,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                     disabled++;
                 }
                 break;
+#endif
             case 'I':
                 fromFile = TRUE;
                 break;
