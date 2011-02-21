@@ -4438,7 +4438,7 @@ void start(){
             #ifdef _DEBUG
             fprintf(stderr, "Starting snarkhunter for %d vertices\n", i);
             #endif
-			call_snarkhunter(i, 3, *handle_snarkhunter_result);
+            call_snarkhunter(i, 3, *handle_snarkhunter_result);
         }
     }
     if(allowMultiEdges && vertexCount == 2){
