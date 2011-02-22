@@ -13,6 +13,7 @@ COMPLETE = pregraphs pregraphs-64 pregraphs-profile pregraphs-debug admissable_c
 SOURCES = pregraphs.c pregraphs.h util.h snarkhunter.c snarkhunter.h admissable_c.c\
           admissable_c.h c4cover.c c4cover.h bipartite.c bipartite.h has3edgecolouring.c\
           has3edgecolouring.h pgfilter.c pgfilter.h Makefile COPYRIGHT.txt LICENSE.txt
+PREGRAPHS_SOURCES = pregraphs.c snarkhunter.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c
 
 all : 32bit
 
@@ -26,17 +27,17 @@ profile : pregraphs-profile
 
 debug : pregraphs-debug
 
-pregraphs: pregraphs.c snarkhunter.c  nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c
-	${CC32} $(CFLAGS) pregraphs.c snarkhunter.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c -o pregraphs
+pregraphs: $(PREGRAPHS_SOURCES)
+	${CC32} $(CFLAGS) $(PREGRAPHS_SOURCES) -o pregraphs
 
-pregraphs-64: pregraphs.c snarkhunter.c  nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c
-	${CC64} $(CFLAGS) pregraphs.c snarkhunter.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c -o pregraphs-64
+pregraphs-64: $(PREGRAPHS_SOURCES)
+	${CC64} $(CFLAGS) $(PREGRAPHS_SOURCES) -o pregraphs-64
 
-pregraphs-profile: pregraphs.c snarkhunter.c  nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c
-	${CC32} -Wall -pg -g pregraphs.c snarkhunter.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c -o pregraphs-profile
+pregraphs-profile: $(PREGRAPHS_SOURCES)
+	${CC32} -Wall -pg -g $(PREGRAPHS_SOURCES) -o pregraphs-profile
 
-pregraphs-debug: pregraphs.c snarkhunter.c  nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c
-	${CC32} -Wall -rdynamic -g pregraphs.c snarkhunter.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c -o pregraphs-debug
+pregraphs-debug: $(PREGRAPHS_SOURCES)
+	${CC32} -Wall -rdynamic -g $(PREGRAPHS_SOURCES) -o pregraphs-debug
 
 admissable_c: admissable_c.c
 	$(CC) $(CFLAGS) -o admissable_c admissable_c.c
