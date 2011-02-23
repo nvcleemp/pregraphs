@@ -12,7 +12,8 @@ CFLAGS = -O4 -Wall
 COMPLETE = pregraphs pregraphs-64 pregraphs-profile pregraphs-debug admissable_c c4cover bipartite has3edgecolouring pgfilter
 SOURCES = pregraphs.c pregraphs.h util.h snarkhunter.c snarkhunter.h admissable_c.c\
           admissable_c.h c4cover.c c4cover.h bipartite.c bipartite.h has3edgecolouring.c\
-          has3edgecolouring.h pgfilter.c pgfilter.h Makefile COPYRIGHT.txt LICENSE.txt
+          has3edgecolouring.h pgfilter.c pgfilter.h minibaum5.c minibaumlib.h Makefile\
+          COPYRIGHT.txt LICENSE.txt
 PREGRAPHS_SOURCES = pregraphs.c snarkhunter.c minibaum5.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c
 
 all : 32bit
