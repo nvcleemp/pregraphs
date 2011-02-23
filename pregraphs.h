@@ -42,6 +42,7 @@
 //#define MAXN 50 //needs to be defined before nauty.h is included !
 
 #include "util.h"
+#include "minibaumlib.h"
 #include "nauty/nauty.h"
 
 #include <stdlib.h>

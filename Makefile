@@ -6,14 +6,14 @@ SHELL = /bin/sh
 
 # Compiling executing program with DWORDSIZE=32 is slightly faster, 
 # but limits the order of the graphs to 32.
-CC32 = gcc -DWORDSIZE=32 -DMAXN=WORDSIZE -DSNARKHUNTERMAIN=sh_nomain
-CC64 = gcc -DWORDSIZE=64 -DMAXN=WORDSIZE -DSNARKHUNTERMAIN=sh_nomain
+CC32 = gcc -DWORDSIZE=32 -DMAXN=WORDSIZE -DSNARKHUNTERMAIN=sh_nomain -DMINIBAUM_NO_MAIN
+CC64 = gcc -DWORDSIZE=64 -DMAXN=WORDSIZE -DSNARKHUNTERMAIN=sh_nomain -DMINIBAUM_NO_MAIN
 CFLAGS = -O4 -Wall
 COMPLETE = pregraphs pregraphs-64 pregraphs-profile pregraphs-debug admissable_c c4cover bipartite has3edgecolouring pgfilter
 SOURCES = pregraphs.c pregraphs.h util.h snarkhunter.c snarkhunter.h admissable_c.c\
           admissable_c.h c4cover.c c4cover.h bipartite.c bipartite.h has3edgecolouring.c\
           has3edgecolouring.h pgfilter.c pgfilter.h Makefile COPYRIGHT.txt LICENSE.txt
-PREGRAPHS_SOURCES = pregraphs.c snarkhunter.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c
+PREGRAPHS_SOURCES = pregraphs.c snarkhunter.c minibaum5.c nauty/nautil.c nauty/nausparse.c nauty/naugraph.c nauty/nauty.c
 
 all : 32bit
 

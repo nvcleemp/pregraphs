@@ -4353,8 +4353,8 @@ static PRIMPREGRAPH *currentPpgraph;
     ppgraph->order = order;
     ppgraph->degree1Count = 0;
     ppgraph->multiEdgeCount = 0;
-    ppgraph->bridgeCount = 0; //will be set when necessary	
-	
+    ppgraph->bridgeCount = 0; //will be set when necessary
+
     int i, j;
 
     for(i=0; i<order; i++){
@@ -4399,6 +4399,63 @@ static PRIMPREGRAPH *currentPpgraph;
 
 }
 
+/*
+ * Handles the input from the external graph by translating the graph into a pregraph primitive
+ * and feeding it to the grow method.
+ */
+ void handle_minibaum_result(unsigned char minibaum_graph[knoten+1][reg], int order){
+    DEBUGMSG("Start handle_minibaum_result")
+    PRIMPREGRAPH *ppgraph = currentPpgraph;
+    ppgraph->order = order;
+    ppgraph->degree1Count = 0;
+    ppgraph->multiEdgeCount = 0;
+    ppgraph->bridgeCount = 0; //will be set when necessary
+
+    int i, j;
+
+    for(i=0; i<order; i++){
+        ppgraph->degree[i]=3;
+
+        set *v;
+        v = GRAPHROW(ppgraph->ulgraph, i, MAXM);
+        EMPTYSET(v, MAXM);
+        j=0;
+        for(j=0; j<3; j++){
+            ppgraph->adjList[i*3+j] = minibaum_graph[i+1][j]-1;
+            ADDELEMENT(v, minibaum_graph[i+1][j]-1);
+        }
+    }
+
+    DEBUGPPGRAPHPRINT(ppgraph)
+
+    if(onlyColourable){
+        DEBUGMSG("Checking colourability")
+        if(!isColourableGraph(ppgraph)){
+            DEBUGMSG("Cubic graph is not 3-edge-colourable")
+            DEBUGMSG("End handle_minibaum_result")
+            return;
+        }
+    }
+
+    if(onlyBipartite){
+        DEBUGMSG("Checking vertex-colourability")
+        //still need to call this method because it will set the colours which we need
+        if(!isBipartiteGraph(ppgraph)){
+            DEBUGMSG("Cubic graph is not bipartite")
+            DEBUGMSG("End handle_minibaum_result")
+            return;
+        }
+    }
+
+    if(ppgraph->order == vertexCount)
+        handle_primpregraph_result(ppgraph);
+    else
+        grow(ppgraph);
+
+    DEBUGMSG("End handle_minibaum_result")
+
+}
+
 void start(){
     DEBUGMSG("Start start")
     structureCount=0;
@@ -4434,16 +4491,24 @@ void start(){
         cubicGeneratorStart = vertexCount;
     }
     if(!onlyColourable || vertexCount%2!=1){
-        for(i = cubicGeneratorStart; i <= vertexCount; i+=2){//TODO: is this the correct upperbound for i
+        if(is_minibaum_available(vertexCount) && onlyBipartite){
             #ifdef _DEBUG
-            fprintf(stderr, "Starting snarkhunter for %d vertices\n", i);
+            fprintf(stderr, "Starting minibaum for %d vertices\n", vertexCount);
             #endif
-            call_snarkhunter(i, 3, *handle_snarkhunter_result);
+            call_minibaum(vertexCount, onlyBipartite, vertexCount!=cubicGeneratorStart);
+        } else {
+            for(i = cubicGeneratorStart; i <= vertexCount; i+=2){//TODO: is this the correct upperbound for i
+                #ifdef _DEBUG
+                fprintf(stderr, "Starting snarkhunter for %d vertices\n", i);
+                #endif
+                call_snarkhunter(i, 3, *handle_snarkhunter_result);
+            }
         }
     }
     if(allowMultiEdges && vertexCount == 2){
         //is 3-edge-colourable
         //is bipartite
+        //is admissable
         writeThetaGraph();
     }
     DEBUGMSG("End start")
@@ -5633,9 +5698,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
         structureCount = primitivesCount = 0;
     } else if(onlyC4Coverable && vertexCount%4!=0){
         structureCount = primitivesCount = 0;
-    } else if(onlySimpleGraphs && vertexCount%4!=0){
+    } else if((onlySimpleGraphs && onlyAdmissable) && vertexCount%4!=0){
         structureCount = primitivesCount = 0;
-    } else if(!allowLoops && !allowSemiEdges && !allowMultiEdges && vertexCount < 4){
+    } else if(onlySimpleGraphs && vertexCount < 4){
         structureCount = primitivesCount = 0;
     } else {
         if(fromFile){
