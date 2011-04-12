@@ -2014,6 +2014,9 @@ void detectAndRemoveChain(FILTERPREGRAPH *pregraph, boolean *removed, int v1, in
 	}
 
     }
+    
+    int firstEndUp = currentUp;
+    int firstEndDown = currentDown;
 
     //if we get here then one side of the chain is ended by an edge with
     //an ordinary vertex
@@ -2057,7 +2060,13 @@ void detectAndRemoveChain(FILTERPREGRAPH *pregraph, boolean *removed, int v1, in
 	    nrOfSquares++;
 	} else {
 	    //end of chain reached because nextUp and nextDown aren't adjacent
-	    *admissable = nrOfSquares % 2;
+            if(nrOfSquares == 2 && (adjMatrix[nextUp] & (1<<firstEndUp)) && (adjMatrix[nextDown] & (1<<firstEndDown))){
+                removed[nextUp] = TRUE;
+                removed[nextDown] = TRUE;
+                *admissable = TRUE;
+            } else {
+                *admissable = nrOfSquares % 2;
+            }
 	    inChain = FALSE;
 	}
     }
@@ -2612,6 +2621,8 @@ void detectAndRemoveChainForC4(FILTERPREGRAPH *pregraph, boolean *removed,
     }
     }
     //first end is finished
+    int firstEndUp = currentUp;
+    int firstEndDown = currentDown;
 
     //now check the other side of the chain
     prevUp = side1_a;
@@ -2653,7 +2664,13 @@ void detectAndRemoveChainForC4(FILTERPREGRAPH *pregraph, boolean *removed,
 	    nrOfSquares++;
 	} else {
 	    //end of chain reached because nextUp and nextDown aren't adjacent
-	    *illegalConfiguration = !(nrOfSquares % 2);
+            if(nrOfSquares == 2 && (adjMatrix[nextUp] & (1<<firstEndUp)) && (adjMatrix[nextDown] & (1<<firstEndDown))){
+                removed[nextUp] = TRUE;
+                removed[nextDown] = TRUE;
+                *illegalConfiguration = FALSE;
+            } else {
+                *illegalConfiguration = !(nrOfSquares % 2);
+            }
 	    inChain = FALSE;
 	}
     }
