@@ -543,6 +543,8 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, 
         }
     }
     //first end is finished
+    int firstEndUp = currentUp;
+    int firstEndDown = currentDown;
 
     //now check the other side of the chain
     prevUp = side1_a;
@@ -584,7 +586,14 @@ void detectAndRemoveChain(PREGRAPH *pregraph, boolean *removed, int v1, int v2, 
 	    nrOfSquares++;
 	} else {
 	    //end of chain reached because nextUp and nextDown aren't adjacent
-	    *illegalConfiguration = !(nrOfSquares % 2);
+            if(nrOfSquares == 2 && (pregraph->adjMatrix[nextUp] & (1<<firstEndUp))
+                    && (pregraph->adjMatrix[nextDown] & (1<<firstEndDown))){
+                removed[nextUp] = TRUE;
+                removed[nextDown] = TRUE;
+                *illegalConfiguration = FALSE;
+            } else {
+                *illegalConfiguration = !(nrOfSquares % 2);
+            }
 	    inChain = FALSE;
 	}
     }
