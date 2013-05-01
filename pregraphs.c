@@ -5098,6 +5098,7 @@ void help(char *name) {
     fprintf(stderr, "Usage: %s [options] n \n\n", name);
     fprintf(stderr, "Valid options:\n");
     fprintf(stderr, "  -h          : Print this help and return.\n");
+    fprintf(stderr, "  -l          : Print generation limits and return.\n");
     fprintf(stderr, "  -i          : Causes %s to print extra info about the generated\n", name);
     fprintf(stderr, "                structures.\n");
     fprintf(stderr, "  -L          : Allow loops.\n");
@@ -5140,6 +5141,19 @@ void help(char *name) {
     fprintf(stderr, "                only continue beyond this point if the counter mod m is equal\n");
     fprintf(stderr, "                to r. Special measures are taken if some graphs are already\n");
     fprintf(stderr, "                outputted before depth d. The default for d is 0.\n");
+}
+
+void printLimits(char *name) {
+    fprintf(stderr, "The program %s was compiled with MAXN set to %d.\n", name, MAXN);
+    fprintf(stderr, "This imposes the following bounds on the generated structures:\n\n");
+    fprintf(stderr, "simple cubic graphs (no options)                   : max %d vertices.\n", MAXN);
+    fprintf(stderr, "simple cubic graphs with loops (-L)                : max %d vertices.\n", MAXN);
+    fprintf(stderr, "simple cubic graphs with semi-edges (-S)           : max %d vertices.\n", (MAXN-2)/2);
+    fprintf(stderr, "cubic multigraphs (-M)                             : max %d vertices.\n", 2*MAXN/3);
+    fprintf(stderr, "cubic multigraphs with loops (-LM)                 : max %d vertices.\n", 2*MAXN/3);
+    fprintf(stderr, "cubic multigraphs with semi-edges (-SM)            : max %d vertices.\n", (MAXN-2)/2);
+    fprintf(stderr, "cubic multigraphs with loops and semi-edges (-LSM) : max %d vertices.\n\n", (MAXN-2)/2);
+    fprintf(stderr, "The options -C, -B, -q and -4 do not change the maximum number of vertices.\n");
 }
 
 void initInfo(){
@@ -5458,7 +5472,7 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     char *inputFileName = NULL;
     FILE *inputFile = stdin;
 
-    while ((c = getopt(argc, argv, "LSMPXCBf:F:o:D:d:Ihim:4q")) != -1) {
+    while ((c = getopt(argc, argv, "LSMPXCBf:F:o:D:d:Ihim:4ql")) != -1) {
         switch (c) {
             case 'L': //(defaults to FALSE)
                 allowLoops = TRUE;
@@ -5565,6 +5579,9 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
                 break;
             case 'h':
                 help(name);
+                return EXIT_SUCCESS;
+            case 'l':
+                printLimits(name);
                 return EXIT_SUCCESS;
             case 'i':
                 logStatistics = TRUE;
