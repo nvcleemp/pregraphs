@@ -1,2 +1,15 @@
+#directories
 nbproject
 nauty
+
+#compiled executables
+pregraphs
+admissable_c
+bipartite
+c4cover
+has3edgecolouring
+pgfilter
+pregraphs-64
+pregraphs-debug
+pregraphs-profile
+
