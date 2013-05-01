@@ -5634,9 +5634,17 @@ int PREGRAPH_MAIN_FUNCTION(int argc, char** argv) {
     vertexCount = strtol(argv[optind], NULL, 10);
     DEBUGDUMP(vertexCount, "%d")
 
-    if(vertexCount > MAXN || (allowSemiEdges && 2*vertexCount + 2 > MAXN)
-            || (allowMultiEdges && vertexCount + vertexCount/2 > MAXN)) {
-        fprintf(stderr, "%s needs to be recompiled to support graphs of order %d and with the given option.\n", name, vertexCount);
+    if(vertexCount > MAXN){
+        fprintf(stderr, "%s needs to be recompiled with a larger value for MAXN to support\ngraphs of order %d and with the given option.\n", name, vertexCount);
+        fprintf(stderr, "MAXN needs to be at least %d for these parameters.\n", vertexCount);
+        return EXIT_FAILURE;
+    } else if (allowSemiEdges && 2*vertexCount + 2 > MAXN) {
+        fprintf(stderr, "%s needs to be recompiled with a larger value for MAXN to support\ngraphs of order %d and with the given option.\n", name, vertexCount);
+        fprintf(stderr, "MAXN needs to be at least %d for these parameters.\n", 2*vertexCount + 2);
+        return EXIT_FAILURE;
+    } else if (allowMultiEdges && vertexCount + vertexCount/2 > MAXN) {
+        fprintf(stderr, "%s needs to be recompiled with a larger value for MAXN to support\ngraphs of order %d and with the given option.\n", name, vertexCount);
+        fprintf(stderr, "MAXN needs to be at least %d for these parameters.\n", vertexCount + vertexCount/2);
         return EXIT_FAILURE;
     }
 
