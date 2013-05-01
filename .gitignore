@@ -13,3 +13,7 @@ pregraphs-64
 pregraphs-debug
 pregraphs-profile
 
+#source distributions
+pregraphs-sources.tar.gz
+pregraphs-sources.zip
+
