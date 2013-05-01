@@ -215,7 +215,7 @@ void unmarkColours(int nonfree_labelled[][2], int nonfree_labelled_size) {
  * The edges that are coloured are stored, so this can be rolled back in case of a conflict.
  */
 boolean propagateFixedColours(int currentVertex, int nonfree_labelled[][2], int *nonfree_labelled_size, PRIMPREGRAPH *ppgraph) {
-    int uncolouredVertex, missingColour;
+    int uncolouredVertex = -1, missingColour = -1; //values assigned to avoid compiler warnings
     //while the colour is fixed for currentVertex
     while(coloursAroundVertex[currentVertex] == 2) {
         //find the colour of the remaining edge
@@ -264,7 +264,8 @@ int tryExtendingColouring(int numberOfColouredEdges, int numberOfEdges, PRIMPREG
         }
         DEBUGASSERT(currentVertex < ppgraph->order);
 
-        int usedColour; //the colour already used at this vertex
+        int usedColour = -1; //the colour already used at this vertex
+                             //value assigned to avoid compiler warnings
         int i;
         for(i = 0; i < ppgraph->degree[currentVertex]; i++) {
             if(ISMARKED_EDGES(currentVertex, i)) {
@@ -960,7 +961,7 @@ void apply_deg1_operation2(PRIMPREGRAPH *ppgraph, int u, int v){
     DEBUGDUMP(v, "%d")
     DEBUGASSERT(areAdjacent(ppgraph, u, v))
     int oldBridge = findBridge(ppgraph, u, v);
-    int bridgeColour;
+    int bridgeColour = -1;  //value assigned to avoid compiler warnings
     if(onlyColourable){
         bridgeColour = getColour(ppgraph, u, v);
     }
@@ -2220,7 +2221,7 @@ boolean checkRemainder(FILTERPREGRAPH *pregraph, boolean *removed){
     for(i=0; i<pregraph->order; i++){
         if(!removed[i] && degree[i]==2 && neighbours[i]==1){
             int currentVertex = i;
-            int nextVertex;
+            int nextVertex = -1;  //value assigned to avoid compiler warnings
             int previousVertex;
             int vertexCount = 2;
 
@@ -2342,7 +2343,8 @@ void detectAndRemoveChainForC4(FILTERPREGRAPH *pregraph, boolean *removed,
     int n1, n2, n3, n4;
     int semiEdge = pregraph->order;
     //propagate chain of squares first to side1 then to side2
-    int prevUp, prevDown, currentUp, currentDown, nextUp, nextDown;
+    int prevUp, prevDown, currentUp = -1, currentDown = -1, nextUp, nextDown;
+    //values assigned to avoid compiler warnings
     boolean inChain;
 
     //determine third neighbours for corner vertices
